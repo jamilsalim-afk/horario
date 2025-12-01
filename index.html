@@ -395,8 +395,13 @@ function loadState(){
   const raw = localStorage.getItem(KEY);
   if(raw){ try{ Object.assign(state, JSON.parse(raw)); }catch(e){ console.warn('parse',e) } }
   // defaults
-  if (!state.users || state.users.length === 0 || !adminExists) {state.users = [{ username:"jamil", password:"@Fdpjs2209", role:"admin" },{ username:"user", password:"user", role:"user" }];
-  }
+  if (!state.users || state.users.length === 0 || !adminExists) {
+  state.users = [
+    { username:"admin", password:"admin", role:"admin" },
+    { username:"user", password:"user", role:"user" },
+    { username:"jamil", password:"@Fdpjs2209", role:"user" }
+  ];
+}
   if(!state.professors || state.professors.length===0){
     state.professors = DEFAULT_PROFESSORS.map(n=>({id:uid('p'),nome:n,siape:'',situacao:'',sigla:'',restrictions:{}}));
   }
