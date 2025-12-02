@@ -226,24 +226,40 @@ function openLoginModal(){
   // focus first input
   setTimeout(()=>{ by('login-username').focus(); }, 50);
 }
-function closeLoginModal(){
-  // blur any focused element inside modal then hide modal
-  try{ if(document.activeElement && modalLogin.contains(document.activeElement)) document.activeElement.blur(); }catch(e){}
-  modalLogin.classList.add('hidden');
+function closeLoginModal() {
+  const modal = document.getElementById("modal-login");
+
+  // Remove foco antes de esconder (corrige o erro de aria)
+  if (document.activeElement) {
+    document.activeElement.blur();
+  }
+
+  modal.classList.add("hidden");    // oculta visualmente
+  modal.setAttribute("aria-hidden", "true");  // oculta acessibilidade
 }
 
 /* ---------- login handling ---------- */
 function loginSubmit(){
-  const u = by('login-username').value.trim();
-  const p = by('login-password').value;
-  const msg = by('login-msg');
-  msg.textContent = '';
-  const user = state.users.find(x=>x.username===u && x.password===p);
-  if(!user){ msg.textContent = 'Credenciais inválidas'; msg.classList.add('danger'); return; }
-  // success
-  state.currentUser = { username: user.username, role: user.role };
+  const u = document.getElementById('login-username').value.trim();
+  const p = document.getElementById('login-password').value;
+
+  const user = state.users.find(x => x.username === u && x.password === p);
+
+  const msg = document.getElementById('login-msg');
+
+  if (!user) {
+    msg.textContent = 'Credenciais inválidas';
+    msg.classList.add('danger');
+    return;
+  }
+
+  state.currentUser = {
+    username: user.username,
+    role: user.role
+  };
+
   saveState();
-  closeLoginModal();
+  closeLoginModal();  // <<<<<<<<<<<<<<<<<<<<<< OBRIGATÓRIO
   renderAll();
 }
 
