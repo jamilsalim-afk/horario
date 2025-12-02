@@ -1,492 +1,365 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>IFRO - Sistema de Horários (corrigido)</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sistema Escolar — Sem Login</title>
+
 <style>
-  :root{--if-green:#1f7a4c;--if-red:#b71c1c;--bg:#f6f8fa}
-  html,body{height:100%;margin:0;font-family:Inter, "Segoe UI", Roboto, Arial;background:var(--bg)}
-  .app{display:flex;min-height:100vh}
-  .sidebar{width:260px;background:linear-gradient(180deg,var(--if-green),#0f5e3f);color:#fff;padding:18px;box-sizing:border-box;display:flex;flex-direction:column}
-  .logo{display:flex;gap:10px;align-items:center}
-  .logo .box{width:44px;height:44px;border-radius:8px;background:#fff;color:var(--if-green);display:flex;align-items:center;justify-content:center;font-weight:800}
-  .nav{margin-top:12px;display:flex;flex-direction:column;gap:6px}
-  .nav button{background:transparent;border:none;color:#fff;text-align:left;padding:10px;border-radius:8px;cursor:pointer;font-weight:700}
-  .nav button:hover{background:rgba(255,255,255,0.05)}
-  .main{flex:1;display:flex;flex-direction:column}
-  header{display:flex;align-items:center;gap:12px;padding:14px;background:#fff}
-  .container{padding:18px;flex:1;overflow:auto}
-  .card{background:#fff;padding:14px;border-radius:10px;box-shadow:0 6px 18px rgba(20,20,40,0.04);margin-bottom:12px}
-  label{display:block;font-weight:700;margin-top:8px}
-  input,select,textarea{width:100%;padding:8px;border-radius:6px;border:1px solid #ddd;margin-top:6px;box-sizing:border-box}
-  table{width:100%;border-collapse:collapse;margin-top:8px}
-  th,td{border:1px solid #eee;padding:8px;text-align:left}
-  .list{max-height:260px;overflow:auto;border-radius:8px;padding:8px;border:1px solid #eee;background:#fafafa}
-  .item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:6px;background:#fff;margin-bottom:6px}
-  .btn{padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
-  .btn.primary{background:var(--if-green);color:#fff}
-  .btn.ghost{background:#fff;border:1px solid #ddd}
-  .hidden{display:none}
-  /* modal */
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999}
-  .modalCard{background:#fff;padding:18px;border-radius:12px;width:360px;box-shadow:0 12px 40px rgba(0,0,0,0.25)}
-  .muted{color:#666;font-size:13px}
-  @media(max-width:900px){.sidebar{display:none}}
+body { margin: 0; font-family: Arial, sans-serif; display: flex; height: 100vh; }
+#sidebar { width: 250px; background: #2c3e50; color: #ecf0f1; display: flex; flex-direction: column; padding: 20px; }
+#sidebar h2 { margin-top: 0; }
+#sidebar button { background: none; color: #ecf0f1; border: none; text-align: left; padding: 10px; cursor: pointer; width: 100%; font-size: 16px; }
+#sidebar button:hover { background: #34495e; }
+
+#content { flex: 1; padding: 20px; overflow-y: auto; }
+.section { padding: 15px; border: 1px solid #ccc; border-radius: 8px; }
+.hidden { display: none; }
+
+table { border-collapse: collapse; margin-top: 15px; width: 100%; }
+table th, table td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+
+label { display: block; margin-top: 10px; }
+input, select { width: 100%; padding: 8px; margin-top: 5px; }
+button.action { padding: 10px 15px; margin-top: 10px; }
+
+.btn { padding: 8px 14px; cursor: pointer; border: none; border-radius: 6px; }
+.primary { background: #3498db; color: white; }
+.danger { background: #e74c3c; color: white; }
 </style>
 </head>
 <body>
-<div class="app">
-  <aside class="sidebar" aria-label="menu">
-    <div class="logo"><div class="box">IF</div><div><strong>INSTITUTO FEDERAL DE RONDÔNIA</strong><div style="font-size:12px">CAMPUS CACOAL</div></div></div>
-    <div style="margin-top:12px;background:rgba(255,255,255,0.06);padding:10px;border-radius:8px;font-size:12px">DEPARTAMENTO DE APOIO AO ENSINO<br/>COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS</div>
-    <nav class="nav" aria-label="navegação">
-      <button data-screen="dashboard">Visão Geral</button>
-      <button data-screen="cad-professores">Cadastro → Professores</button>
-      <button data-screen="cad-turmas">Cadastro → Turmas</button>
-      <button data-screen="cad-disciplinas">Cadastro → Disciplinas</button>
-      <button data-screen="cad-dias-letivos">Cadastro → Dias Letivos</button>
-      <button data-screen="horario-base">Horário Base</button>
-      <button data-screen="horario-semanal">Horário Semanal</button>
-      <button data-screen="relatorio">Relatórios</button>
-      <button data-screen="admin">Administração</button>
-    </nav>
-    <div style="margin-top:auto;font-size:13px">
-      <div class="muted" id="userInfo">Não autenticado</div>
-      <div style="margin-top:8px"><button id="btn-logout" class="btn ghost hidden">Sair</button></div>
-    </div>
-  </aside>
 
-  <main class="main" role="main">
-    <header><div><strong>Gerador de Horários — IFRO Campus Cacoal</strong><div class="muted">Protótipo local</div></div></header>
-    <div class="container">
-      <!-- DASHBOARD -->
-      <div id="screen-dashboard" class="card screen">
-        <h2>Visão Geral</h2>
-        <p class="muted">Abra o menu e navegue. Faça login como admin para editar.</p>
-        <div style="display:flex;gap:12px;margin-top:12px">
-          <div style="background:#f1fbf4;padding:12px;border-radius:8px;border:1px solid #e1efe6"><strong>Professores</strong><div id="stat-prof" class="muted">0</div></div>
-          <div style="background:#fff4f4;padding:12px;border-radius:8px;border:1px solid #f3dede"><strong>Disciplinas</strong><div id="stat-subj" class="muted">0</div></div>
-          <div style="background:#fff;padding:12px;border-radius:8px;border:1px solid #eee"><strong>Turmas</strong><div id="stat-class" class="muted">0</div></div>
-        </div>
-      </div>
-
-      <!-- CAD PROF -->
-      <div id="screen-cad-professores" class="card screen hidden">
-        <h2>Cadastro de Professores</h2>
-        <form id="form-prof">
-          <label>Nome completo *</label><input id="prof-nome" required>
-          <label>Siape / CPF</label><input id="prof-siape">
-          <label>Situação</label><select id="prof-situ"><option>DE</option><option>40</option><option>20</option><option>Substituto</option></select>
-          <div style="margin-top:10px"><button id="btn-save-prof" class="btn primary">Salvar professor</button> <button id="btn-clear-prof" type="button" class="btn">Limpar</button></div>
-        </form>
-        <h3 style="margin-top:12px">Lista</h3><div id="list-prof" class="list"></div>
-      </div>
-
-      <!-- CAD TURMA -->
-      <div id="screen-cad-turmas" class="card screen hidden">
-        <h2>Cadastro de Turmas</h2>
-        <form id="form-turma">
-          <label>Nome da Turma *</label><input id="turma-nome" required>
-          <label>Regime</label><select id="turma-regime"><option>Integrado</option><option>Superior</option></select>
-          <label>Turno</label><select id="turma-turno"><option>Manhã</option><option>Tarde</option><option>Noite</option></select>
-          <div style="margin-top:10px"><button id="btn-save-turma" class="btn primary">Salvar turma</button></div>
-        </form>
-        <h3 style="margin-top:12px">Lista</h3><div id="list-turmas" class="list"></div>
-      </div>
-
-      <!-- CAD DISCIPLINAS -->
-      <div id="screen-cad-disciplinas" class="card screen hidden">
-        <h2>Cadastro de Disciplinas</h2>
-        <form id="form-disc">
-          <label>Nome *</label><input id="disc-nome" required>
-          <label>CH (h)</label><input id="disc-ch" type="number" value="60">
-          <label>Turma</label><select id="disc-turma"></select>
-          <label>Professor</label><select id="disc-prof"></select>
-          <label>Aulas semanais</label><input id="disc-aulas" type="number" value="4" min="1">
-          <div style="margin-top:10px"><button id="btn-save-disc" class="btn primary">Salvar disciplina</button></div>
-        </form>
-        <h3 style="margin-top:12px">Lista</h3><div id="list-disc" class="list"></div>
-      </div>
-
-      <!-- Horário Base (simplificado) -->
-      <div id="screen-horario-base" class="card screen hidden">
-        <h2>Horário Base</h2>
-        <label>Turma</label><select id="hb-turma"></select>
-        <div style="margin-top:8px"><button id="hb-gen" class="btn primary">Gerar para turma</button></div>
-        <div id="hb-area" style="margin-top:12px"></div>
-      </div>
-
-      <!-- Admin -->
-      <div id="screen-admin" class="card screen hidden">
-        <h2>Administração</h2>
-        <div style="display:flex;gap:12px">
-          <div style="flex:1">
-            <label>Usuário</label><input id="admin-user">
-            <label>Senha</label><input id="admin-pass">
-            <label>Role</label><select id="admin-role"><option value="admin">admin</option><option value="user">user</option></select>
-            <div style="margin-top:8px"><button id="btn-create-user" class="btn primary">Criar usuário</button></div>
-          </div>
-          <div style="flex:2"><h3>Usuários</h3><div id="list-users" class="list"></div></div>
-        </div>
-      </div>
-
-    </div>
-  </main>
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <h2>Sistema Escolar</h2>
+  <button onclick="showSection('professoresSection')">Professores</button>
+  <button onclick="showSection('turmasSection')">Turmas</button>
+  <button onclick="showSection('horariosSection')">Horários</button>
+  <button onclick="showSection('screen-admin')">Administração</button>
 </div>
 
-<!-- modal login -->
-<div id="modal-login" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="login-title">
-  <div class="modalCard" role="document">
-    <h3 id="login-title">Entrar no Sistema</h3>
-    <p class="muted">Use <strong>admin/admin</strong>, <strong>user/user</strong> ou <strong>jamil/@Fdpjs2209</strong></p>
-    <label>Usuário</label><input id="login-username" type="text">
-    <label>Senha</label><input id="login-password" type="password">
-    <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
-      <button id="login-cancel" class="btn">Cancelar</button>
-      <button id="login-submit" class="btn primary">Entrar</button>
-    </div>
-    <div id="login-msg" class="muted" style="margin-top:8px"></div>
+<!-- CONTENT -->
+<div id="content">
+
+  <!-- PROFESSORES -->
+  <div id="professoresSection" class="section">
+    <h2>Cadastro de Professores</h2>
+
+    <label>Nome</label>
+    <input id="profNome" type="text" />
+
+    <label>Disciplina</label>
+    <input id="profDisciplina" type="text" />
+
+    <button class="action primary" onclick="salvarProfessor()">Salvar</button>
+
+    <h3>Lista de Professores</h3>
+    <table>
+      <thead>
+        <tr><th>Nome</th><th>Disciplina</th><th>Ações</th></tr>
+      </thead>
+      <tbody id="profTable"></tbody>
+    </table>
+  </div>
+
+  <!-- TURMAS -->
+  <div id="turmasSection" class="section hidden">
+    <h2>Cadastro de Turmas</h2>
+
+    <label>Nome da Turma</label>
+    <input id="turmaNome" type="text" />
+
+    <button class="action primary" onclick="salvarTurma()">Salvar</button>
+
+    <h3>Lista de Turmas</h3>
+    <table>
+      <thead><tr><th>Turma</th><th>Ações</th></tr></thead>
+      <tbody id="turmaTable"></tbody>
+    </table>
+  </div>
+
+  <!-- HORÁRIOS -->
+  <div id="horariosSection" class="section hidden">
+    <h2>Horários</h2>
+
+    <label>Turma</label>
+    <select id="horarioTurma"></select>
+
+    <label>Professor</label>
+    <select id="horarioProfessor"></select>
+
+    <label>Dia</label>
+    <select id="horarioDia">
+      <option>Segunda</option>
+      <option>Terça</option>
+      <option>Quarta</option>
+      <option>Quinta</option>
+      <option>Sexta</option>
+    </select>
+
+    <label>Horário</label>
+    <input id="horarioHora" type="time" />
+
+    <button class="action primary" onclick="salvarHorario()">Salvar</button>
+
+    <h3>Grade</h3>
+    <table>
+      <thead>
+        <tr><th>Turma</th><th>Professor</th><th>Dia</th><th>Hora</th><th>Ações</th></tr>
+      </thead>
+      <tbody id="horarioTable"></tbody>
+    </table>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="screen-admin" class="section hidden">
+    <h2>Administração</h2>
+
+    <label>Usuário</label><input type="text" id="adminUser">
+    <label>Senha</label><input type="text" id="adminPass">
+    <label>Role</label>
+    <select id="adminRole">
+      <option value="admin">admin</option>
+      <option value="user">user</option>
+    </select>
+
+    <button class="btn primary" id="btnCreateUser">Criar usuário</button>
+
+    <h3>Lista de Usuários</h3>
+    <ul id="listUsers"></ul>
   </div>
 </div>
 
 <script>
-/* ---------- Estado e utilitários ---------- */
-const KEY = 'ifro_timetable_v2';
-function uid(p='id'){ return p+'_'+Math.random().toString(36).slice(2,9); }
+/* ============================
+   BANCO DE DADOS LOCAL
+============================ */
+const KEY = "SISTEMA_ESCOLAR_DATA";
 
 let state = {
   users: [],
   professors: [],
-  classes: [],
-  subjects: [],
-  periods: null,
-  baseSchedules: {},
-  weeklySchedules: [],
-  currentUser: null
+  turmas: [],
+  horarios: []
 };
 
-function saveState(){ localStorage.setItem(KEY, JSON.stringify(state)); updateStats(); }
-function loadState(){
+function saveState() {
+  localStorage.setItem(KEY, JSON.stringify(state));
+}
+
+function loadState() {
   const raw = localStorage.getItem(KEY);
-  if(raw){
-    try{ const parsed = JSON.parse(raw); Object.assign(state, parsed); }
-    catch(e){ console.warn('load parse fail', e); }
+  if (raw) {
+    try { Object.assign(state, JSON.parse(raw)); }
+    catch(e) { console.warn("Erro ao carregar storage:", e); }
   }
 
-  // ensure default users exist at least
-  if(!Array.isArray(state.users) || state.users.length === 0){
-    state.users = [
-      {username:'admin', password:'admin', role:'admin'},
-      {username:'user', password:'user', role:'user'}
-    ];
-  }
-  // ensure 'jamil' exists and is user (not overwrite)
-  if(!state.users.some(u=>u.username==='jamil')){
-    state.users.push({username:'jamil', password:'@Fdpjs2209', role:'user'});
-  }
-
-  // default periods
-  if(!state.periods || !state.periods.manha){
-    state.periods = {
-      manha:['07:30-08:20','08:20-09:10','INTERVALO','09:30-10:20','10:20-11:10','11:10-12:00'],
-      tarde:['13:50-14:40','14:40-15:30','INTERVALO','15:50-16:40','16:40-17:30','17:30-18:20'],
-      noite:['19:00-19:50','19:50-20:40','INTERVALO','20:50-21:40','21:40-22:30']
-    };
+  // Usuário padrão (login desabilitado)
+  if (state.users.length === 0) {
+    state.users.push({ username:"admin", password:"admin", role:"admin" });
   }
 }
+
 loadState();
 
-/* ---------- DOM helpers ---------- */
-function by(id){ return document.getElementById(id); }
-function showScreen(screenId){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
-  const el = by('screen-' + screenId) || by('screen-' + screenId) ;
-  // our mapping uses ids like screen-cad-professores / screen-cad-turmas etc
-  // For direct mapping we built ids: screen-dashboard, screen-cad-professores, screen-cad-turmas, screen-cad-disciplinas, screen-horario-base, screen-admin
-  // So accept both forms:
-  const screenMap = {
-    'dashboard':'screen-dashboard',
-    'cad-professores':'screen-cad-professores',
-    'cad-turmas':'screen-cad-turmas',
-    'cad-disciplinas':'screen-cad-disciplinas',
-    'horario-base':'screen-horario-base',
-    'admin':'screen-admin'
-  };
-  const mapped = screenMap[screenId] || screenId;
-  const toShow = document.getElementById(mapped);
-  if(toShow) toShow.classList.remove('hidden');
+/* ============================
+   NAVEGAÇÃO ENTRE TELAS
+============================ */
+function showSection(id) {
+  document.querySelectorAll(".section").forEach(sec => sec.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
 }
 
-/* ---------- modal open/close with focus safety ---------- */
-const modalLogin = by('modal-login');
-function openLoginModal(){
-  // remove hidden, set focus
-  modalLogin.classList.remove('hidden');
-  // focus first input
-  setTimeout(()=>{ by('login-username').focus(); }, 50);
-}
-function closeLoginModal() {
-  const modal = document.getElementById("modal-login");
+/* ============================
+   PROFESSORES
+============================ */
+function salvarProfessor() {
+  const nome = profNome.value.trim();
+  const disc = profDisciplina.value.trim();
 
-  // Remove foco antes de esconder (corrige o erro de aria)
-  if (document.activeElement) {
-    document.activeElement.blur();
-  }
+  if (!nome) return alert("Digite um nome.");
 
-  modal.classList.add("hidden");    // oculta visualmente
-  modal.setAttribute("aria-hidden", "true");  // oculta acessibilidade
-}
-
-/* ---------- login handling ---------- */
-function login() {
-    const user = document.getElementById('loginUser').value;
-    const pass = document.getElementById('loginPass').value;
-
-    const result = autenticar(user, pass);
-
-    if (result) {
-        // LOGIN OK
-        fecharModalLogin(); // <<< você precisa garantir que isso existe
-        atualizarInterfaceUsuario();
-    } else {
-        alert("Usuário ou senha incorretos");
-    }
-}
-
-  state.currentUser = {
-    username: user.username,
-    role: user.role
-  };
+  state.professors.push({
+    id: Date.now(),
+    nome,
+    disciplina: disc
+  });
 
   saveState();
-  closeLoginModal();  // <<<<<<<<<<<<<<<<<<<<<< OBRIGATÓRIO
-  renderAll();
+  renderProfessores();
+
+  profNome.value = "";
+  profDisciplina.value = "";
 }
 
-/* ---------- logout ---------- */
-function logout(){
-  state.currentUser = null;
+function renderProfessores() {
+  profTable.innerHTML = "";
+
+  state.professors.forEach(p => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${p.nome}</td>
+      <td>${p.disciplina}</td>
+      <td>
+        <button class="danger" onclick="delProf(${p.id})">Excluir</button>
+      </td>
+    `;
+    profTable.appendChild(tr);
+  });
+
+  renderProfessoresSelect();
+}
+
+function delProf(id) {
+  state.professors = state.professors.filter(p => p.id !== id);
   saveState();
-  openLoginModal();
-  renderAll();
+  renderProfessores();
 }
 
-/* ---------- CRUD Professores (simples) ---------- */
-function renderProfessors(){
-  const el = by('list-prof'); el.innerHTML='';
-  state.professors.forEach(p=>{
-    const div = document.createElement('div'); div.className='item';
-    const left = document.createElement('div'); left.innerHTML = `<strong>${p.nome}</strong><div class="muted">${p.siape||''}</div>`;
-    const right = document.createElement('div');
-    const btnE = document.createElement('button'); btnE.className='btn ghost'; btnE.textContent='Editar'; btnE.onclick = ()=>editProfessor(p.id);
-    const btnD = document.createElement('button'); btnD.className='btn'; btnD.textContent='Remover'; btnD.onclick = ()=>{ if(!confirm('Remover?')) return; state.professors = state.professors.filter(x=>x.id!==p.id); saveState(); renderProfessors(); };
-    right.appendChild(btnE); right.appendChild(btnD);
-    div.appendChild(left); div.appendChild(right); el.appendChild(div);
-  });
-}
-function editProfessor(id){
-  const p = state.professors.find(x=>x.id===id); if(!p) return;
-  by('prof-nome').value = p.nome;
-  by('prof-siape').value = p.siape || '';
-  // change save behavior to update
-  const btn = by('btn-save-prof');
-  btn.textContent = 'Atualizar';
-  btn.onclick = function update(e){
-    e?.preventDefault();
-    p.nome = by('prof-nome').value.trim();
-    p.siape = by('prof-siape').value.trim();
-    saveState(); renderProfessors();
-    btn.textContent = 'Salvar professor';
-    btn.onclick = saveProfessor;
-    by('form-prof').reset();
-  };
-}
-function saveProfessor(e){
-  e?.preventDefault();
-  if(!isAdmin()){ alert('Somente admin pode salvar. Faça login.'); openLoginModal(); return; }
-  const nome = by('prof-nome').value.trim(); if(!nome){ alert('Nome obrigatório'); return; }
-  state.professors.push({ id: uid('p'), nome, siape: by('prof-siape').value.trim() });
-  saveState(); renderProfessors(); by('form-prof').reset();
-}
-
-/* ---------- CRUD Turmas ---------- */
-function renderTurmas(){
-  const el = by('list-turmas'); el.innerHTML='';
-  state.classes.forEach(t=>{
-    const div=document.createElement('div'); div.className='item';
-    const left=document.createElement('div'); left.innerHTML=`<strong>${t.nome}</strong><div class="muted">${t.regime} • ${t.turno}</div>`;
-    const right=document.createElement('div');
-    const edit=document.createElement('button'); edit.className='btn ghost'; edit.textContent='Editar'; edit.onclick=()=>editTurma(t.id);
-    const del=document.createElement('button'); del.className='btn'; del.textContent='Remover'; del.onclick=()=>{ if(!confirm('Remover turma?')) return; state.classes = state.classes.filter(x=>x.id!==t.id); saveState(); renderTurmas(); };
-    right.appendChild(edit); right.appendChild(del);
-    div.appendChild(left); div.appendChild(right); el.appendChild(div);
-  });
-}
-function saveTurma(e){
-  e?.preventDefault();
-  if(!isAdmin()){ alert('Somente admin'); openLoginModal(); return; }
-  const nome = by('turma-nome').value.trim(); if(!nome){ alert('Nome obrigatório'); return; }
-  state.classes.push({id:uid('c'), nome, regime:by('turma-regime').value, turno:by('turma-turno').value});
-  saveState(); renderTurmas(); updateSelects(); by('form-turma').reset();
-}
-function editTurma(id){
-  const t = state.classes.find(x=>x.id===id); if(!t) return;
-  by('turma-nome').value = t.nome; by('turma-regime').value=t.regime; by('turma-turno').value=t.turno;
-  const btn = by('btn-save-turma'); btn.textContent='Atualizar';
-  btn.onclick = function update(e){ e?.preventDefault(); t.nome = by('turma-nome').value.trim(); t.regime = by('turma-regime').value; t.turno = by('turma-turno').value; saveState(); renderTurmas(); updateSelects(); btn.textContent='Salvar turma'; btn.onclick = saveTurma; by('form-turma').reset(); };
-}
-
-/* ---------- CRUD Disciplinas ---------- */
-function renderSubjects(){
-  const el = by('list-disc'); el.innerHTML='';
-  state.subjects.forEach(s=>{
-    const div=document.createElement('div'); div.className='item';
-    const profName = s.professorId ? (state.professors.find(p=>p.id===s.professorId)?.nome || '') : '(sem)';
-    const left=document.createElement('div'); left.innerHTML=`<strong>${s.nome}</strong><div class="muted">${s.ch}h • ${profName}</div>`;
-    const right=document.createElement('div');
-    const del=document.createElement('button'); del.className='btn'; del.textContent='Remover'; del.onclick=()=>{ if(!confirm('Remover disciplina?')) return; state.subjects = state.subjects.filter(x=>x.id!==s.id); saveState(); renderSubjects(); };
-    right.appendChild(del); div.appendChild(left); div.appendChild(right); el.appendChild(div);
-  });
-}
-function saveDisc(e){
-  e?.preventDefault();
-  if(!isAdmin()){ alert('Somente admin'); openLoginModal(); return; }
-  const nome = by('disc-nome').value.trim(); if(!nome){ alert('Nome obrigatório'); return; }
-  const ch = parseInt(by('disc-ch').value) || 0;
-  const classId = by('disc-turma').value;
-  const profId = by('disc-prof').value || null;
-  const aulas = parseInt(by('disc-aulas').value) || 1;
-  state.subjects.push({id:uid('s'), nome, ch, classId, professorId:profId, aulasSemana:aulas});
-  saveState(); renderSubjects(); updateSelects(); by('form-disc').reset();
-}
-
-/* ---------- Atualizações de selects e estatísticas ---------- */
-function updateSelects(){
-  // disc-turma
-  const dt = by('disc-turma'); if(dt){ dt.innerHTML=''; state.classes.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=c.nome; dt.appendChild(o); }); }
-  // disc-prof
-  const dp = by('disc-prof'); if(dp){ dp.innerHTML='<option value=\"\">(nenhum)</option>'; state.professors.forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent=p.nome; dp.appendChild(o); }); }
-  // hb-turma
-  const hb = by('hb-turma'); if(hb){ hb.innerHTML=''; state.classes.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=c.nome; hb.appendChild(o); }); }
-}
-function updateStats(){
-  by('stat-prof').textContent = state.professors.length;
-  by('stat-subj').textContent = state.subjects.length;
-  by('stat-class').textContent = state.classes.length;
-  by('userInfo').textContent = state.currentUser ? `Usuário: ${state.currentUser.username} (${state.currentUser.role})` : 'Não autenticado';
-  // logout button
-  if(state.currentUser) by('btn-logout').classList.remove('hidden'); else by('btn-logout').classList.add('hidden');
-}
-
-/* ---------- Horário base (simplificado apenas para exibir) ---------- */
-function generateForClass(classId){
-  const cls = state.classes.find(c=>c.id===classId); if(!cls) { alert('Turma inválida'); return; }
-  // naive: build grid using subjects of this class in order
-  const subs = state.subjects.filter(s=>s.classId===classId);
-  if(subs.length===0){ alert('Nenhuma disciplina na turma'); return; }
-  const days = 5; const periodsPerDay = 5;
-  const grid = Array.from({length:days}, ()=> Array.from({length:periodsPerDay}, ()=> null));
-  let i=0;
-  for(let d=0; d<days; d++){
-    for(let p=0; p<periodsPerDay; p++){
-      const s = subs[i % subs.length];
-      grid[d][p] = {subjectId:s.id, professorId:s.professorId||null, time: (p+1)+''};
-      i++;
-    }
-  }
-  return grid;
-}
-function renderHB(){
-  const area = by('hb-area'); area.innerHTML='';
-  const cid = by('hb-turma').value; if(!cid) return;
-  const grid = state.baseSchedules[cid];
-  if(!grid){ area.innerHTML='<div class=\"muted\">Sem horário gerado.</div>'; return; }
-  const tbl = document.createElement('table'); const thead = document.createElement('thead'); thead.innerHTML='<tr><th>Período/Dia</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th></tr>'; tbl.appendChild(thead);
-  const tbody = document.createElement('tbody');
-  for(let p=0;p<grid[0].length;p++){
-    const tr = document.createElement('tr'); const th = document.createElement('th'); th.textContent = 'P ' + (p+1); tr.appendChild(th);
-    for(let d=0; d<grid.length; d++){
-      const td = document.createElement('td'); const cell = grid[d][p];
-      if(cell){ const subj = state.subjects.find(s=>s.id===cell.subjectId); const prof = state.professors.find(pp=>pp.id===cell.professorId); td.innerHTML = `<strong>${subj?subj.nome:'(disc)'}</strong><div class='muted'>${prof?prof.nome:''}</div>`; } else td.textContent='-';
-      tr.appendChild(td);
-    }
-    tbody.appendChild(tr);
-  }
-  tbl.appendChild(tbody); area.appendChild(tbl);
-}
-
-/* ---------- Users admin create/list ---------- */
-function renderUsers(){
-  const el = by('list-users'); el.innerHTML='';
-  state.users.forEach(u=>{
-    const div=document.createElement('div'); div.className='item';
-    const left=document.createElement('div'); left.innerHTML=`<strong>${u.username}</strong><div class="muted">${u.role}</div>`;
-    const right=document.createElement('div'); const del=document.createElement('button'); del.className='btn'; del.textContent='Remover'; del.onclick=()=>{ if(!confirm('Remover usuário?')) return; state.users = state.users.filter(x=>x.username!==u.username); saveState(); renderUsers(); };
-    right.appendChild(del); div.appendChild(left); div.appendChild(right); el.appendChild(div);
+function renderProfessoresSelect() {
+  horarioProfessor.innerHTML = "";
+  state.professors.forEach(p => {
+    let opt = document.createElement("option");
+    opt.value = p.nome;
+    opt.textContent = p.nome;
+    horarioProfessor.appendChild(opt);
   });
 }
 
-/* ---------- utilities ---------- */
-function isAdmin(){ return state.currentUser && state.currentUser.role === 'admin'; }
+/* ============================
+   TURMAS
+============================ */
+function salvarTurma() {
+  const nome = turmaNome.value.trim();
+  if (!nome) return alert("Digite o nome da turma.");
 
-/* ---------- bindings & init ---------- */
-document.addEventListener('DOMContentLoaded', ()=>{
-
-  // nav buttons
-  document.querySelectorAll('.nav button').forEach(b=> b.addEventListener('click', ()=>{ const key = b.getAttribute('data-screen'); showScreen(key); }));
-
-  // modal buttons
-  by('login-cancel').addEventListener('click', ()=>{ closeLoginModal(); });
-  by('login-submit').addEventListener('click', loginSubmit);
-
-  // logout
-  by('btn-logout').addEventListener('click', ()=> logout());
-
-  // forms
-  by('btn-save-prof').addEventListener('click', saveProfessor);
-  by('btn-save-turma').addEventListener('click', saveTurma);
-  by('btn-save-disc').addEventListener('click', saveDisc);
-
-  by('btn-create-user').addEventListener('click', ()=>{
-    if(!isAdmin()){ alert('Somente admin pode criar usuários'); openLoginModal(); return; }
-    const u = by('admin-user').value.trim(); const p = by('admin-pass').value; const r = by('admin-role').value;
-    if(!u||!p){ alert('Usuário e senha obrigatórios'); return; }
-    if(state.users.some(x=>x.username===u)){ alert('Usuário existe'); return; }
-    state.users.push({username:u,password:p,role:r}); saveState(); renderUsers(); by('admin-user').value=''; by('admin-pass').value='';
+  state.turmas.push({
+    id: Date.now(),
+    nome
   });
 
-  // hb generate
-  by('hb-gen').addEventListener('click', ()=>{
-    const cid = by('hb-turma').value; if(!cid){ alert('Escolha turma'); return; }
-    // simple generator
-    try{
-      const grid = generateForClass(cid);
-      state.baseSchedules[cid] = grid; saveState(); renderHB();
-      alert('Horário base gerado para a turma.');
-    }catch(e){ alert('Erro ao gerar: '+e.message); }
-  });
+  saveState();
+  renderTurmas();
 
-  // update selects after load
-  updateSelects();
-  renderAll();
-
-  // if no user logged, open login modal
-  if(!state.currentUser) openLoginModal();
-});
-
-/* ---------- render all ---------- */
-function renderAll(){
-  renderProfessors(); renderTurmas(); renderSubjects(); renderUsers(); updateSelects(); updateStats();
-  // ensure hb select updated
-  if(by('hb-turma')) by('hb-turma').value = by('hb-turma').options[0]?.value || '';
-  // if baseSchedules exist for selected show
-  renderHB();
+  turmaNome.value = "";
 }
 
-/* ---------- expose for debug ---------- */
-window._STATE = state;
-window.saveState = saveState;
+function renderTurmas() {
+  turmaTable.innerHTML = "";
+  horarioTurma.innerHTML = "";
+
+  state.turmas.forEach(t => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${t.nome}</td>
+      <td>
+        <button class="danger" onclick="delTurma(${t.id})">Excluir</button>
+      </td>
+    `;
+    turmaTable.appendChild(tr);
+
+    let opt = document.createElement("option");
+    opt.value = t.id;
+    opt.textContent = t.nome;
+    horarioTurma.appendChild(opt);
+  });
+}
+
+function delTurma(id) {
+  state.turmas = state.turmas.filter(t => t.id !== id);
+  saveState();
+  renderTurmas();
+}
+
+/* ============================
+   HORÁRIOS
+============================ */
+function salvarHorario() {
+  const turma = horarioTurma.value;
+  const prof = horarioProfessor.value;
+  const dia = horarioDia.value;
+  const hora = horarioHora.value;
+
+  if (!turma || !prof || !hora)
+    return alert("Preencha todos os campos.");
+
+  state.horarios.push({
+    id: Date.now(),
+    turma,
+    prof,
+    dia,
+    hora
+  });
+
+  saveState();
+  renderHorarios();
+}
+
+function renderHorarios() {
+  horarioTable.innerHTML = "";
+
+  state.horarios.forEach(h => {
+    const turmaObj = state.turmas.find(t => t.id == h.turma);
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${turmaObj ? turmaObj.nome : ""}</td>
+      <td>${h.prof}</td>
+      <td>${h.dia}</td>
+      <td>${h.hora}</td>
+      <td>
+        <button class="danger" onclick="delHorario(${h.id})">Excluir</button>
+      </td>
+    `;
+    horarioTable.appendChild(tr);
+  });
+}
+
+function delHorario(id) {
+  state.horarios = state.horarios.filter(h => h.id !== id);
+  saveState();
+  renderHorarios();
+}
+
+/* ============================
+   ADMINISTRAÇÃO
+============================ */
+btnCreateUser.onclick = () => {
+  const u = adminUser.value.trim();
+  const p = adminPass.value.trim();
+  const r = adminRole.value;
+
+  if (!u || !p) return alert("Preencha usuário e senha.");
+
+  state.users.push({ username: u, password: p, role: r });
+  saveState();
+  renderUsers();
+
+  adminUser.value = "";
+  adminPass.value = "";
+};
+
+function renderUsers() {
+  listUsers.innerHTML = "";
+  state.users.forEach(u => {
+    const li = document.createElement("li");
+    li.innerHTML = `<strong>${u.username}</strong> - ${u.role}`;
+    listUsers.appendChild(li);
+  });
+}
+
+/* ============================
+   INICIALIZAÇÃO
+============================ */
+function init() {
+  renderProfessores();
+  renderTurmas();
+  renderHorarios();
+  renderUsers();
+}
+
+init();
 </script>
 </body>
 </html>
