@@ -239,19 +239,20 @@ function closeLoginModal() {
 }
 
 /* ---------- login handling ---------- */
-function loginSubmit(){
-  const u = document.getElementById('login-username').value.trim();
-  const p = document.getElementById('login-password').value;
+function login() {
+    const user = document.getElementById('loginUser').value;
+    const pass = document.getElementById('loginPass').value;
 
-  const user = state.users.find(x => x.username === u && x.password === p);
+    const result = autenticar(user, pass);
 
-  const msg = document.getElementById('login-msg');
-
-  if (!user) {
-    msg.textContent = 'Credenciais inválidas';
-    msg.classList.add('danger');
-    return;
-  }
+    if (result) {
+        // LOGIN OK
+        fecharModalLogin(); // <<< você precisa garantir que isso existe
+        atualizarInterfaceUsuario();
+    } else {
+        alert("Usuário ou senha incorretos");
+    }
+}
 
   state.currentUser = {
     username: user.username,
