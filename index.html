@@ -353,7 +353,7 @@
 </div>
 
 <!-- login modal -->
-<div id="modal-login" class="modal hidden" aria-hidden="lie">
+<div id="modal-login" class="modal hidden" aria-hidden="true" style="display:none !important">
   <div class="modalCard">
     <h3>Entrar no Sistema</h3>
     <p class="muted">Use: <strong>admin/admin</strong> (admin) ou <strong>user/user</strong> (usuário)</p>
@@ -408,6 +408,7 @@ function loadState(){
   }
 }
 loadState();
+  state.currentUser = { username: "admin", role: "admin" };
 
 /* ===========================
    UI boot & bindings
@@ -416,7 +417,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   bindNav();
   bindActions();
   renderAll();
-  showLoginIfNeeded();
+  //showLoginIfNeeded();
 });
 
 function bindNav(){
@@ -936,7 +937,9 @@ function logout(){ state.currentUser=null; saveState(); renderAll(); showLoginIf
 function isAdmin(){ return state.currentUser && state.currentUser.role==='admin'; }
 function showLogin(){ document.getElementById('modal-login').classList.remove('hidden'); document.getElementById('modal-login').ariaHidden='false'; }
 function hideLogin(){ document.getElementById('modal-login').classList.add('hidden'); document.getElementById('modal-login').ariaHidden='true'; }
-function showLoginIfNeeded(){ if(!state.currentUser){ showLogin(); } }
+function showLoginIfNeeded() {
+    return; // nunca mostra o modal
+}
 
 /* ===========================
    Helpers & Utilities
