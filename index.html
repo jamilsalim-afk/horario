@@ -1,46 +1,44 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Gerador de Horários - IFRO Campus Cacoal (Protótipo v2)</title>
-<link rel="stylesheet" href="style.css">
-<!-- html2pdf (usado para gerar PDFs mais formatados) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gerador de Horários - IFRO Campus Cacoal (Protótipo)</title>
+
+  <!-- estilos -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- html2pdf (CDN) para geração de PDFs formatados -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
 </head>
 <body>
-<div class="app-wrap">
-<aside class="sidebar">
-<div class="logo">IFRO — Horários</div>
-<nav>
-<a href="#" data-tab="inicio">Início</a>
-<a href="#" data-tab="instituicao">Instituição</a>
-<a href="#" data-tab="cadastro">Cadastro</a>
-<a href="#" data-tab="horario-base">Horário Base</a>
-<a href="#" data-tab="horario-semanal">Horário Semanal</a>
-<a href="#" data-tab="relatorios">Relatórios</a>
-</nav>
-<hr>
-<button class="btn btn-primary" id="save-all">Salvar Tudo (local)</button>
-</aside>
+  <div class="app-wrap">
+    <aside class="sidebar">
+      <div class="logo">IFRO — Horários</div>
+      <nav>
+        <a href="#" data-tab="inicio">Início</a>
+        <a href="#" data-tab="instituicao">Instituição</a>
+        <a href="#" data-tab="cadastro">Cadastro</a>
+        <a href="#" data-tab="horario-base">Horário Base</a>
+        <a href="#" data-tab="horario-semanal">Horário Semanal</a>
+        <a href="#" data-tab="relatorios">Relatórios</a>
+      </nav>
+      <hr>
+      <button class="btn btn-primary" id="save-all">Salvar Tudo (local)</button>
+    </aside>
 
+    <main class="main-content">
+      <header class="header-institucional">
+        <h1>INSTITUTO FEDERAL DE RONDÔNIA</h1>
+        <h2>CAMPUS CACOAL</h2>
+        <p>DEPARTAMENTO DE APOIO AO ENSINO</p>
+        <p>COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS</p>
+      </header>
 
-<main class="main-content">
-<header class="header-institucional">
-<h1>INSTITUTO FEDERAL DE RONDÔNIA</h1>
-<h2>CAMPUS CACOAL</h2>
-<p>DEPARTAMENTO DE APOIO AO ENSINO</p>
-<p>COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS</p>
-</header>
+      <section class="card" id="tab-conteudo"><!-- conteúdo dinâmico --></section>
+    </main>
+  </div>
 
-
-<section class="card" id="tab-conteudo"></section>
-
-
-</main>
-</div>
-
-
-<script src="app_v2.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
