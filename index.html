@@ -309,36 +309,36 @@
       </div>
 
       <!-- CADASTRO -> HORÁRIOS (definição períodos) -->
-      <div id="screen-cad-horarios-define" class="card screen hidden">
-    <h2>Horários de Aulas (períodos por turno)</h2>
-    <p class="muted">Use o padrão ou personalize. Use 'INTERVALO' para pausas.</p>
+    <div id="screen-cad-horarios-define" class="card screen" style="display: none;">
+    <h2>Horários de Aulas (períodos por turno)</h2>
+    <p class="muted">Use o padrão ou personalize. Use 'INTERVALO' para pausas.</p>
 
-    <div class="period-editor">
-        <h3>Manhã</h3>
-        <ul id="list-periods-manha" class="period-list">
-            </ul>
-        <input type="text" id="new-period-manha" placeholder="Ex: 07:30-08:20 ou INTERVALO">
-        <button class="btn" onclick="addPeriod('manha')">Adicionar</button>
-    </div>
+    <div class="period-editor">
+        <h3>Manhã</h3>
+        <ul id="list-periods-manha" class="period-list">
+            </ul>
+        <input type="text" id="new-period-manha" placeholder="Ex: 07:30-08:20 ou INTERVALO">
+        <button class="btn" onclick="addPeriod('manha')">Adicionar</button>
+    </div>
 
-    <div class="period-editor">
-        <h3>Tarde</h3>
-        <ul id="list-periods-tarde" class="period-list"></ul>
-        <input type="text" id="new-period-tarde" placeholder="Ex: 13:50-14:40 ou INTERVALO">
-        <button class="btn" onclick="addPeriod('tarde')">Adicionar</button>
-    </div>
+    <div class="period-editor">
+        <h3>Tarde</h3>
+        <ul id="list-periods-tarde" class="period-list"></ul>
+        <input type="text" id="new-period-tarde" placeholder="Ex: 13:50-14:40 ou INTERVALO">
+        <button class="btn" onclick="addPeriod('tarde')">Adicionar</button>
+    </div>
 
-    <div class="period-editor">
-        <h3>Noite</h3>
-        <ul id="list-periods-noite" class="period-list"></ul>
-        <input type="text" id="new-period-noite" placeholder="Ex: 19:00-19:50 ou INTERVALO">
-        <button class="btn" onclick="addPeriod('noite')">Adicionar</button>
+    <div class="period-editor">
+        <h3>Noite</h3>
+        <ul id="list-periods-noite" class="period-list"></ul>
+        <input type="text" id="new-period-noite" placeholder="Ex: 19:00-19:50 ou INTERVALO">
+        <button class="btn" onclick="addPeriod('noite')">Adicionar</button>
+    </div>
+    
+    <div style="margin-top:20px">
+        <button class="btn primary" id="btn-save-periods" onclick="savePeriods()">Salvar períodos</button>
+    </div>
     </div>
-    
-    <div style="margin-top:20px">
-        <button class="btn primary" id="btn-save-periods">Salvar períodos</button>
-    </div>
-</div>
 
       <!-- CADASTRO -> TURMAS -->
       <div id="screen-cad-turmas" class="card screen hidden">
