@@ -260,69 +260,171 @@
         </div>
       </div>
 
-      <!-- CADASTRO -> PROFESSORES -->
-      <div id="screen-cad-professores" class="card screen hidden" role="region">
-        <h2>Cadastro de Professores</h2>
-        <form id="form-professor">
-          <div class="row">
-            <div class="col">
-              <label>Nome completo *</label>
-              <input type="text" id="prof-nome" required>
-            </div>
-            <div class="col">
-              <label>Siape / CPF</label>
-              <input type="text" id="prof-siape">
-            </div>
-          </div>
+      <!-- CADASTRO -> PROFESSORES (AGORA INTEGRADO E MODIFICADO) -->
+    <div id="screen-cad-professores" class="card screen" style="display: none;">
+        <h2>Cadastro de Professores</h2>
+        <!-- O FORMULÁRIO ESTÁ AGORA VINCULADO AO LISTENER DE SUBMIT NO JS -->
+        <form id="form-professor">
+          <div class="row">
+            <div class="col">
+              <label>Nome completo *</label>
+              <input type="text" id="prof-nome" required>
+            </div>
+            <div class="col">
+              <label>Siape / CPF</label>
+              <input type="text" id="prof-siape">
+            </div>
+          </div>
 
-          <div class="row">
-            <div class="col">
-              <label>Situação</label>
-              <select id="prof-situacao"><option value="DE">DE</option><option value="40">40</option><option value="20">20</option><option value="Substituto">Substituto</option></select>
-            </div>
-            <div class="col">
-              <label>Sigla / Apelido</label>
-              <input type="text" id="prof-sigla" placeholder="ex: MAT">
-            </div>
-          </div>
+          <div class="row">
+            <div class="col">
+              <label>Situação</label>
+              <select id="prof-situacao"><option value="DE">DE</option><option value="40">40</option><option value="20">20</option><option value="Substituto">Substituto</option></select>
+            </div>
+            <div class="col">
+              <label>Sigla / Apelido</label>
+              <input type="text" id="prof-sigla" placeholder="ex: MAT">
+            </div>
+          </div>
 
-          <h3 style="margin-top:12px">Restrições (opcionais)</h3>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <div style="min-width:220px">
-              <label>PRD</label>
-              <select id="prof-prd"><option value="">Nenhuma</option><option value="dia">Dia inteiro</option><option value="manha">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option></select>
-            </div>
-            <div style="min-width:220px">
-              <label>PGD</label>
-              <select id="prof-pgd"><option value="">Nenhuma</option><option value="dia">Dia inteiro</option><option value="manha">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option></select>
-            </div>
-            <div style="min-width:220px">
-              <label>Descanso 11h (noite→manhã)</label>
-              <select id="prof-descanso"><option value="1">Aplicar</option><option value="0">Não aplicar</option></select>
-            </div>
-          </div>
+          <h3 style="margin-top:12px">Restrições de Dedicação (PRD e PGD)</h3>
 
-          <div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap">
-            <div style="min-width:180px">
-              <label>Não pode 1ª manhã?</label><select id="prof-no-first-m"><option value="0">Não</option><option value="1">Sim</option></select>
+            <!-- GRUPO DE RESTRIÇÕES PRD -->
+            <div style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; margin-bottom: 12px;">
+                <h4>PRD (Prioridade de Redução de Docência)</h4>
+                <div style="display:flex;gap:12px;flex-wrap:wrap; margin-top: 8px;">
+                    <!-- PRD Restrição 1 - Dia -->
+                    <div style="min-width:220px">
+                        <label>1ª Restrição: Dia</label>
+                        <select id="prof-prd-dia-1">
+                            <option value="">Nenhum Dia</option>
+                            <option value="segunda">Segunda-feira</option>
+                            <option value="terca">Terça-feira</option>
+                            <option value="quarta">Quarta-feira</option>
+                            <option value="quinta">Quinta-feira</option>
+                            <option value="sexta">Sexta-feira</option>
+                        </select>
+                    </div>
+                    <!-- PRD Restrição 1 - Turno -->
+                    <div style="min-width:220px">
+                        <label>1ª Restrição: Turno</label>
+                        <select id="prof-prd-turno-1">
+                            <option value="">Nenhuma</option>
+                            <option value="dia">Dia inteiro</option>
+                            <option value="manha">Manhã</option>
+                            <option value="tarde">Tarde</option>
+                            <option value="noite">Noite</option>
+                        </select>
+                    </div>
+                    <!-- PRD Restrição 2 - Dia -->
+                    <div style="min-width:220px">
+                        <label>2ª Restrição: Dia (Opcional)</label>
+                        <select id="prof-prd-dia-2">
+                            <option value="">Nenhum Dia</option>
+                            <option value="segunda">Segunda-feira</option>
+                            <option value="terca">Terça-feira</option>
+                            <option value="quarta">Quarta-feira</option>
+                            <option value="quinta">Quinta-feira</option>
+                            <option value="sexta">Sexta-feira</option>
+                        </select>
+                    </div>
+                    <!-- PRD Restrição 2 - Turno -->
+                    <div style="min-width:220px">
+                        <label>2ª Restrição: Turno (Opcional)</label>
+                        <select id="prof-prd-turno-2">
+                            <option value="">Nenhuma</option>
+                            <option value="dia">Dia inteiro</option>
+                            <option value="manha">Manhã</option>
+                            <option value="tarde">Tarde</option>
+                            <option value="noite">Noite</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-            <div style="min-width:180px"><label>Não pode 2 primeiras manhã?</label><select id="prof-no-first2-m"><option value="0">Não</option><option value="1">Sim</option></select></div>
-            <div style="min-width:180px"><label>Não pode última manhã?</label><select id="prof-no-last-m"><option value="0">Não</option><option value="1">Sim</option></select></div>
-            <div style="min-width:180px"><label>Não pode 1ª tarde?</label><select id="prof-no-first-t"><option value="0">Não</option><option value="1">Sim</option></select></div>
-            <div style="min-width:180px"><label>Não pode 2 últimas tarde?</label><select id="prof-no-last2-t"><option value="0">Não</option><option value="1">Sim</option></select></div>
-          </div>
 
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <button class="btn primary" id="btn-save-prof">Salvar professor</button>
-            <button type="button" class="btn" id="btn-clear-prof">Limpar</button>
-          </div>
-        </form>
+            <!-- GRUPO DE RESTRIÇÕES PGD -->
+            <div style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; margin-bottom: 12px;">
+                <h4>PGD (Plano de Gestão Docente)</h4>
+                <div style="display:flex;gap:12px;flex-wrap:wrap; margin-top: 8px;">
+                    <!-- PGD Restrição 1 - Dia -->
+                    <div style="min-width:220px">
+                        <label>1ª Restrição: Dia</label>
+                        <select id="prof-pgd-dia-1">
+                            <option value="">Nenhum Dia</option>
+                            <option value="segunda">Segunda-feira</option>
+                            <option value="terca">Terça-feira</option>
+                            <option value="quarta">Quarta-feira</option>
+                            <option value="quinta">Quinta-feira</option>
+                            <option value="sexta">Sexta-feira</option>
+                        </select>
+                    </div>
+                    <!-- PGD Restrição 1 - Turno -->
+                    <div style="min-width:220px">
+                        <label>1ª Restrição: Turno</label>
+                        <select id="prof-pgd-turno-1">
+                            <option value="">Nenhuma</option>
+                            <option value="dia">Dia inteiro</option>
+                            <option value="manha">Manhã</option>
+                            <option value="tarde">Tarde</option>
+                            <option value="noite">Noite</option>
+                        </select>
+                    </div>
+                    <!-- PGD Restrição 2 - Dia -->
+                    <div style="min-width:220px">
+                        <label>2ª Restrição: Dia (Opcional)</label>
+                        <select id="prof-pgd-dia-2">
+                            <option value="">Nenhum Dia</option>
+                            <option value="segunda">Segunda-feira</option>
+                            <option value="terca">Terça-feira</option>
+                            <option value="quarta">Quarta-feira</option>
+                            <option value="quinta">Quinta-feira</option>
+                            <option value="sexta">Sexta-feira</option>
+                        </select>
+                    </div>
+                    <!-- PGD Restrição 2 - Turno -->
+                    <div style="min-width:220px">
+                        <label>2ª Restrição: Turno (Opcional)</label>
+                        <select id="prof-pgd-turno-2">
+                            <option value="">Nenhuma</option>
+                            <option value="dia">Dia inteiro</option>
+                            <option value="manha">Manhã</option>
+                            <option value="tarde">Tarde</option>
+                            <option value="noite">Noite</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
-        <div style="margin-top:14px">
-          <h3>Lista de Professores</h3>
-          <div id="list-professores" class="list" role="list"></div>
-        </div>
-      </div>
+            <!-- OUTRAS RESTRIÇÕES DE HORÁRIO -->
+            <h3 style="margin-top:12px">Outras Restrições de Horário</h3>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <div style="min-width:220px">
+                    <label>Descanso 11h (noite→manhã)</label>
+                    <select id="prof-descanso"><option value="1">Aplicar</option><option value="0">Não aplicar</option></select>
+                </div>
+            </div>
+
+            <div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap">
+                <div style="min-width:180px">
+                    <label>Não pode 1ª manhã?</label><select id="prof-no-first-m"><option value="0">Não</option><option value="1">Sim</option></select>
+            </div>
+            <div style="min-width:180px"><label>Não pode 2 primeiras manhã?</label><select id="prof-no-first2-m"><option value="0">Não</option><option value="1">Sim</option></select></div>
+            <div style="min-width:180px"><label>Não pode última manhã?</label><select id="prof-no-last-m"><option value="0">Não</option><option value="1">Sim</option></select></div>
+            <div style="min-width:180px"><label>Não pode 1ª tarde?</label><select id="prof-no-first-t"><option value="0">Não</option><option value="1">Sim</option></select></div>
+            <div style="min-width:180px"><label>Não pode 2 últimas tarde?</label><select id="prof-no-last2-t"><option value="0">Não</option><option value="1">Sim</option></select></div>
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn primary" id="btn-save-prof">Salvar professor</button>
+            <button type="button" class="btn" id="btn-clear-prof">Limpar</button>
+          </div>
+        </form>
+
+        <div style="margin-top:14px">
+          <h3>Lista de Professores</h3>
+          <div id="list-professores" class="list" role="list"></div>
+        </div>
+    </div>
 
       <!-- CADASTRO -> HORÁRIOS (definição períodos) -->
       <div id="screen-cad-horarios-define" class="card screen hidden">
