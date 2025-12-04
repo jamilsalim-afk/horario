@@ -1,17 +1,16 @@
-/* Mantive a paleta IFRO e pequenas melhorias visuais */
 :root{
---if-amarelo-sol: #FFD000;
---if-verde-amazonia: #007a3d;
---if-azul-atlantico: #183EFF;
---if-vermelho-urucum: #c91f37;
---if-primario-escuro: #107039;
---bg: #ffffff;
---surface: #fbfbfb;
---text: #111;
---muted: #666;
---sidebar-width: 300px;
---gutter: 16px;
---radius: 8px;
+  --if-amarelo-sol: #FFD000;
+  --if-verde-amazonia: #007a3d;
+  --if-azul-atlantico: #183EFF;
+  --if-vermelho-urucum: #c91f37;
+  --if-primario-escuro: #107039;
+  --bg: #ffffff;
+  --surface: #fbfbfb;
+  --text: #111;
+  --muted: #666;
+  --sidebar-width: 300px;
+  --gutter: 16px;
+  --radius: 8px;
 }
 html,body{font-family: 'Open Sans', Arial, sans-serif;color:var(--text);background:var(--bg);margin:0;padding:0}
 .app-wrap{display:flex;min-height:100vh}
@@ -40,4 +39,5 @@ fieldset{border:1px dashed #eee;padding:12px;border-radius:6px}
 .droppable{background:#fff}
 .undo-redo{display:flex;gap:8px;margin-bottom:8px}
 .notice{background:#fff3cd;border:1px solid #ffe8a1;padding:8px;border-radius:6px}
+.h-center{text-align:center}
 @media (max-width:900px){.sidebar{display:none}.header-institucional{padding-left:20px}}
