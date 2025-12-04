@@ -175,14 +175,110 @@
           </div>
 
           <h3 style="margin-top:12px">Restrições (opcionais)</h3>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <div style="min-width:220px">
-              <label>PRD</label>
-              <select id="prof-prd"><option value="">Nenhuma</option><option value="dia">Dia inteiro</option><option value="manha">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option></select>
+          <!-- GRUPO DE RESTRIÇÕES PRD -->
+            <div style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; margin-bottom: 12px;">
+                <h4>PRD (Prioridade de Redução de Docência)</h4>
+                <div style="display:flex;gap:12px;flex-wrap:wrap; margin-top: 8px;">
+                    <!-- PRD Restrição 1 - Dia -->
+                    <div style="min-width:220px">
+                        <label>1ª Restrição: Dia</label>
+                        <select id="prof-prd-dia-1">
+                            <option value="">Nenhum Dia</option>
+                            <option value="segunda">Segunda-feira</option>
+                            <option value="terca">Terça-feira</option>
+                            <option value="quarta">Quarta-feira</option>
+                            <option value="quinta">Quinta-feira</option>
+                            <option value="sexta">Sexta-feira</option>
+                        </select>
+                    </div>
+                    <!-- PRD Restrição 1 - Turno -->
+                    <div style="min-width:220px">
+                        <label>1ª Restrição: Turno</label>
+                        <select id="prof-prd-turno-1">
+                            <option value="">Nenhuma</option>
+                            <option value="dia">Dia inteiro</option>
+                            <option value="manha">Manhã</option>
+                            <option value="tarde">Tarde</option>
+                            <option value="noite">Noite</option>
+                        </select>
+                    </div>
+                    <!-- PRD Restrição 2 - Dia -->
+                    <div style="min-width:220px">
+                        <label>2ª Restrição: Dia (Opcional)</label>
+                        <select id="prof-prd-dia-2">
+                            <option value="">Nenhum Dia</option>
+                            <option value="segunda">Segunda-feira</option>
+                            <option value="terca">Terça-feira</option>
+                            <option value="quarta">Quarta-feira</option>
+                            <option value="quinta">Quinta-feira</option>
+                            <option value="sexta">Sexta-feira</option>
+                        </select>
+                    </div>
+                    <!-- PRD Restrição 2 - Turno -->
+                    <div style="min-width:220px">
+                        <label>2ª Restrição: Turno (Opcional)</label>
+                        <select id="prof-prd-turno-2">
+                            <option value="">Nenhuma</option>
+                            <option value="dia">Dia inteiro</option>
+                            <option value="manha">Manhã</option>
+                            <option value="tarde">Tarde</option>
+                            <option value="noite">Noite</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-            <div style="min-width:220px">
-              <label>PGD</label>
-              <select id="prof-pgd"><option value="">Nenhuma</option><option value="dia">Dia inteiro</option><option value="manha">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option></select>
+
+            <!-- GRUPO DE RESTRIÇÕES PGD -->
+            <div style="border: 1px solid #ddd; padding: 10px; border-radius: 4px; margin-bottom: 12px;">
+                <h4>PGD (Plano de Gestão Docente)</h4>
+                <div style="display:flex;gap:12px;flex-wrap:wrap; margin-top: 8px;">
+                    <!-- PGD Restrição 1 - Dia -->
+                    <div style="min-width:220px">
+                        <label>1ª Restrição: Dia</label>
+                        <select id="prof-pgd-dia-1">
+                            <option value="">Nenhum Dia</option>
+                            <option value="segunda">Segunda-feira</option>
+                            <option value="terca">Terça-feira</option>
+                            <option value="quarta">Quarta-feira</option>
+                            <option value="quinta">Quinta-feira</option>
+                            <option value="sexta">Sexta-feira</option>
+                        </select>
+                    </div>
+                    <!-- PGD Restrição 1 - Turno -->
+                    <div style="min-width:220px">
+                        <label>1ª Restrição: Turno</label>
+                        <select id="prof-pgd-turno-1">
+                            <option value="">Nenhuma</option>
+                            <option value="dia">Dia inteiro</option>
+                            <option value="manha">Manhã</option>
+                            <option value="tarde">Tarde</option>
+                            <option value="noite">Noite</option>
+                        </select>
+                    </div>
+                    <!-- PGD Restrição 2 - Dia -->
+                    <div style="min-width:220px">
+                        <label>2ª Restrição: Dia (Opcional)</label>
+                        <select id="prof-pgd-dia-2">
+                            <option value="">Nenhum Dia</option>
+                            <option value="segunda">Segunda-feira</option>
+                            <option value="terca">Terça-feira</option>
+                            <option value="quarta">Quarta-feira</option>
+                            <option value="quinta">Quinta-feira</option>
+                            <option value="sexta">Sexta-feira</option>
+                        </select>
+                    </div>
+                    <!-- PGD Restrição 2 - Turno -->
+                    <div style="min-width:220px">
+                        <label>2ª Restrição: Turno (Opcional)</label>
+                        <select id="prof-pgd-turno-2">
+                            <option value="">Nenhuma</option>
+                            <option value="dia">Dia inteiro</option>
+                            <option value="manha">Manhã</option>
+                            <option value="tarde">Tarde</option>
+                            <option value="noite">Noite</option>
+                        </select>
+                    </div>
+                </div>
             </div>
             <div style="min-width:220px">
               <label>Descanso 11h (noite→manhã)</label>
