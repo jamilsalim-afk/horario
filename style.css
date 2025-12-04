@@ -214,13 +214,35 @@
 
       <!-- CADASTRO -> HORÁRIOS (definição períodos) -->
       <div id="screen-cad-horarios-define" class="card screen hidden">
-        <h2>Horários de Aulas (períodos por turno)</h2>
-        <p class="muted">Use o padrão ou personalize. Separe por |. Use 'INTERVALO' quando houver pausa.</p>
-        <label>Manhã</label><input id="periods-manha" value="07:30-08:20|08:20-09:10|INTERVALO|09:30-10:20|10:20-11:10|11:10-12:00">
-        <label>Tarde</label><input id="periods-tarde" value="13:50-14:40|14:40-15:30|INTERVALO|15:50-16:40|16:40-17:30|17:30-18:20">
-        <label>Noite</label><input id="periods-noite" value="19:00-19:50|19:50-20:40|INTERVALO|20:50-21:40|21:40-22:30">
-        <div style="margin-top:8px"><button class="btn primary" id="btn-save-periods">Salvar períodos</button></div>
-      </div>
+    <h2>Horários de Aulas (períodos por turno)</h2>
+    <p class="muted">Use o padrão ou personalize. Use 'INTERVALO' para pausas.</p>
+
+    <div class="period-editor">
+        <h3>Manhã</h3>
+        <ul id="list-periods-manha" class="period-list">
+            </ul>
+        <input type="text" id="new-period-manha" placeholder="Ex: 07:30-08:20 ou INTERVALO">
+        <button class="btn" onclick="addPeriod('manha')">Adicionar</button>
+    </div>
+
+    <div class="period-editor">
+        <h3>Tarde</h3>
+        <ul id="list-periods-tarde" class="period-list"></ul>
+        <input type="text" id="new-period-tarde" placeholder="Ex: 13:50-14:40 ou INTERVALO">
+        <button class="btn" onclick="addPeriod('tarde')">Adicionar</button>
+    </div>
+
+    <div class="period-editor">
+        <h3>Noite</h3>
+        <ul id="list-periods-noite" class="period-list"></ul>
+        <input type="text" id="new-period-noite" placeholder="Ex: 19:00-19:50 ou INTERVALO">
+        <button class="btn" onclick="addPeriod('noite')">Adicionar</button>
+    </div>
+    
+    <div style="margin-top:20px">
+        <button class="btn primary" id="btn-save-periods">Salvar períodos</button>
+    </div>
+</div>
 
       <!-- CADASTRO -> TURMAS -->
       <div id="screen-cad-turmas" class="card screen hidden">
