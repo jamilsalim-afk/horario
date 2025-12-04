@@ -1,2067 +1,317 @@
-<!DOCTYPE html>
+--- index.html ---
+```html
+<!doctype html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Horários IFRO - Cacoal</title>
-    <!-- Carregamento do Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Configuração da fonte Inter -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f1f5f9; /* slate-100 */
-        }
-        /* Estilização para simular PDF/Impressão */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            .print-area, .print-area * {
-                visibility: visible;
-            }
-            .print-area {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                margin: 0;
-                padding: 20px;
-                background: white;
-            }
-            /* Garantir que a tabela de horário fique compacta para impressão */
-            .print-area table {
-                border-collapse: collapse;
-                width: 100%;
-                font-size: 10px;
-            }
-            .print-area th, .print-area td {
-                border: 1px solid #000;
-                padding: 4px;
-            }
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Gerador de Horários - IFRO Campus Cacoal (Protótipo)</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex h-screen overflow-hidden">
-
-    <!-- Menu Lateral (Sidebar) -->
-    <aside class="w-64 bg-gray-800 text-white flex flex-col p-4 shadow-xl">
-        <h1 class="text-xl font-bold mb-6 text-yellow-400">Sistema IFRO - Cacoal</h1>
-        
-        <div class="space-y-2 flex-grow">
-            <!-- Menu CADASTRO -->
-            <button class="menu-item w-full text-left p-2 rounded-lg transition duration-150 hover:bg-gray-700 font-semibold" data-view="cadastro-professores">1 – CADASTRO</button>
-            <nav class="ml-4 space-y-1" id="menu-cadastro">
-                <button class="sub-menu-item w-full text-left p-1 rounded hover:bg-gray-700" data-view="cadastro-professores">Professores</button>
-                <button class="sub-menu-item w-full text-left p-1 rounded hover:bg-gray-700" data-view="cadastro-horarios">Horários (Períodos)</button>
-                <button class="sub-menu-item w-full text-left p-1 rounded hover:bg-gray-700" data-view="cadastro-turmas">Turmas</button>
-                <button class="sub-menu-item w-full text-left p-1 rounded hover:bg-gray-700" data-view="cadastro-disciplinas">Disciplinas</button>
-                <button class="sub-menu-item w-full text-left p-1 rounded hover:bg-gray-700" data-view="cadastro-dias-letivos">Dias Letivos</button>
-            </nav>
-
-            <!-- Menu RELATÓRIO -->
-            <button class="menu-item w-full text-left p-2 rounded-lg transition duration-150 hover:bg-gray-700 font-semibold" data-view="relatorio-individual">2 – RELATÓRIO</button>
-            <nav class="ml-4 space-y-1" id="menu-relatorio">
-                <button class="sub-menu-item w-full text-left p-1 rounded hover:bg-gray-700" data-view="relatorio-individual">Relatório Individual</button>
-                <button class="sub-menu-item w-full text-left p-1 rounded hover:bg-gray-700" data-view="relatorio-turma">Relatório de Turma</button>
-                <button class="sub-menu-item w-full text-left p-1 rounded hover:bg-gray-700" data-view="relatorio-disciplina">Relatório de Disciplina</button>
-                <button class="sub-menu-item w-full text-left p-1 rounded hover:bg-gray-700" data-view="relatorio-exportar-csv">Exportar CSV (Semana)</button>
-            </nav>
-
-            <button class="menu-item w-full text-left p-2 rounded-lg transition duration-150 hover:bg-gray-700 font-semibold" data-view="horario-base">3 – HORÁRIO BASE</button>
-            <button class="menu-item w-full text-left p-2 rounded-lg transition duration-150 hover:bg-gray-700 font-semibold" data-view="horario-semanal">4 – HORÁRIO SEMANAL</button>
-        </div>
-
-        <div class="mt-4 pt-4 border-t border-gray-700">
-            <p class="text-sm text-gray-400">Usuário: <span id="user-display">Carregando...</span></p>
-        </div>
+<body>
+  <div class="app-wrap">
+    <aside class="sidebar">
+      <div class="logo">IFRO — Horários</div>
+      <nav>
+        <a href="#" data-tab="inicio">Início</a>
+        <a href="#" data-tab="instituicao">Instituição</a>
+        <a href="#" data-tab="cadastro">Cadastro</a>
+        <a href="#" data-tab="horario-base">Horário Base</a>
+        <a href="#" data-tab="horario-semanal">Horário Semanal</a>
+        <a href="#" data-tab="relatorios">Relatórios</a>
+      </nav>
+      <hr>
+      <button class="btn btn-primary" id="save-all">Salvar Tudo (local)</button>
     </aside>
 
-    <!-- Conteúdo Principal -->
-    <main class="flex-grow p-6 overflow-y-auto">
-        <div id="app-content" class="space-y-8">
-            <h2 class="text-3xl font-extrabold text-gray-900">Seja Bem-Vindo ao Sistema de Horários</h2>
-            <p class="text-gray-600">Por favor, selecione uma opção no menu lateral para começar.</p>
-        </div>
-        
-        <!-- Modal para avisos (Substitui alert()) -->
-        <div id="modal-container" class="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 hidden items-center justify-center">
-            <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full">
-                <h3 id="modal-title" class="text-xl font-bold mb-4 text-red-600">Atenção!</h3>
-                <p id="modal-message" class="text-gray-700 mb-6"></p>
-                <div class="flex justify-end space-x-3">
-                    <button id="modal-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150 hidden">Cancelar</button>
-                    <button id="modal-confirm-btn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-150">Ok</button>
-                </div>
-            </div>
-        </div>
+    <main class="main-content">
+      <header class="header-institucional">
+        <h1>INSTITUTO FEDERAL DE RONDÔNIA</h1>
+        <h2>CAMPUS CACOAL</h2>
+        <p>DEPARTAMENTO DE APOIO AO ENSINO</p>
+        <p>COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS</p>
+      </header>
 
-        <!-- Área de Impressão (Oculta, usada pelo @media print) -->
-        <div id="print-area" class="print-area hidden"></div>
+      <section class="card" id="tab-conteudo">
+        <!-- Conteúdo das abas aparece aqui -->
+      </section>
+
     </main>
+  </div>
 
-    <!-- Script de Inicialização e Lógica -->
-    <script type="module">
-        // Importações do Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, collection, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs, query, where, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // Ativar logging para debug
-        setLogLevel('Debug');
-
-        // Variáveis Globais (Fornecidas pelo ambiente)
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        let app, db, auth;
-        let userId = null;
-        let isAuthReady = false;
-
-        // Estrutura de Dados em Memória (Caches)
-        let professors = [];
-        let classes = []; // Turmas
-        let subjects = []; // Disciplinas
-        let periods = { Manhã: [], Tarde: [], Noite: [] };
-        let baseSchedule = {};
-
-        // ---------------------------------------------------------------------
-        // 1. INICIALIZAÇÃO FIREBASE E AUTENTICAÇÃO
-        // ---------------------------------------------------------------------
-
-        const initializeFirebase = async () => {
-            if (!firebaseConfig) {
-                console.error("Firebase config not found.");
-                document.getElementById('user-display').textContent = "ERRO: Configuração Firebase ausente.";
-                return;
-            }
-
-            try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                // Autenticação
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        isAuthReady = true;
-                        document.getElementById('user-display').textContent = userId.substring(0, 8) + '...';
-                        console.log("Usuário autenticado:", userId);
-                        setupRealtimeListeners();
-                    } else {
-                        console.error("Falha na autenticação.");
-                        document.getElementById('user-display').textContent = "Não Autenticado";
-                    }
-                });
-
-            } catch (error) {
-                console.error("Erro na inicialização do Firebase:", error);
-                document.getElementById('user-display').textContent = "ERRO: " + error.message;
-            }
-        };
-
-        // ---------------------------------------------------------------------
-        // 2. FUNÇÕES DE PERSISTÊNCIA (FIRESTORE)
-        // ---------------------------------------------------------------------
-
-        const getCollectionRef = (collectionName) => {
-            if (!userId) {
-                console.error("User ID is not set. Cannot access Firestore.");
-                return null;
-            }
-            // Caminho: /artifacts/{appId}/users/{userId}/{collectionName}
-            return collection(db, `artifacts/${appId}/users/${userId}/${collectionName}`);
-        };
-
-        const setupRealtimeListeners = () => {
-            if (!isAuthReady) return;
-
-            // Listener para Professores
-            onSnapshot(getCollectionRef('professors'), (snapshot) => {
-                professors = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderProfessorList();
-                renderProfessorSelects();
-                console.log("Professores atualizados:", professors.length);
-            }, (error) => console.error("Erro ao carregar professores:", error));
-
-            // Listener para Turmas
-            onSnapshot(getCollectionRef('classes'), (snapshot) => {
-                classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderClassList();
-                renderClassSelects();
-                console.log("Turmas atualizadas:", classes.length);
-            }, (error) => console.error("Erro ao carregar turmas:", error));
-
-            // Listener para Horários (Períodos)
-            onSnapshot(doc(getCollectionRef('config'), 'periods'), (docSnapshot) => {
-                if (docSnapshot.exists()) {
-                    periods = docSnapshot.data().periods;
-                } else {
-                    // Padrão se não existir
-                    periods = {
-                        Manhã: ['07:30-08:20', '08:20-09:10', 'INTERVALO', '09:30-10:20', '10:20-11:10', '11:10-12:00'],
-                        Tarde: ['13:50-14:40', '14:40-15:30', 'INTERVALO', '15:50-16:40', '16:40-17:30', '17:30-18:20'],
-                        Noite: ['19:00-19:50', '19:50-20:40', 'INTERVALO', '20:50-21:40', '21:40-22:30'],
-                    };
-                    savePeriods(periods); // Salva o padrão inicial
-                }
-                renderPeriods();
-                console.log("Períodos atualizados:", periods);
-            }, (error) => console.error("Erro ao carregar períodos:", error));
-
-            // Listener para Disciplinas
-            onSnapshot(getCollectionRef('subjects'), (snapshot) => {
-                subjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderSubjectList();
-                console.log("Disciplinas atualizadas:", subjects.length);
-            }, (error) => console.error("Erro ao carregar disciplinas:", error));
-            
-            // Listener para Horário Base
-             onSnapshot(doc(getCollectionRef('schedules'), 'base'), (docSnapshot) => {
-                if (docSnapshot.exists()) {
-                    baseSchedule = docSnapshot.data().schedule;
-                } else {
-                    baseSchedule = {};
-                }
-                renderBaseSchedule();
-                console.log("Horário Base atualizado.");
-            }, (error) => console.error("Erro ao carregar Horário Base:", error));
-
-            // Adicionar dados iniciais dos professores (Se a lista estiver vazia)
-            if (professors.length === 0) {
-                addInitialProfessors();
-            }
-        };
-        
-        const saveDocument = async (collectionName, data, id = null) => {
-            const collectionRef = getCollectionRef(collectionName);
-            if (!collectionRef) return false;
-
-            try {
-                if (id) {
-                    await setDoc(doc(collectionRef, id), data);
-                    showMessage(`Informações atualizadas com sucesso em ${collectionName}.`, 'Sucesso');
-                } else {
-                    await addDoc(collectionRef, data);
-                    showMessage(`Novo registro salvo com sucesso em ${collectionName}.`, 'Sucesso');
-                }
-                return true;
-            } catch (e) {
-                console.error("Erro ao salvar documento:", e);
-                showMessage(`Erro ao salvar: ${e.message}`, 'Erro');
-                return false;
-            }
-        };
-        
-        const deleteDocument = async (collectionName, id) => {
-             const collectionRef = getCollectionRef(collectionName);
-            if (!collectionRef) return;
-            try {
-                await deleteDoc(doc(collectionRef, id));
-                showMessage("Registro removido com sucesso.", 'Sucesso');
-            } catch (e) {
-                console.error("Erro ao remover documento:", e);
-                showMessage(`Erro ao remover: ${e.message}`, 'Erro');
-            }
-        };
-
-        // Função para salvar os períodos de aula
-        const savePeriods = async (periodsData) => {
-            const configRef = getCollectionRef('config');
-            if (!configRef) return;
-            await setDoc(doc(configRef, 'periods'), { periods: periodsData });
-            showMessage("Horários (Períodos) salvos com sucesso.", 'Sucesso');
-        };
-
-        // ---------------------------------------------------------------------
-        // 3. ESTRUTURAS DE DADOS INICIAIS
-        // ---------------------------------------------------------------------
-
-        const professorList = [
-            { siape: '1889267', nome: 'Adriana Aparecida Rigolon', email: 'adriana.rigolon@ifro.edu.br' },
-            { siape: '1046329', nome: 'Agmar Aparecido Felix Chaves', email: 'agmar.chaves@ifro.edu.br' },
-            { siape: '1041488', nome: 'Aguinaldo Pereira', email: 'aguinaldo.pereira@ifro.edu.br' },
-            { siape: '3137523', nome: 'Alberto Ayres Benicio', email: 'alberto.benicio@ifro.edu.br' },
-            { siape: '3495475', nome: 'Aline da Silva Correa Valerio Sakyrabiar', email: 'aline.sakyrabiar@ifro.edu.br' },
-            { siape: '1825596', nome: 'Andreia Maciel da Silva', email: 'andreia.maciel@ifro.edu.br' },
-            { siape: '3433716', nome: 'Angelica Fernandes Estok', email: 'angelica.estok@ifro.edu.br' },
-            { siape: '1810830', nome: 'Angelita Aparecida Coutinho Picazevicz', email: 'angelita.aparecida@ifro.edu.br' },
-            { siape: '2240652', nome: 'Arilson Ramos', email: 'arilson.ramos@ifro.edu.br' },
-            { siape: '2309875', nome: 'Ayrton Schupp Pinheiro Oliveira', email: 'ayrton.oliveira@ifro.edu.br' },
-            { siape: '1132760', nome: 'Barbara Ferreira Fadul', email: 'barbara.fadul@ifro.edu.br' },
-            { siape: '3304216', nome: 'Cirlania Pereira Batista', email: 'cirlania.batista@ifro.edu.br' },
-            { siape: '2060029', nome: 'Claudemir Miranda Barboza', email: 'claudemir.barboza@ifro.edu.br' },
-            { siape: '3503067', nome: 'Claudia Aline Puerari Goncalves', email: 'claudia.puerari@ifro.edu.br' },
-            { siape: '1209877', nome: 'Daphne Chiara Antonio', email: 'daphne.chiara@ifro.edu.br' },
-            { siape: '2395951', nome: 'Debora Costa Barroso Correa', email: 'debora.correa@ifro.edu.br' },
-            { siape: '2046133', nome: 'Dheimy da Silva Novelli', email: 'dheimy.novelli@ifro.edu.br' },
-            { siape: '3003852', nome: 'Dhieisi Ebert Bolsanello', email: 'dhieisi.ebert@ifro.edu.br' },
-            { siape: '1885797', nome: 'Edmilson Maria de Brito', email: 'edmilson.brito@ifro.edu.br' },
-            { siape: '1318225', nome: 'Edna Cristiane da Matta', email: 'edna.matta@ifro.edu.br' },
-            { siape: '2157441', nome: 'Eduardo Lucas Jorge Serapiao', email: 'eduardo.lucas@ifro.edu.br' },
-            { siape: '1223755', nome: 'Erick Rodrigo de Oliveira Mesquita', email: 'erick.mesquita@ifro.edu.br' },
-            { siape: '2322486', nome: 'Eslei Justiniano dos Reis', email: 'eslei.reis@ifro.edu.br' },
-            { siape: '1120066', nome: 'Gabriel Tenorio dos Santos', email: 'gabriel.santos@ifro.edu.br' },
-            { siape: '3388929', nome: 'Gian Willian Tavares de Souza', email: 'gian.souza@ifro.edu.br' },
-            { siape: '2261097', nome: 'Gilson Divino Araujo da Silva', email: 'gilson.silva@ifro.edu.br' },
-            { siape: '1424350', nome: 'Gilson Pedro Ranzula', email: 'gilson.ranzula@ifro.edu.br' },
-            { siape: '1267347', nome: 'Heloisa Helena Ribeiro de Miranda', email: 'heloisa.miranda@ifro.edu.br' },
-            { siape: '3504810', nome: 'Henri Francis Ternes de Oliveira', email: 'henri.oliveira@ifro.edu.br' },
-            { siape: '3062344', nome: 'Henrique Silva Servio', email: 'henrique.servio@ifro.edu.br' },
-            { siape: '1459246', nome: 'Ingrid Leticia Menezes Barbosa', email: 'ingrid.leticia@ifro.edu.br' },
-            { siape: '1934082', nome: 'Iramaia Grespan Ferreira de Aquino', email: 'iramaia.grespan@ifro.edu.br' },
-            { siape: '2107472', nome: 'Irlan Cordeiro de Souza', email: 'irlan.cordeiro@ifro.edu.br' },
-            { siape: '2046612', nome: 'Isis Lazzarini Foroni', email: 'isis.foroni@ifro.edu.br' },
-            { siape: '3494080', nome: 'Jefferson Lemes Pinto', email: 'jefferson.pinto@ifro.edu.br' },
-            { siape: '1115608', nome: 'Jhonata Lemos da Silva', email: 'jhonata.silva@ifro.edu.br' },
-            { siape: '1900386', nome: 'Joel Martins Braga Junior', email: 'joel.martins@ifro.edu.br' },
-            { siape: '2298332', nome: 'Joelson Barral do Espirito Santo', email: 'joelson.santo@ifro.edu.br' },
-            { siape: '1866708', nome: 'Jorge da Silva Werneck', email: 'jorge.werneck@ifro.edu.br' },
-            { siape: '2119073', nome: 'Jose de Anchieta Almeida da Silva', email: 'jose.silva@ifro.edu.br' },
-            { siape: '1251214', nome: 'Jose Nilson Rosa Baraldi Molis', email: 'jose.molis@ifro.edu.br' },
-            { siape: '1296169', nome: 'Juliana Ferraz Huback Rodrigues', email: 'juliana.rodrigues@ifro.edu.br' },
-            { siape: '1905870', nome: 'Juliana Maria Freitas de Assis Holanda', email: 'juliana.holanda@ifro.edu.br' },
-            { siape: '3469321', nome: 'Juliane Lima Araujo', email: 'juliane.araujo@ifro.edu.br' },
-            { siape: '1831654', nome: 'Juliano Alves de Deus', email: 'juliano.alves@ifro.edu.br' },
-            { siape: '3098146', nome: 'Julio Eduardo Neves dos Santos', email: 'julio.santos@ifro.edu.br' },
-            { siape: '1206844', nome: 'Jussara Maria Oliveira de Araujo', email: 'jussara.araujo@ifro.edu.br' },
-            { siape: '3501741', nome: 'Leia Marcia dos Santos Kempim', email: 'leia.kempim@ifro.edu.br' },
-            { siape: '2354704', nome: 'Leonardo dos Santos Franca Shockness', email: 'leonardo.shockness@ifro.edu.br' },
-            { siape: '3421792', nome: 'Lilian Andrea dos Santos', email: 'lilian.santos@ifro.edu.br' },
-            { siape: '3499505', nome: 'Lilian Barbosa da Silva Lurde', email: 'lilian.barbosa@ifro.edu.br' },
-            { siape: '1084749', nome: 'Lilian Catiuscia Eifler Firme da Silva', email: 'lilian.silva@ifro.edu.br' },
-            { siape: '3145683', nome: 'Luciana Alves Ranzula', email: 'luciana.ranzula@ifro.edu.br' },
-            { siape: '2164739', nome: 'Magno Batista Amorim', email: 'magno.amorim@ifro.edu.br' },
-            { siape: '2161540', nome: 'Marcilei Serafim Germano', email: 'marcilei.germano@ifro.edu.br' },
-            { siape: '1094604', nome: 'Marco Aurelio Nunes de Barros', email: 'marco.barros@ifro.edu.br' },
-            { siape: '1420464', nome: 'Maria Angelica Petrini', email: 'maria.petrini@ifro.edu.br' },
-            { siape: '1818605', nome: 'Maria Cristiana de Freitas da Costa', email: 'maria.cristiana@ifro.edu.br' },
-            { siape: '3469237', nome: 'Paula Michelli da Silva Franco Belmont', email: 'paula.belmont@ifro.edu.br' },
-            { siape: '1786119', nome: 'Sergio Nunes de Jesus', email: 'sergio.nunes@ifro.edu.br' },
-            { siape: '2186164', nome: 'Sirley Leite Freitas', email: 'sirley.freitas@ifro.edu.br' },
-            { siape: '1055473', nome: 'Thiago Jose Sampaio Kaiser', email: 'thiago.kaiser@ifro.edu.br' },
-            { siape: '2164510', nome: 'Tiago Roberto Silva Santos', email: 'tiago.santos@ifro.edu.br' },
-            { siape: '1452652', nome: 'Uberlando Tiburtino Leite', email: 'uberlando@ifro.edu.br' },
-            { siape: '1411784', nome: 'Uirande Oliveira Costa', email: 'uirande.costa@ifro.edu.br' },
-            { siape: '1886531', nome: 'Vera Lucia Lopes Silveira', email: 'vera.lucia@ifro.edu.br' }
-        ];
-        
-        const addInitialProfessors = async () => {
-            const collectionRef = getCollectionRef('professors');
-            if (!collectionRef) return;
-
-            const snapshot = await getDocs(query(collectionRef));
-            if (snapshot.empty) {
-                console.log("Adicionando professores iniciais...");
-                for (const prof of professorListTemplate) {
-                    const defaultRestrictions = {
-                        situacao: 'DE',
-                        prd: [], // { dia: 'SEGUNDA', turno: 'INTEIRO' }
-                        pgd: [],
-                        regra11h: true,
-                        naoPode1Manha: 'Não',
-                        naoPode2Manhas: 'Não',
-                        naoPodeUltimaManha: 'Não',
-                        naoPode1Tarde: 'Não',
-                        naoPodeUltimaTarde: 'Não',
-                        naoPode2UltimasTardes: 'Não',
-                    };
-                    await setDoc(doc(collectionRef, prof.siape), { ...prof, ...defaultRestrictions });
-                }
-            }
-        };
-
-        // ---------------------------------------------------------------------
-        // 4. FUNÇÕES DE UTILIDADE E UI
-        // ---------------------------------------------------------------------
-        
-        const showMessage = (message, title = 'Aviso', isConfirm = false) => {
-            const container = document.getElementById('modal-container');
-            document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal-title').className = `text-xl font-bold mb-4 ${title === 'Sucesso' ? 'text-green-600' : title === 'Erro' ? 'text-red-600' : 'text-yellow-600'}`;
-            document.getElementById('modal-message').textContent = message;
-            
-            const confirmBtn = document.getElementById('modal-confirm-btn');
-            const cancelBtn = document.getElementById('modal-cancel-btn');
-
-            return new Promise(resolve => {
-                confirmBtn.onclick = () => {
-                    container.classList.add('hidden');
-                    resolve(true);
-                };
-                
-                if (isConfirm) {
-                    cancelBtn.classList.remove('hidden');
-                    cancelBtn.onclick = () => {
-                        container.classList.add('hidden');
-                        resolve(false);
-                    };
-                    confirmBtn.textContent = 'Confirmar';
-                } else {
-                    cancelBtn.classList.add('hidden');
-                    confirmBtn.textContent = 'Ok';
-                }
-
-                container.classList.remove('hidden');
-            });
-        };
-
-        const daysOfWeek = ['SEGUNDA', 'TERÇA', 'QUARTA', 'QUINTA', 'SEXTA', 'SÁBADO'];
-        const dayPeriods = ['DIA INTEIRO', 'MATUTINO', 'VESPERTINO', 'NOTURNO'];
-        const periodTimes = ['1ª', '2ª', '3ª', '4ª', '5ª', '6ª'];
-        
-        // Função para formatar o cabeçalho dos relatórios PDF
-        const createReportHeader = (title) => `
-            <div class="text-center mb-6 border-b border-gray-300 pb-4">
-                <p class="text-xs font-bold">INSTITUTO FEDERAL DE RONDÔNIA</p>
-                <p class="text-2xl font-extrabold text-blue-800">CAMPUS CACOAL</p>
-                <p class="text-sm font-semibold mt-2">DEPARTAMENTO DE APOIO AO ENSINO</p>
-                <p class="text-sm font-semibold">COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS</p>
-                <h3 class="text-xl font-bold mt-4">${title}</h3>
-            </div>
-        `;
-        
-        // Função para simular a exportação para PDF (Imprimir)
-        const exportToPDF = (contentHTML, title) => {
-            const printArea = document.getElementById('print-area');
-            printArea.innerHTML = createReportHeader(title) + contentHTML;
-            printArea.classList.remove('hidden');
-            window.print();
-            printArea.classList.add('hidden');
-        };
-
-        // ---------------------------------------------------------------------
-        // 5. RENDERIZAÇÃO DAS TELAS
-        // ---------------------------------------------------------------------
-
-        const renderView = (viewName) => {
-            const contentDiv = document.getElementById('app-content');
-            contentDiv.innerHTML = '';
-            
-            // Remove a seleção de todos os sub-menus
-            document.querySelectorAll('.sub-menu-item').forEach(btn => {
-                btn.classList.remove('bg-gray-700', 'font-semibold', 'text-yellow-400');
-                btn.classList.add('text-white');
-            });
-
-            // Adiciona a seleção ao item clicado
-            const activeMenuItem = document.querySelector(`.sub-menu-item[data-view="${viewName}"]`) || document.querySelector(`.menu-item[data-view="${viewName}"]`);
-            if (activeMenuItem) {
-                activeMenuItem.classList.add('bg-gray-700', 'font-semibold', 'text-yellow-400');
-                activeMenuItem.classList.remove('text-white');
-            }
-
-            switch (viewName) {
-                case 'cadastro-professores':
-                    contentDiv.innerHTML = renderCadastroProfessores();
-                    setupProfessorFormListeners();
-                    renderProfessorList();
-                    break;
-                case 'cadastro-horarios':
-                    contentDiv.innerHTML = renderCadastroHorarios();
-                    renderPeriods();
-                    setupPeriodsListeners();
-                    break;
-                case 'cadastro-turmas':
-                    contentDiv.innerHTML = renderCadastroTurmas();
-                    setupClassFormListeners();
-                    renderClassList();
-                    break;
-                case 'cadastro-disciplinas':
-                    contentDiv.innerHTML = renderCadastroDisciplinas();
-                    setupSubjectFormListeners();
-                    renderSubjectList();
-                    renderProfessorSelects();
-                    renderClassSelects();
-                    break;
-                case 'cadastro-dias-letivos':
-                    contentDiv.innerHTML = renderCadastroDiasLetivos();
-                    setupCalendarListeners();
-                    break;
-                case 'horario-base':
-                    contentDiv.innerHTML = renderHorarioBase();
-                    setupBaseScheduleListeners();
-                    renderBaseSchedule(); // Renderiza o horário base atual
-                    break;
-                case 'horario-semanal':
-                    contentDiv.innerHTML = renderHorarioSemanal();
-                    setupWeeklyScheduleListeners();
-                    break;
-                case 'relatorio-individual':
-                    contentDiv.innerHTML = renderRelatorioIndividual();
-                    renderProfessorSelects();
-                    setupReportListeners('individual');
-                    break;
-                case 'relatorio-turma':
-                    contentDiv.innerHTML = renderRelatorioTurma();
-                    renderClassSelects();
-                    setupReportListeners('turma');
-                    break;
-                case 'relatorio-disciplina':
-                    contentDiv.innerHTML = renderRelatorioDisciplina();
-                    renderClassSelects();
-                    setupReportListeners('disciplina');
-                    break;
-                case 'relatorio-exportar-csv':
-                    contentDiv.innerHTML = renderExportarCSV();
-                    setupReportListeners('csv');
-                    break;
-                default:
-                    contentDiv.innerHTML = `<h2 class="text-3xl font-extrabold text-gray-900">Visão Geral</h2><p class="text-gray-600">Use o menu à esquerda para navegar.</p>`;
-            }
-        };
-
-        // ---------------------------------------------------------------------
-        // 5.1. RENDERIZAÇÃO: CADASTRO - PROFESSORES (Seção 1)
-        // ---------------------------------------------------------------------
-
-        const createRestrictionGroup = (type, title) => `
-            <div class="border p-4 rounded-lg bg-gray-50 mb-4">
-                <h4 class="font-semibold text-gray-700 mb-3">${title}</h4>
-                <!-- Restrição Principal -->
-                <div class="flex space-x-4 mb-2">
-                    <select id="${type}-dia-1" class="form-select flex-1 rounded-lg border-gray-300">
-                        <option value="">-- Dia da Semana (Principal) --</option>
-                        ${daysOfWeek.slice(0, 5).map(d => `<option value="${d}">${d}</option>`).join('')}
-                    </select>
-                    <select id="${type}-turno-1" class="form-select flex-1 rounded-lg border-gray-300">
-                        <option value="">-- Turno (Principal) --</option>
-                        ${dayPeriods.map(p => `<option value="${p}">${p}</option>`).join('')}
-                    </select>
-                </div>
-                <!-- Restrição Secundária -->
-                <div class="flex space-x-4">
-                    <select id="${type}-dia-2" class="form-select flex-1 rounded-lg border-gray-300">
-                        <option value="">-- Dia da Semana (Opcional) --</option>
-                        ${daysOfWeek.slice(0, 5).map(d => `<option value="${d}">${d}</option>`).join('')}
-                    </select>
-                    <select id="${type}-turno-2" class="form-select flex-1 rounded-lg border-gray-300">
-                        <option value="">-- Turno (Opcional) --</option>
-                        ${dayPeriods.map(p => `<option value="${p}">${p}</option>`).join('')}
-                    </select>
-                </div>
-            </div>
-        `;
-
-        const createRestrictionSelect = (id, label) => `
-            <div class="flex items-center justify-between p-2 bg-white rounded-lg border border-gray-200">
-                <label for="${id}" class="text-sm text-gray-700">${label}</label>
-                <select id="${id}" class="form-select w-20 text-sm rounded-lg border-gray-300">
-                    <option value="Não">Não</option>
-                    <option value="Sim">Sim</option>
-                </select>
-            </div>
-        `;
-
-        const renderCadastroProfessores = () => `
-            <h2 class="text-3xl font-extrabold text-gray-900">1. Cadastro de Professores</h2>
-            <form id="professor-form" class="bg-white p-6 rounded-xl shadow-lg space-y-4">
-                <input type="hidden" id="professor-id">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label for="prof-nome" class="block text-sm font-medium text-gray-700">Nome Completo</label>
-                        <input type="text" id="prof-nome" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                    </div>
-                    <div>
-                        <label for="prof-siape" class="block text-sm font-medium text-gray-700">Siape / CPF</label>
-                        <input type="text" id="prof-siape" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                    </div>
-                    <div>
-                        <label for="prof-situacao" class="block text-sm font-medium text-gray-700">Situação</label>
-                        <select id="prof-situacao" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                            <option value="DE">DE (Dedicação Exclusiva)</option>
-                            <option value="40">40h</option>
-                            <option value="20">20h</option>
-                            <option value="Substituto">Substituto</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Restrições de PRD/PGD</h3>
-                        ${createRestrictionGroup('prof-prd', 'PRD (Preparação Didática)')}
-                        ${createRestrictionGroup('prof-pgd', 'PGD (Programa de Gestão de Desempenho)')}
-                        
-                        <div class="flex items-center justify-between p-3 bg-red-100 rounded-lg border border-red-300">
-                            <label for="prof-regra11h" class="text-sm font-medium text-red-800">APLICAR REGRA DE 11 HORAS DE DESCANSO</label>
-                            <input type="checkbox" id="prof-regra11h" checked class="h-5 w-5 text-red-600 rounded">
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Restrições Gerais de Horário</h3>
-                        <div class="space-y-3">
-                            ${createRestrictionSelect('prof-naoPode1Manha', 'Não pode a Primeira da Manhã?')}
-                            ${createRestrictionSelect('prof-naoPode2Manhas', 'Não pode as Duas Primeiras da Manhã?')}
-                            ${createRestrictionSelect('prof-naoPodeUltimaManha', 'Não pode a Última da Manhã?')}
-                            ${createRestrictionSelect('prof-naoPode1Tarde', 'Não pode a Primeira da Tarde?')}
-                            ${createRestrictionSelect('prof-naoPodeUltimaTarde', 'Não pode a Última da Tarde?')}
-                            ${createRestrictionSelect('prof-naoPode2UltimasTardes', 'Não pode as Duas Últimas da Tarde?')}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pt-4 flex justify-end space-x-3">
-                    <button type="submit" id="prof-save-btn" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150 shadow-md">
-                        Salvar Informações
-                    </button>
-                    <button type="button" id="prof-clear-btn" class="px-6 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition duration-150 shadow-md">
-                        Limpar Formulário
-                    </button>
-                </div>
-            </form>
-
-            <div class="mt-8">
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">Lista de Professores Cadastrados</h3>
-                <div class="bg-white p-4 rounded-xl shadow-lg overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Siape/CPF</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Situação</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="professor-list-body" class="bg-white divide-y divide-gray-200">
-                            <!-- Lista de professores será inserida aqui pelo JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-        
-        const renderProfessorList = () => {
-            const tbody = document.getElementById('professor-list-body');
-            if (!tbody) return;
-
-            tbody.innerHTML = professors.map(prof => `
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${prof.nome}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${prof.siape}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${prof.situacao}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
-                        <button onclick="editProfessor('${prof.id}')" class="text-blue-600 hover:text-blue-900 transition duration-150">
-                            Editar
-                        </button>
-                        <button onclick="removeProfessor('${prof.id}', '${prof.nome}')" class="text-red-600 hover:text-red-900 transition duration-150">
-                            Remover
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        };
-        
-        // Expor funções globais para o HTML
-        window.editProfessor = (id) => {
-            const prof = professors.find(p => p.id === id);
-            if (!prof) return;
-
-            document.getElementById('professor-id').value = prof.id;
-            document.getElementById('prof-nome').value = prof.nome;
-            document.getElementById('prof-siape').value = prof.siape;
-            document.getElementById('prof-situacao').value = prof.situacao;
-            document.getElementById('prof-regra11h').checked = prof.regra11h;
-
-            // Preencher PRD/PGD
-            ['prd', 'pgd'].forEach(type => {
-                prof[type].forEach((res, index) => {
-                    if (index < 2) {
-                        document.getElementById(`prof-${type}-dia-${index + 1}`).value = res.dia || '';
-                        document.getElementById(`prof-${type}-turno-${index + 1}`).value = res.turno || '';
-                    }
-                });
-            });
-
-            // Preencher Restrições Gerais
-            document.getElementById('prof-naoPode1Manha').value = prof.naoPode1Manha;
-            document.getElementById('prof-naoPode2Manhas').value = prof.naoPode2Manhas;
-            document.getElementById('prof-naoPodeUltimaManha').value = prof.naoPodeUltimaManha;
-            document.getElementById('prof-naoPode1Tarde').value = prof.naoPode1Tarde;
-            document.getElementById('prof-naoPodeUltimaTarde').value = prof.naoPodeUltimaTarde;
-            document.getElementById('prof-naoPode2UltimasTardes').value = prof.naoPode2UltimasTardes;
-
-            document.getElementById('prof-save-btn').textContent = 'Atualizar Informações';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-        
-        window.removeProfessor = async (id, name) => {
-            const confirmed = await showMessage(`Tem certeza que deseja remover o professor(a) ${name}?`, 'Confirmação', true);
-            if (confirmed) {
-                deleteDocument('professors', id);
-            }
-        };
-
-        const setupProfessorFormListeners = () => {
-            const form = document.getElementById('professor-form');
-            if (!form) return;
-
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                const id = document.getElementById('professor-id').value || null;
-                const nome = document.getElementById('prof-nome').value;
-                const siape = document.getElementById('prof-siape').value;
-                const situacao = document.getElementById('prof-situacao').value;
-
-                const extractRestrictions = (type) => {
-                    const restrictions = [];
-                    for (let i = 1; i <= 2; i++) {
-                        const dia = document.getElementById(`prof-${type}-dia-${i}`).value;
-                        const turno = document.getElementById(`prof-${type}-turno-${i}`).value;
-                        if (dia && turno) {
-                            restrictions.push({ dia, turno });
-                        }
-                    }
-                    return restrictions;
-                };
-
-                const data = {
-                    nome,
-                    siape,
-                    situacao,
-                    regra11h: document.getElementById('prof-regra11h').checked,
-                    prd: extractRestrictions('prof-prd'),
-                    pgd: extractRestrictions('prof-pgd'),
-                    naoPode1Manha: document.getElementById('prof-naoPode1Manha').value,
-                    naoPode2Manhas: document.getElementById('prof-naoPode2Manhas').value,
-                    naoPodeUltimaManha: document.getElementById('prof-naoPodeUltimaManha').value,
-                    naoPode1Tarde: document.getElementById('prof-naoPode1Tarde').value,
-                    naoPodeUltimaTarde: document.getElementById('prof-naoPodeUltimaTarde').value,
-                    naoPode2UltimasTardes: document.getElementById('prof-naoPode2UltimasTardes').value,
-                };
-                
-                const success = await saveDocument('professors', data, id);
-                if (success) {
-                    form.reset();
-                    document.getElementById('professor-id').value = '';
-                    document.getElementById('prof-save-btn').textContent = 'Salvar Informações';
-                }
-            });
-            
-            document.getElementById('prof-clear-btn').addEventListener('click', () => {
-                form.reset();
-                document.getElementById('professor-id').value = '';
-                document.getElementById('prof-save-btn').textContent = 'Salvar Informações';
-                document.getElementById('prof-regra11h').checked = true; // Reinicia o checkbox
-            });
-        };
-
-        // ---------------------------------------------------------------------
-        // 5.2. RENDERIZAÇÃO: CADASTRO - HORÁRIOS (Períodos) (Seção 2)
-        // ---------------------------------------------------------------------
-
-        const renderCadastroHorarios = () => `
-            <h2 class="text-3xl font-extrabold text-gray-900">2. Horários de Aulas (Períodos)</h2>
-            <p class="text-gray-600 mb-6">Defina os horários de início e fim para cada período. Use 'INTERVALO' para pausas não letivas.</p>
-            
-            <div id="horarios-content" class="space-y-6">
-                <!-- Conteúdo dos horários Manhã/Tarde/Noite será inserido aqui -->
-            </div>
-
-            <div class="mt-8 flex justify-end">
-                <button id="save-periods-btn" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150 shadow-md">
-                    Salvar Horários
-                </button>
-            </div>
-        `;
-        
-        const renderPeriods = () => {
-            const contentDiv = document.getElementById('horarios-content');
-            if (!contentDiv) return;
-
-            contentDiv.innerHTML = Object.keys(periods).map(turno => `
-                <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-blue-500">
-                    <h3 class="text-xl font-bold mb-4">${turno}</h3>
-                    <div id="period-list-${turno}" class="flex flex-wrap gap-2 mb-4">
-                        ${periods[turno].map((p, index) => `
-                            <div class="flex items-center space-x-1 p-2 bg-gray-100 rounded-lg border border-gray-200">
-                                <input type="text" value="${p}" data-turno="${turno}" data-index="${index}" 
-                                       class="period-input w-28 text-sm text-center rounded-lg border-gray-300"
-                                       placeholder="HH:MM-HH:MM ou INTERVALO">
-                                <button onclick="removePeriod('${turno}', ${index})" 
-                                        class="text-red-500 hover:text-red-700 transition duration-150">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                                </button>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <button onclick="addPeriod('${turno}')" class="text-sm px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-150">
-                        + Inserir Outro Horário
-                    </button>
-                </div>
-            `).join('');
-        };
-        
-        window.removePeriod = (turno, index) => {
-            periods[turno].splice(index, 1);
-            renderPeriods();
-        };
-
-        window.addPeriod = (turno) => {
-            periods[turno].push('HH:MM-HH:MM');
-            renderPeriods();
-        };
-
-        const setupPeriodsListeners = () => {
-            document.getElementById('save-periods-btn')?.addEventListener('click', async () => {
-                const newPeriods = JSON.parse(JSON.stringify(periods)); // Clone
-                
-                document.querySelectorAll('.period-input').forEach(input => {
-                    const turno = input.dataset.turno;
-                    const index = parseInt(input.dataset.index);
-                    if (newPeriods[turno] && index >= 0) {
-                        newPeriods[turno][index] = input.value.trim().toUpperCase();
-                    }
-                });
-                
-                // Limpa entradas vazias
-                Object.keys(newPeriods).forEach(turno => {
-                    newPeriods[turno] = newPeriods[turno].filter(p => p !== '');
-                });
-
-                await savePeriods(newPeriods);
-            });
-        };
-
-        // ---------------------------------------------------------------------
-        // 5.3. RENDERIZAÇÃO: CADASTRO - TURMAS (Seção 3)
-        // ---------------------------------------------------------------------
-
-        const renderCadastroTurmas = () => `
-            <h2 class="text-3xl font-extrabold text-gray-900">3. Cadastro de Turmas</h2>
-            <form id="class-form" class="bg-white p-6 rounded-xl shadow-lg space-y-4">
-                <input type="hidden" id="class-id">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label for="class-name" class="block text-sm font-medium text-gray-700">Nome da Turma *</label>
-                        <input type="text" id="class-name" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                    </div>
-                    <div>
-                        <label for="class-modalidade" class="block text-sm font-medium text-gray-700">Modalidade *</label>
-                        <select id="class-modalidade" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                            <option value="">Selecione</option>
-                            <option value="INTEGRADO">INTEGRADO</option>
-                            <option value="SUPERIOR">SUPERIOR</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border p-4 rounded-lg bg-yellow-50">
-                    <div>
-                        <label for="class-turno-primario" class="block text-sm font-medium text-gray-700">Turno Principal (Obrigatório)</label>
-                        <select id="class-turno-primario" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                            <option value="">Selecione</option>
-                            <option value="Manhã">Manhã</option>
-                            <option value="Tarde">Tarde</option>
-                            <option value="Noite">Noite</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="class-turno-secundario" class="block text-sm font-medium text-gray-700">Turno Secundário (Opcional - Para 2 Turnos)</label>
-                        <select id="class-turno-secundario" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                            <option value="">Nenhum</option>
-                            <option value="Manhã">Manhã</option>
-                            <option value="Tarde">Tarde</option>
-                            <option value="Noite">Noite</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="pt-4 flex justify-end">
-                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150 shadow-md">
-                        Salvar Turma
-                    </button>
-                </div>
-            </form>
-
-            <div class="mt-8">
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">Lista de Turmas</h3>
-                <div class="bg-white p-4 rounded-xl shadow-lg overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modalidade</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Turnos</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="class-list-body" class="bg-white divide-y divide-gray-200">
-                            <!-- Lista de turmas será inserida aqui -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-        
-        const renderClassList = () => {
-            const tbody = document.getElementById('class-list-body');
-            if (!tbody) return;
-
-            tbody.innerHTML = classes.map(cls => `
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${cls.name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cls.modalidade}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cls.turnoPrimario} ${cls.turnoSecundario ? `e ${cls.turnoSecundario}` : ''}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
-                        <button onclick="editClass('${cls.id}')" class="text-blue-600 hover:text-blue-900 transition duration-150">
-                            Editar
-                        </button>
-                        <button onclick="removeClass('${cls.id}', '${cls.name}')" class="text-red-600 hover:text-red-900 transition duration-150">
-                            Remover
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        };
-
-        window.editClass = (id) => {
-            const cls = classes.find(c => c.id === id);
-            if (!cls) return;
-            document.getElementById('class-id').value = cls.id;
-            document.getElementById('class-name').value = cls.name;
-            document.getElementById('class-modalidade').value = cls.modalidade;
-            document.getElementById('class-turno-primario').value = cls.turnoPrimario;
-            document.getElementById('class-turno-secundario').value = cls.turnoSecundario || '';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
-        window.removeClass = async (id, name) => {
-            const confirmed = await showMessage(`Tem certeza que deseja remover a turma ${name}?`, 'Confirmação', true);
-            if (confirmed) {
-                deleteDocument('classes', id);
-            }
-        };
-
-        const setupClassFormListeners = () => {
-            document.getElementById('class-form')?.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const id = document.getElementById('class-id').value || null;
-                const name = document.getElementById('class-name').value;
-                const modalidade = document.getElementById('class-modalidade').value;
-                const turnoPrimario = document.getElementById('class-turno-primario').value;
-                const turnoSecundario = document.getElementById('class-turno-secundario').value;
-
-                if (turnoSecundario && turnoPrimario === turnoSecundario) {
-                    showMessage("Os turnos primário e secundário não podem ser iguais.", 'Erro');
-                    return;
-                }
-
-                await saveDocument('classes', { name, modalidade, turnoPrimario, turnoSecundario }, id);
-                document.getElementById('class-form').reset();
-                document.getElementById('class-id').value = '';
-            });
-        };
-
-        // ---------------------------------------------------------------------
-        // 5.4. RENDERIZAÇÃO: CADASTRO - DISCIPLINAS (Seção 4)
-        // ---------------------------------------------------------------------
-
-        const renderProfessorSelects = () => {
-            const professorSelects = document.querySelectorAll('.prof-select');
-            const options = professors.map(p => `<option value="${p.id}">${p.nome} (${p.siape})</option>`).join('');
-            professorSelects.forEach(select => {
-                const selectedValue = select.value;
-                select.innerHTML = `<option value="">-- Professor (Opcional) --</option>` + options;
-                select.value = selectedValue; // Mantém o valor selecionado
-            });
-        };
-
-        const renderClassSelects = () => {
-            const classSelects = document.querySelectorAll('.class-select');
-            const options = classes.map(c => `<option value="${c.id}">${c.name} (${c.modalidade})</option>`).join('');
-            classSelects.forEach(select => {
-                const selectedValue = select.value;
-                select.innerHTML = `<option value="">-- Turma * --</option>` + options;
-                select.value = selectedValue;
-            });
-        };
-
-        const renderCadastroDisciplinas = () => `
-            <h2 class="text-3xl font-extrabold text-gray-900">4. Cadastro de Disciplinas</h2>
-            <form id="subject-form" class="bg-white p-6 rounded-xl shadow-lg space-y-4">
-                <input type="hidden" id="subject-id">
-                
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                        <label for="subject-name" class="block text-sm font-medium text-gray-700">Nome da Disciplina *</label>
-                        <input type="text" id="subject-name" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                    </div>
-                    <div>
-                        <label for="subject-class" class="block text-sm font-medium text-gray-700">Turma Associada *</label>
-                        <select id="subject-class" required class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm class-select">
-                            <option value="">-- Turma * --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="subject-professor" class="block text-sm font-medium text-gray-700">Professor Vinculado</label>
-                        <select id="subject-professor" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm prof-select">
-                            <option value="">-- Professor (Opcional) --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="subject-ch-semanal" class="block text-sm font-medium text-gray-700">Aulas Semanais (h)</label>
-                        <input type="number" id="subject-ch-semanal" required min="1" max="10" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                    </div>
-                </div>
-
-                <!-- Restrição de Aglutinação -->
-                <div class="border p-4 rounded-lg bg-gray-50">
-                    <h3 class="font-semibold text-gray-700 mb-3">Restrições de Aglutinação de Aulas</h3>
-                    <p class="text-sm text-gray-600 mb-3">Escolha como as aulas semanais (CH) devem ser agrupadas no horário.</p>
-                    <select id="subject-agglutination" class="form-select w-full rounded-lg border-gray-300">
-                        <option value="">Automático/Padrão (1x1)</option>
-                        <option value="1:1">1 Aula: 1 Dia de 1 Aula</option>
-                        <option value="2:2">2 Aulas: 1 Dia de 2 Aulas</option>
-                        <option value="3:3">3 Aulas: 1 Dia de 3 Aulas</option>
-                        <option value="3:2+1">3 Aulas: 1 Dia de 2 Aulas + 1 Dia de 1 Aula</option>
-                        <option value="4:2+2">4 Aulas: 2 Dias de 2 Aulas</option>
-                        <option value="5:3+2">5 Aulas: 1 Dia de 3 Aulas + 1 Dia de 2 Aulas</option>
-                        <option value="6:3+3">6 Aulas: 2 Dias de 3 Aulas</option>
-                    </select>
-                </div>
-
-                <!-- Disciplina Fixa -->
-                <div class="border p-4 rounded-lg bg-red-50">
-                    <h3 class="font-semibold text-gray-700 mb-3">Disciplina Fixa em Horário (Opcional)</h3>
-                    <p class="text-sm text-gray-600 mb-3">Selecione o dia e o período de início onde esta disciplina deve ser fixada.</p>
-                    <div class="flex space-x-4">
-                        <select id="subject-fixed-day" class="form-select flex-1 rounded-lg border-gray-300">
-                            <option value="">-- Dia da Semana --</option>
-                            ${daysOfWeek.map(d => `<option value="${d}">${d}</option>`).join('')}
-                        </select>
-                        <select id="subject-fixed-period" class="form-select flex-1 rounded-lg border-gray-300">
-                            <option value="">-- Período de Início --</option>
-                            <!-- Opções de período serão preenchidas dinamicamente -->
-                            ${[...periods.Manhã, ...periods.Tarde, ...periods.Noite].filter(p => p !== 'INTERVALO').map((p, i) => `<option value="${i}">${p} (Posição ${i+1})</option>`).join('')}
-                        </select>
-                        <input type="number" id="subject-fixed-duration" min="1" max="6" placeholder="Duração (aulas)" class="w-32 rounded-lg border-gray-300 shadow-sm">
-                    </div>
-                </div>
-
-                <div class="pt-4 flex justify-end">
-                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150 shadow-md">
-                        Salvar Disciplina
-                    </button>
-                </div>
-            </form>
-
-            <div class="mt-8">
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">Lista de Disciplinas</h3>
-                <div class="bg-white p-4 rounded-xl shadow-lg overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disciplina</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Turma</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prof.</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aulas/Sem</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="subject-list-body" class="bg-white divide-y divide-gray-200">
-                            <!-- Lista de disciplinas será inserida aqui -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-
-        const getProfessorName = (id) => professors.find(p => p.id === id)?.nome || 'Não Atribuído';
-        const getClassName = (id) => classes.find(c => c.id === id)?.name || 'Turma Não Encontrada';
-        
-        const renderSubjectList = () => {
-            const tbody = document.getElementById('subject-list-body');
-            if (!tbody) return;
-
-            tbody.innerHTML = subjects.map(sub => `
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sub.name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${getClassName(sub.classId)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${getProfessorName(sub.professorId)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sub.chSemanal}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
-                        <button onclick="editSubject('${sub.id}')" class="text-blue-600 hover:text-blue-900 transition duration-150">
-                            Editar
-                        </button>
-                        <button onclick="removeSubject('${sub.id}', '${sub.name}')" class="text-red-600 hover:text-red-900 transition duration-150">
-                            Remover
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        };
-
-        window.editSubject = (id) => {
-            const sub = subjects.find(s => s.id === id);
-            if (!sub) return;
-
-            document.getElementById('subject-id').value = sub.id;
-            document.getElementById('subject-name').value = sub.name;
-            document.getElementById('subject-class').value = sub.classId;
-            document.getElementById('subject-professor').value = sub.professorId || '';
-            document.getElementById('subject-ch-semanal').value = sub.chSemanal;
-            document.getElementById('subject-agglutination').value = sub.agglutination || '';
-
-            // Disciplina Fixa
-            document.getElementById('subject-fixed-day').value = sub.fixedDay || '';
-            document.getElementById('subject-fixed-period').value = sub.fixedPeriod || '';
-            document.getElementById('subject-fixed-duration').value = sub.fixedDuration || '';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
-        window.removeSubject = async (id, name) => {
-            const confirmed = await showMessage(`Tem certeza que deseja remover a disciplina ${name}?`, 'Confirmação', true);
-            if (confirmed) {
-                deleteDocument('subjects', id);
-            }
-        };
-
-        const setupSubjectFormListeners = () => {
-            document.getElementById('subject-form')?.addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                const id = document.getElementById('subject-id').value || null;
-                const name = document.getElementById('subject-name').value;
-                const classId = document.getElementById('subject-class').value;
-                const professorId = document.getElementById('subject-professor').value || null;
-                const chSemanal = parseInt(document.getElementById('subject-ch-semanal').value);
-                const agglutination = document.getElementById('subject-agglutination').value;
-                const fixedDay = document.getElementById('subject-fixed-day').value;
-                const fixedPeriod = document.getElementById('subject-fixed-period').value;
-                const fixedDuration = document.getElementById('subject-fixed-duration').value ? parseInt(document.getElementById('subject-fixed-duration').value) : 0;
-
-                const data = {
-                    name,
-                    classId,
-                    professorId,
-                    chSemanal,
-                    agglutination,
-                    fixedDay: fixedDay || null,
-                    fixedPeriod: fixedPeriod || null,
-                    fixedDuration: fixedDuration || null,
-                };
-                
-                await saveDocument('subjects', data, id);
-                document.getElementById('subject-form').reset();
-                document.getElementById('subject-id').value = '';
-            });
-        };
-
-        // ---------------------------------------------------------------------
-        // 5.5. RENDERIZAÇÃO: CADASTRO - DIAS LETIVOS (Seção 5)
-        // ---------------------------------------------------------------------
-
-        const dayTypes = {
-            'Letivo': 'bg-green-100 border-green-500', 
-            'Não Letivo': 'bg-red-100 border-red-500', 
-            'Feriado': 'bg-yellow-100 border-yellow-500', 
-            'Recuperação': 'bg-blue-100 border-blue-500', 
-            'Exame': 'bg-purple-100 border-purple-500'
-        };
-
-        const renderCadastroDiasLetivos = () => `
-            <h2 class="text-3xl font-extrabold text-gray-900">5. Cadastro de Dias Letivos (Calendário)</h2>
-            <div class="bg-white p-6 rounded-xl shadow-lg space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label for="calendar-year" class="block text-sm font-medium text-gray-700">Ano *</label>
-                        <select id="calendar-year" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                            ${[2025, 2026, 2027, 2028, 2029, 2030].map(y => `<option value="${y}" ${y === new Date().getFullYear() + 1 ? 'selected' : ''}>${y}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div>
-                        <label for="calendar-modalidade" class="block text-sm font-medium text-gray-700">Modalidade *</label>
-                        <select id="calendar-modalidade" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                            <option value="INTEGRADO">INTEGRADO</option>
-                            <option value="SUPERIOR">SUPERIOR</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4">
-                    <!-- Calendário -->
-                    <div class="lg:col-span-2">
-                        <h3 class="text-xl font-bold text-gray-800 mb-4">Calendário Anual</h3>
-                        <div id="calendar-view" class="bg-gray-100 p-4 rounded-lg">
-                            <p class="text-center text-gray-500">Selecione o ano e a modalidade para gerar o calendário.</p>
-                        </div>
-                    </div>
-
-                    <!-- Sumário de Dias -->
-                    <div class="lg:col-span-1">
-                        <h3 class="text-xl font-bold text-gray-800 mb-4">Sumário de Dias</h3>
-                        <div id="summary-table" class="space-y-2">
-                            ${Object.keys(dayTypes).map(type => `
-                                <div class="flex justify-between items-center p-2 rounded-lg ${dayTypes[type]} border">
-                                    <span class="font-medium text-gray-700">${type}:</span>
-                                    <span id="sum-${type.toLowerCase().replace(' ', '-')}" class="font-bold text-lg text-gray-900">0</span>
-                                </div>
-                            `).join('')}
-                            <div class="flex justify-between items-center p-2 rounded-lg bg-gray-200 border border-gray-400">
-                                <span class="font-bold text-gray-800">Sábados Letivos:</span>
-                                <span id="sum-sabados-letivos" class="font-bold text-lg text-gray-900">0</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pt-4 flex justify-end">
-                    <button id="save-calendar-btn" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-150 shadow-md">
-                        Salvar Informações
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        const setupCalendarListeners = () => {
-            const yearSelect = document.getElementById('calendar-year');
-            const modalidadeSelect = document.getElementById('calendar-modalidade');
-            if (yearSelect && modalidadeSelect) {
-                const renderCalendar = () => {
-                    const year = parseInt(yearSelect.value);
-                    const modalidade = modalidadeSelect.value;
-                    generateCalendar(year, modalidade);
-                };
-                
-                yearSelect.addEventListener('change', renderCalendar);
-                modalidadeSelect.addEventListener('change', renderCalendar);
-
-                // Geração inicial
-                renderCalendar();
-            }
-        };
-
-        const generateCalendar = (year, modalidade) => {
-            const calendarDiv = document.getElementById('calendar-view');
-            if (!calendarDiv) return;
-
-            const daysData = {}; // Simulação: { '2025-01-01': 'Feriado', ... }
-            const totalDays = 365 + (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 1 : 0);
-            
-            let html = `<div class="grid grid-cols-12 gap-2 text-xs font-semibold">`;
-            
-            for (let month = 0; month < 12; month++) {
-                const date = new Date(year, month, 1);
-                const monthName = date.toLocaleString('pt-BR', { month: 'long' });
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-                
-                html += `<div class="col-span-3 mb-4 p-2 border rounded-lg bg-white shadow">
-                            <h4 class="text-center font-bold mb-2 text-blue-600">${monthName.toUpperCase()}</h4>
-                            <div class="grid grid-cols-7 gap-1 text-center">
-                                <span class="font-bold text-red-500">D</span><span class="font-bold">S</span><span class="font-bold">T</span><span class="font-bold">Q</span><span class="font-bold">Q</span><span class="font-bold">S</span><span class="font-bold text-blue-500">S</span>
-                                ${Array(new Date(year, month, 1).getDay()).fill('<span></span>').join('')}
-                                ${Array.from({ length: daysInMonth }, (_, i) => {
-                                    const day = i + 1;
-                                    const fullDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                                    const type = daysData[fullDate] || 'Letivo';
-                                    const className = dayTypes[type];
-                                    return `<button data-date="${fullDate}" data-type="${type}" class="day-cell p-1 rounded-sm border ${className}">${day}</button>`;
-                                }).join('')}
-                            </div>
-                        </div>`;
-            }
-
-            html += `</div>`;
-            calendarDiv.innerHTML = html;
-            updateSummaryTable(daysData, modalidade);
-            
-            // Adiciona listener para seleção de dia
-            document.querySelectorAll('.day-cell').forEach(cell => {
-                cell.addEventListener('click', async (e) => {
-                    const date = e.target.dataset.date;
-                    const currentType = e.target.dataset.type;
-                    
-                    const newType = await showDayTypeModal(date, modalidade, currentType);
-                    if (newType) {
-                        daysData[date] = newType;
-                        e.target.dataset.type = newType;
-                        e.target.className = `day-cell p-1 rounded-sm border ${dayTypes[newType]}`;
-                        updateSummaryTable(daysData, modalidade);
-                        // Implementar aqui a lógica de salvar daysData no Firestore.
-                    }
-                });
-            });
-        };
-        
-        const showDayTypeModal = (date, modalidade, currentType) => {
-            const types = ['Dia Letivo', 'Dia Não Letivo', 'Feriado'];
-            if (modalidade === 'INTEGRADO') types.push('Recuperação', 'Exame');
-            if (modalidade === 'SUPERIOR') types.push('Exame');
-            
-            let message = `Selecione o tipo para o dia ${date}:<br><div class="mt-4 space-y-2">`;
-            types.forEach(type => {
-                const cleanType = type.replace('Dia ', '');
-                const isSelected = cleanType === currentType;
-                message += `<button data-type="${cleanType}" class="select-day-type-btn w-full px-4 py-2 rounded-lg transition duration-150 ${isSelected ? 'bg-blue-600 text-white font-bold' : 'bg-gray-200 hover:bg-gray-300'}">${type}</button>`;
-            });
-            message += '</div>';
-
-            const container = document.getElementById('modal-container');
-            document.getElementById('modal-title').textContent = 'Definir Tipo de Dia';
-            document.getElementById('modal-message').innerHTML = message;
-            document.getElementById('modal-confirm-btn').classList.add('hidden');
-            document.getElementById('modal-cancel-btn').classList.remove('hidden');
-            document.getElementById('modal-cancel-btn').textContent = 'Fechar';
-            
-            container.classList.remove('hidden');
-            
-            return new Promise(resolve => {
-                document.getElementById('modal-cancel-btn').onclick = () => {
-                    container.classList.add('hidden');
-                    resolve(null);
-                };
-                
-                document.querySelectorAll('.select-day-type-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        container.classList.add('hidden');
-                        resolve(btn.dataset.type);
-                    });
-                });
-            });
-        };
-
-        const updateSummaryTable = (daysData, modalidade) => {
-            const counts = { 'Letivo': 0, 'Não Letivo': 0, 'Feriado': 0, 'Recuperação': 0, 'Exame': 0, 'Sábados Letivos': 0 };
-            
-            for (const dateStr in daysData) {
-                const type = daysData[dateStr];
-                const date = new Date(dateStr + 'T12:00:00'); // 'T12:00:00' para evitar problemas de fuso horário
-                const dayOfWeek = date.getDay(); // 0=Dom, 1=Seg, ..., 6=Sáb
-                
-                counts[type]++;
-                
-                if (dayOfWeek === 6 && type === 'Letivo') {
-                    counts['Sábados Letivos']++;
-                }
-            }
-            
-            document.getElementById('sum-letivo').textContent = counts.Letivo;
-            document.getElementById('sum-nao-letivo').textContent = counts['Não Letivo'];
-            document.getElementById('sum-feriado').textContent = counts.Feriado;
-            document.getElementById('sum-recuperacao').textContent = counts.Recuperação;
-            document.getElementById('sum-exame').textContent = counts.Exame;
-            document.getElementById('sum-sabados-letivos').textContent = counts['Sábados Letivos'];
-            
-            // Oculta/Exibe Recuperação dependendo da modalidade
-            const recDiv = document.getElementById('sum-recuperacao')?.closest('.flex');
-            if (recDiv) {
-                recDiv.classList.toggle('hidden', modalidade === 'SUPERIOR');
-            }
-        };
-
-        // ---------------------------------------------------------------------
-        // 5.6. RENDERIZAÇÃO: HORÁRIO BASE (Seção 10)
-        // ---------------------------------------------------------------------
-
-        const renderHorarioBase = () => `
-            <h2 class="text-3xl font-extrabold text-gray-900">3. Horário Base</h2>
-            <div class="bg-white p-6 rounded-xl shadow-lg space-y-4">
-                <p class="text-gray-600">Gere o horário base que respeitará todas as restrições de professores, disciplinas e turmas.</p>
-                <button id="generate-base-schedule-btn" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition duration-150 shadow-md">
-                    Gerar Horário Base
-                </button>
-                <button id="export-base-schedule-pdf" class="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition duration-150 shadow-md">
-                    Exportar Horário Base (PDF)
-                </button>
-            </div>
-
-            <div class="mt-8">
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">Visualização do Horário Base</h3>
-                <div id="base-schedule-container" class="overflow-x-auto">
-                    <!-- Tabela de Horário Base será renderizada aqui -->
-                </div>
-            </div>
-        `;
-        
-        const renderBaseSchedule = () => {
-            const container = document.getElementById('base-schedule-container');
-            if (!container) return;
-            
-            // Simulação de renderização de horário (Apenas para as turmas cadastradas)
-            if (classes.length === 0) {
-                container.innerHTML = `<p class="text-gray-500 p-4 bg-gray-100 rounded-lg">Nenhuma turma cadastrada para exibir o horário.</p>`;
-                return;
-            }
-
-            const allPeriods = periods.Manhã.concat(periods.Tarde).concat(periods.Noite);
-            
-            let html = '';
-            
-            classes.forEach(cls => {
-                const className = cls.name;
-                const schedule = baseSchedule[cls.id] || {}; // Horário específico da turma
-                
-                html += `<div class="mb-8">
-                            <h4 class="text-xl font-bold text-blue-700 mb-3">Turma: ${className}</h4>
-                            <table class="min-w-full divide-y divide-gray-200 border border-gray-300 bg-white shadow-lg">
-                                <thead class="bg-blue-50">
-                                    <tr>
-                                        <th class="px-2 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-24">Hora</th>
-                                        ${daysOfWeek.map(day => `<th class="px-2 py-2 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">${day}</th>`).join('')}
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    ${allPeriods.map((time, pIndex) => {
-                                        if (time === 'INTERVALO') {
-                                            return `<tr class="bg-yellow-100"><td colspan="${daysOfWeek.length + 1}" class="text-center font-bold py-1 text-sm">${time}</td></tr>`;
-                                        }
-                                        return `<tr>
-                                            <td class="px-2 py-1 whitespace-nowrap text-sm font-medium bg-gray-50">${time}</td>
-                                            ${daysOfWeek.map(day => {
-                                                const slot = schedule[day] ? schedule[day][pIndex] : null;
-                                                const content = slot 
-                                                    ? `<span class="font-semibold text-xs">${slot.subject}</span><br><span class="text-xs text-gray-600">${getProfessorName(slot.professorId)}</span>`
-                                                    : '';
-                                                
-                                                // Simulação de slot arrastável (usaria event listeners de drag/drop no código real)
-                                                return `<td class="px-2 py-1 border border-gray-200 text-center text-xs cursor-pointer hover:bg-blue-50 transition duration-100" data-class="${cls.id}" data-day="${day}" data-period-index="${pIndex}">
-                                                            ${content}
-                                                        </td>`;
-                                            }).join('')}
-                                        </tr>`;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>`;
-            });
-
-            container.innerHTML = html;
-        };
-
-        const setupBaseScheduleListeners = () => {
-            document.getElementById('generate-base-schedule-btn')?.addEventListener('click', async () => {
-                const confirmed = await showMessage("A geração do Horário Base é um processo complexo que pode sobrescrever dados existentes. Deseja continuar?", "Confirmação de Geração", true);
-                if (!confirmed) return;
-
-                // -----------------------------------------------------------
-                // SIMULAÇÃO DO ALGORITMO DE GERAÇÃO (HEURÍSTICA SIMPLES)
-                // -----------------------------------------------------------
-                showMessage("Gerando Horário Base... (Simulação)", "Processando");
-                
-                const newSchedule = {}; // O novo horário base
-                
-                // 1. Inicializa o horário para todas as turmas
-                classes.forEach(cls => {
-                    newSchedule[cls.id] = {};
-                    daysOfWeek.forEach(day => {
-                        newSchedule[cls.id][day] = Array(periods.Manhã.length + periods.Tarde.length + periods.Noite.length).fill(null);
-                    });
-                });
-
-                // 2. Coloca as disciplinas fixas primeiro
-                subjects.filter(s => s.fixedDay && s.fixedPeriod && s.fixedDuration > 0).forEach(sub => {
-                    const classId = sub.classId;
-                    const day = sub.fixedDay;
-                    const startPeriod = parseInt(sub.fixedPeriod);
-                    const duration = sub.fixedDuration;
-                    
-                    if (newSchedule[classId] && newSchedule[classId][day]) {
-                         for (let i = 0; i < duration; i++) {
-                            const index = startPeriod + i;
-                            // Checagem básica de intervalo
-                            if (newSchedule[classId][day][index] === null && allPeriods[index] !== 'INTERVALO') {
-                                newSchedule[classId][day][index] = {
-                                    subject: sub.name,
-                                    professorId: sub.professorId,
-                                    isFixed: true
-                                };
-                            }
-                        }
-                    }
-                });
-
-                // 3. Implementar a Heurística Completa (Restrições de Professor, PRD/PGD, 11h, Aglutinação)
-                // ... (A complexidade é alta, este é o ponto de expansão futura)
-
-                // Simulação: Apenas salva o resultado no Firestore
-                await saveDocument('schedules', { schedule: newSchedule, lastUpdated: new Date().toISOString() }, 'base');
-                
-                showMessage("Horário Base gerado (simulado) e salvo com sucesso! Você pode visualizá-lo na seção 'Visualização do Horário Base'.", "Sucesso");
-                
-                // Força a atualização da lista de horários
-                baseSchedule = newSchedule;
-                renderBaseSchedule();
-            });
-
-            document.getElementById('export-base-schedule-pdf')?.addEventListener('click', () => {
-                const reportHTML = generateBaseScheduleReportHTML();
-                exportToPDF(reportHTML, 'Relatório Horário Base Semanal');
-            });
-        };
-
-        const generateBaseScheduleReportHTML = () => {
-            let reportHTML = '';
-            
-            classes.forEach(cls => {
-                const className = cls.name;
-                const schedule = baseSchedule[cls.id] || {};
-                const allPeriods = periods.Manhã.concat(periods.Tarde).concat(periods.Noite);
-                
-                let tableHTML = `<h4 class="text-lg font-bold mt-4 mb-2">Turma: ${className}</h4>
-                                 <table class="w-full text-xs border border-gray-700 mb-6">
-                                    <thead>
-                                        <tr class="bg-gray-100">
-                                            <th class="border border-gray-700 p-1 w-20">Hora</th>
-                                            ${daysOfWeek.map(day => `<th class="border border-gray-700 p-1">${day}</th>`).join('')}
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-                
-                allPeriods.forEach((time, pIndex) => {
-                    if (time === 'INTERVALO') {
-                        tableHTML += `<tr><td colspan="${daysOfWeek.length + 1}" class="border border-gray-700 p-1 text-center bg-yellow-50 font-semibold">INTERVALO</td></tr>`;
-                        return;
-                    }
-                    tableHTML += `<tr>
-                                    <td class="border border-gray-700 p-1 bg-gray-50 font-medium">${time}</td>
-                                    ${daysOfWeek.map(day => {
-                                        const slot = schedule[day] ? schedule[day][pIndex] : null;
-                                        const content = slot 
-                                            ? `${slot.subject} (${getProfessorName(slot.professorId).split(' ')[0]})` // Exibe Nome e Sobrenome do Prof
-                                            : '';
-                                        return `<td class="border border-gray-700 p-1 text-center">${content}</td>`;
-                                    }).join('')}
-                                </tr>`;
-                });
-                
-                tableHTML += `</tbody></table>`;
-                reportHTML += tableHTML;
-            });
-            
-            return reportHTML;
-        };
-
-        // ---------------------------------------------------------------------
-        // 5.7. RENDERIZAÇÃO: HORÁRIO SEMANAL (Seção 11)
-        // ---------------------------------------------------------------------
-
-        const renderHorarioSemanal = () => `
-            <h2 class="text-3xl font-extrabold text-gray-900">4. Horário Semanal</h2>
-            <div class="bg-white p-6 rounded-xl shadow-lg space-y-4">
-                <p class="text-gray-600">Crie e edite horários específicos para uma determinada semana, baseando-se no Horário Base.</p>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label for="weekly-schedule-week" class="block text-sm font-medium text-gray-700">Semana (Início)</label>
-                        <input type="date" id="weekly-schedule-week" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                    </div>
-                </div>
-
-                <div class="pt-4 flex space-x-3">
-                    <button id="generate-weekly-schedule-btn" class="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-150 shadow-md">
-                        Gerar Horário Semanal (Cópia Base)
-                    </button>
-                    <button id="save-weekly-schedule-btn" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition duration-150 shadow-md" disabled>
-                        Salvar Horário Semanal
-                    </button>
-                    <button id="export-weekly-schedule-pdf" class="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition duration-150 shadow-md" disabled>
-                        Exportar Semanal (PDF)
-                    </button>
-                </div>
-            </div>
-
-            <div class="mt-8">
-                <h3 class="text-2xl font-bold text-gray-800 mb-4">Visualização do Horário Semanal</h3>
-                <div id="weekly-schedule-container" class="overflow-x-auto">
-                    <p class="text-gray-500 p-4 bg-gray-100 rounded-lg">Selecione uma semana e gere o horário para visualização e edição.</p>
-                </div>
-            </div>
-        `;
-        
-        const setupWeeklyScheduleListeners = () => {
-            const weekInput = document.getElementById('weekly-schedule-week');
-            const generateBtn = document.getElementById('generate-weekly-schedule-btn');
-            const saveBtn = document.getElementById('save-weekly-schedule-btn');
-            
-            generateBtn?.addEventListener('click', () => {
-                if (!weekInput.value) {
-                    showMessage("Por favor, selecione a data de início da semana.", "Erro");
-                    return;
-                }
-                
-                // Simulação: Carrega o Horário Base para a semana selecionada
-                const weekId = weekInput.value;
-                showMessage(`Carregando Horário Base para a semana de ${weekId}...`, "Processando");
-                
-                // Na implementação real, aqui você carregaria o horário semanal se já existisse.
-                // Como não existe, copiamos o baseSchedule.
-                const weeklySchedule = JSON.parse(JSON.stringify(baseSchedule));
-                
-                renderEditableSchedule(weeklySchedule, 'weekly-schedule-container', weekId);
-                saveBtn.disabled = false;
-                
-                showMessage(`Horário Base copiado para a semana de ${weekId}. Agora você pode fazer ajustes manuais.`, "Sucesso");
-            });
-            
-            saveBtn?.addEventListener('click', async () => {
-                 if (!weekInput.value) return;
-                 const weekId = weekInput.value;
-                 const scheduleData = getEditableScheduleData(); // Função fictícia para obter dados da tabela
-                 
-                 // Simulação: Salva a instância semanal no Firestore
-                 await saveDocument('weekly_schedules', { schedule: scheduleData, weekStart: weekId, baseScheduleId: 'base' }, weekId);
-            });
-        };
-        
-        const renderEditableSchedule = (scheduleData, containerId, weekId) => {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-
-            // A lógica de renderização é similar ao Horário Base, mas com funcionalidade de drag-and-drop simulada.
-            // Para manter o código conciso, a simulação de edição manual será apenas visual.
-            // O CSS de drag-and-drop e a lógica de verificação de conflito seriam implementados aqui.
-            
-            let html = '';
-            
-            classes.forEach(cls => {
-                const className = cls.name;
-                const schedule = scheduleData[cls.id] || {};
-                const allPeriods = periods.Manhã.concat(periods.Tarde).concat(periods.Noite);
-                
-                html += `<div class="mb-8">
-                            <h4 class="text-xl font-bold text-blue-700 mb-3">Turma: ${className} (Semana: ${weekId})</h4>
-                            <table class="min-w-full divide-y divide-gray-200 border border-gray-300 bg-white shadow-lg">
-                                <thead class="bg-blue-50">
-                                    <!-- Cabeçalho da tabela igual ao do Horário Base -->
-                                </thead>
-                                <tbody class="divide-y divide-gray-200">
-                                    ${allPeriods.map((time, pIndex) => {
-                                        if (time === 'INTERVALO') {
-                                            return `<tr class="bg-yellow-100"><td colspan="${daysOfWeek.length + 1}" class="text-center font-bold py-1 text-sm">${time}</td></tr>`;
-                                        }
-                                        return `<tr>
-                                            <td class="px-2 py-1 whitespace-nowrap text-sm font-medium bg-gray-50">${time}</td>
-                                            ${daysOfWeek.map(day => {
-                                                const slot = schedule[day] ? schedule[day][pIndex] : null;
-                                                const content = slot 
-                                                    ? `<div class="p-1 rounded bg-blue-100 border border-blue-400 draggable-slot" draggable="true" data-slot='${JSON.stringify(slot)}'>
-                                                            <span class="font-semibold text-xs">${slot.subject}</span><br><span class="text-xs text-gray-600">${getProfessorName(slot.professorId).split(' ')[0]}</span>
-                                                        </div>`
-                                                    : `<div class="h-8 droppable-slot"></div>`; // Slot vazio, droppable
-                                                
-                                                return `<td class="px-2 py-1 border border-gray-200 text-center text-xs" data-class="${cls.id}" data-day="${day}" data-period-index="${pIndex}">
-                                                            ${content}
-                                                        </td>`;
-                                            }).join('')}
-                                        </tr>`;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>`;
-            });
-
-            container.innerHTML = html;
-        };
-        
-        // Função fictícia para simular a obtenção dos dados após a edição manual
-        const getEditableScheduleData = () => {
-            // Em uma implementação completa, esta função leria os dados de cada slot da tabela
-            // para construir o objeto de horário modificado.
-            return baseSchedule; 
-        };
-
-        // ---------------------------------------------------------------------
-        // 5.8. RENDERIZAÇÃO: RELATÓRIOS (Seções 6, 7, 8, 9)
-        // ---------------------------------------------------------------------
-
-        const renderRelatorioIndividual = () => `
-            <h2 class="text-3xl font-extrabold text-gray-900">6. Relatório Individual (Professor)</h2>
-            <div class="bg-white p-6 rounded-xl shadow-lg space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="report-prof-select" class="block text-sm font-medium text-gray-700">Selecione o Professor</label>
-                        <select id="report-prof-select" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm prof-select">
-                            <option value="">-- Selecione um Professor --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="report-week-select-ind" class="block text-sm font-medium text-gray-700">Semana de Referência (Data)</label>
-                        <input type="date" id="report-week-select-ind" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                    </div>
-                </div>
-
-                <div class="pt-4 flex justify-end">
-                    <button id="generate-individual-report-btn" class="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-150 shadow-md">
-                        Gerar Relatório & PDF
-                    </button>
-                </div>
-            </div>
-
-            <div id="individual-report-preview" class="mt-8 bg-white p-6 rounded-xl shadow-lg hidden print-area">
-                <h3 class="text-xl font-bold mb-4">Pré-visualização</h3>
-                <!-- Conteúdo do relatório será inserido aqui -->
-            </div>
-        `;
-
-        const renderRelatorioTurma = () => `
-            <h2 class="text-3xl font-extrabold text-gray-900">7. Relatório de Turma</h2>
-            <div class="bg-white p-6 rounded-xl shadow-lg space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label for="report-turma-year" class="block text-sm font-medium text-gray-700">Ano</label>
-                        <select id="report-turma-year" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                            ${[2025, 2026, 2027].map(y => `<option value="${y}">${y}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div>
-                        <label for="report-turma-select" class="block text-sm font-medium text-gray-700">Selecione a Turma</label>
-                        <select id="report-turma-select" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm class-select">
-                            <option value="">-- Selecione uma Turma --</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="pt-4 flex justify-end">
-                    <button id="generate-turma-report-btn" class="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-150 shadow-md">
-                        Gerar Relatório & PDF
-                    </button>
-                </div>
-            </div>
-
-            <div id="turma-report-preview" class="mt-8 bg-white p-6 rounded-xl shadow-lg hidden print-area">
-                <!-- Conteúdo do relatório será inserido aqui -->
-            </div>
-        `;
-        
-        const renderRelatorioDisciplina = () => `
-            <h2 class="text-3xl font-extrabold text-gray-900">8. Relatório de Disciplina</h2>
-            <div class="bg-white p-6 rounded-xl shadow-lg space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label for="report-subject-year" class="block text-sm font-medium text-gray-700">Ano</label>
-                        <select id="report-subject-year" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                            ${[2025, 2026, 2027].map(y => `<option value="${y}">${y}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div>
-                        <label for="report-subject-class-select" class="block text-sm font-medium text-gray-700">Turma</label>
-                        <select id="report-subject-class-select" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm class-select">
-                            <option value="">-- Selecione a Turma --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="report-subject-select" class="block text-sm font-medium text-gray-700">Disciplina</label>
-                        <select id="report-subject-select" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                            <option value="">-- Selecione a Disciplina --</option>
-                            <!-- Disciplinas serão preenchidas via JS ao selecionar a turma -->
-                        </select>
-                    </div>
-                </div>
-
-                <div class="pt-4 flex justify-end">
-                    <button id="generate-subject-report-btn" class="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-150 shadow-md">
-                        Gerar Relatório & PDF
-                    </button>
-                </div>
-            </div>
-
-            <div id="subject-report-preview" class="mt-8 bg-white p-6 rounded-xl shadow-lg hidden print-area">
-                <!-- Conteúdo do relatório será inserido aqui -->
-            </div>
-        `;
-
-        const renderExportarCSV = () => `
-            <h2 class="text-3xl font-extrabold text-gray-900">9. Exportar CSV (Semana)</h2>
-            <div class="bg-white p-6 rounded-xl shadow-lg space-y-4">
-                <p class="text-gray-600">Exporte os dados do horário de todas as turmas para uma semana específica no formato CSV.</p>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="csv-week-select" class="block text-sm font-medium text-gray-700">Semana de Referência (Início)</label>
-                        <input type="date" id="csv-week-select" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm">
-                    </div>
-                </div>
-
-                <div class="pt-4 flex justify-end">
-                    <button id="export-csv-btn" class="px-6 py-2 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 transition duration-150 shadow-md">
-                        Exportar CSV
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        const setupReportListeners = (type) => {
-            // Lógica de manipulação de relatórios
-            switch (type) {
-                case 'individual':
-                    document.getElementById('generate-individual-report-btn')?.addEventListener('click', () => {
-                        const profId = document.getElementById('report-prof-select').value;
-                        const week = document.getElementById('report-week-select-ind').value;
-                        if (!profId || !week) {
-                            showMessage("Selecione o professor e a semana.", "Atenção");
-                            return;
-                        }
-                        const reportHTML = generateIndividualReportHTML(profId, week);
-                        document.getElementById('individual-report-preview').innerHTML = createReportHeader('Relatório Individual do Professor') + reportHTML;
-                        document.getElementById('individual-report-preview').classList.remove('hidden');
-                        exportToPDF(reportHTML, 'Relatório Individual do Professor');
-                    });
-                    break;
-                case 'turma':
-                    document.getElementById('generate-turma-report-btn')?.addEventListener('click', () => {
-                         const turmaId = document.getElementById('report-turma-select').value;
-                         if (!turmaId) {
-                            showMessage("Selecione a turma.", "Atenção");
-                            return;
-                         }
-                         const reportHTML = generateTurmaReportHTML(turmaId);
-                         document.getElementById('turma-report-preview').innerHTML = createReportHeader('Relatório de Turma') + reportHTML;
-                         document.getElementById('turma-report-preview').classList.remove('hidden');
-                         exportToPDF(reportHTML, 'Relatório de Turma');
-                    });
-                    break;
-                case 'disciplina':
-                    document.getElementById('report-subject-class-select')?.addEventListener('change', (e) => {
-                        const classId = e.target.value;
-                        const subjectSelect = document.getElementById('report-subject-select');
-                        const filteredSubjects = subjects.filter(s => s.classId === classId);
-                        subjectSelect.innerHTML = '<option value="">-- Selecione a Disciplina --</option>' + 
-                            filteredSubjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-                    });
-                    document.getElementById('generate-subject-report-btn')?.addEventListener('click', () => {
-                         const turmaId = document.getElementById('report-subject-class-select').value;
-                         const subjectId = document.getElementById('report-subject-select').value;
-                         if (!turmaId || !subjectId) {
-                            showMessage("Selecione a turma e a disciplina.", "Atenção");
-                            return;
-                         }
-                         const reportHTML = generateSubjectReportHTML(turmaId, subjectId);
-                         document.getElementById('subject-report-preview').innerHTML = createReportHeader('Relatório de Disciplina') + reportHTML;
-                         document.getElementById('subject-report-preview').classList.remove('hidden');
-                         exportToPDF(reportHTML, 'Relatório de Disciplina');
-                    });
-                    break;
-                case 'csv':
-                    document.getElementById('export-csv-btn')?.addEventListener('click', () => {
-                         const week = document.getElementById('csv-week-select').value;
-                         if (!week) {
-                            showMessage("Selecione a semana para exportação.", "Atenção");
-                            return;
-                         }
-                         exportCSV(week);
-                    });
-                    break;
-            }
-        };
-
-        const generateIndividualReportHTML = (profId, week) => {
-            const prof = professors.find(p => p.id === profId);
-            if (!prof) return 'Professor não encontrado.';
-
-            // Na implementação real, buscaria o horário semanal para a 'week'
-            const currentSchedule = baseSchedule; 
-            const allPeriods = periods.Manhã.concat(periods.Tarde).concat(periods.Noite);
-
-            let tableHTML = `<h4 class="text-lg font-bold">Professor: ${prof.nome} (Semana de ${week})</h4>
-                             <table class="w-full text-xs border border-gray-700 mt-4">
-                                <thead>
-                                    <tr class="bg-gray-100">
-                                        <th class="border border-gray-700 p-1 w-20">Hora</th>
-                                        ${daysOfWeek.map(day => `<th class="border border-gray-700 p-1">${day}</th>`).join('')}
-                                    </tr>
-                                </thead>
-                                <tbody>`;
-            
-            allPeriods.forEach((time, pIndex) => {
-                if (time === 'INTERVALO') {
-                    tableHTML += `<tr><td colspan="${daysOfWeek.length + 1}" class="border border-gray-700 p-1 text-center bg-yellow-50 font-semibold">INTERVALO</td></tr>`;
-                    return;
-                }
-                tableHTML += `<tr>
-                                <td class="border border-gray-700 p-1 bg-gray-50 font-medium">${time}</td>
-                                ${daysOfWeek.map(day => {
-                                    let content = '';
-                                    // Procura se o professor tem aula em qualquer turma neste horário
-                                    classes.forEach(cls => {
-                                        const slot = currentSchedule[cls.id]?.[day]?.[pIndex];
-                                        if (slot && slot.professorId === profId) {
-                                            content = `${slot.subject} (${cls.name})`;
-                                        }
-                                    });
-                                    return `<td class="border border-gray-700 p-1 text-center">${content}</td>`;
-                                }).join('')}
-                            </tr>`;
-            });
-            
-            tableHTML += `</tbody></table>`;
-            return tableHTML;
-        };
-
-        const generateTurmaReportHTML = (turmaId) => {
-            const cls = classes.find(c => c.id === turmaId);
-            if (!cls) return 'Turma não encontrada.';
-            
-            const filteredSubjects = subjects.filter(s => s.classId === turmaId);
-            
-            // Simulação de dados mensais (seria calculado com o calendário de Dias Letivos)
-            const monthlyData = [
-                { mes: 'Janeiro', aulas: 0, sabado: 0 }, { mes: 'Fevereiro', aulas: 20, sabado: 2 },
-                { mes: 'Março', aulas: 25, sabado: 4 }, { mes: 'Abril', aulas: 22, sabado: 0 },
-                { mes: 'Maio', aulas: 26, sabado: 4 }, { mes: 'Junho', aulas: 15, sabado: 2 },
-                { mes: 'Julho', aulas: 5, sabado: 0 }, { mes: 'Agosto', aulas: 24, sabado: 4 },
-                { mes: 'Setembro', aulas: 23, sabado: 2 }, { mes: 'Outubro', aulas: 25, sabado: 4 },
-                { mes: 'Novembro', aulas: 22, sabado: 2 }, { mes: 'Dezembro', aulas: 10, sabado: 0 }
-            ];
-            
-            let totalAulas = monthlyData.reduce((sum, item) => sum + item.aulas + item.sabado, 0);
-
-            let html = `<h4 class="text-lg font-bold">Turma: ${cls.name} | Modalidade: ${cls.modalidade} | Ano: 2025 (Simulado)</h4>
-                        <p class="text-sm">Turnos: ${cls.turnoPrimario} ${cls.turnoSecundario ? `e ${cls.turnoSecundario}` : ''}</p>
-                        
-                        <h5 class="font-bold mt-4 mb-2">Quantitativo de Aulas por Mês (Baseado no Calendário Letivo)</h5>
-                        <table class="w-full text-xs border border-gray-700 mb-6">
-                            <thead>
-                                <tr class="bg-gray-100">
-                                    <th class="border border-gray-700 p-1">Disciplina</th>
-                                    ${monthlyData.map(m => `<th class="border border-gray-700 p-1">${m.mes}</th>`).join('')}
-                                    <th class="border border-gray-700 p-1">Sábados</th>
-                                    <th class="border border-gray-700 p-1 bg-blue-100">TOTAL (Exceto Rec/Exame)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${filteredSubjects.map(sub => {
-                                    const totalSubjectAulas = sub.chSemanal * 40; // Simulação: 40 semanas letivas
-                                    return `<tr>
-                                        <td class="border border-gray-700 p-1 font-medium">${sub.name}</td>
-                                        ${monthlyData.map(item => `<td class="border border-gray-700 p-1 text-center">${Math.round(sub.chSemanal * (item.aulas / 20))}</td>`).join('')}
-                                        <td class="border border-gray-700 p-1 text-center">${Math.round(sub.chSemanal * (monthlyData.reduce((s,i) => s + i.sabado, 0) / 4))}</td>
-                                        <td class="border border-gray-700 p-1 text-center font-bold bg-blue-50">${totalSubjectAulas}</td>
-                                    </tr>`;
-                                }).join('')}
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td class="border border-gray-700 p-1 font-bold bg-gray-200">Total de Aulas (Turma)</td>
-                                    <td colspan="${monthlyData.length + 1}" class="border border-gray-700 p-1 text-right font-bold bg-gray-200"></td>
-                                    <td class="border border-gray-700 p-1 text-center font-bold bg-gray-200">${totalAulas}</td>
-                                </tr>
-                            </tfoot>
-                        </table>`;
-            return html;
-        };
-
-        const generateSubjectReportHTML = (turmaId, subjectId) => {
-            const cls = classes.find(c => c.id === turmaId);
-            const sub = subjects.find(s => s.id === subjectId);
-            if (!cls || !sub) return 'Turma ou Disciplina não encontrada.';
-
-            // Simulação de lista de aulas (seria muito longa na vida real)
-            const classList = [
-                { date: '04/03/2025', dayOfWeek: 'TERÇA', time: '07:30-09:10', professor: getProfessorName(sub.professorId) },
-                { date: '06/03/2025', dayOfWeek: 'QUINTA', time: '10:20-11:10', professor: getProfessorName(sub.professorId) },
-                { date: '11/03/2025', dayOfWeek: 'TERÇA', time: '07:30-09:10', professor: getProfessorName(sub.professorId) },
-                // ... mais aulas
-            ];
-            
-            let html = `<h4 class="text-lg font-bold">Disciplina: ${sub.name} | Turma: ${cls.name} | Professor: ${getProfessorName(sub.professorId)}</h4>
-                        <p class="text-sm">Aulas Semanais: ${sub.chSemanal}h</p>
-                        
-                        <h5 class="font-bold mt-4 mb-2">Detalhamento das Aulas Agendadas (Simulado)</h5>
-                        <table class="w-full text-xs border border-gray-700 mb-6">
-                            <thead>
-                                <tr class="bg-gray-100">
-                                    <th class="border border-gray-700 p-1">Mês</th>
-                                    <th class="border border-gray-700 p-1">Dia</th>
-                                    <th class="border border-gray-700 p-1">Dia da Semana</th>
-                                    <th class="border border-gray-700 p-1">Horário de Aula</th>
-                                    <th class="border border-gray-700 p-1">Professor</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${classList.map(aula => `<tr>
-                                    <td class="border border-gray-700 p-1">${aula.date.substring(3, 5)}</td>
-                                    <td class="border border-gray-700 p-1">${aula.date}</td>
-                                    <td class="border border-gray-700 p-1">${aula.dayOfWeek}</td>
-                                    <td class="border border-gray-700 p-1">${aula.time}</td>
-                                    <td class="border border-gray-700 p-1">${aula.professor}</td>
-                                </tr>`).join('')}
-                            </tbody>
-                            <tfoot>
-                                <tr>
-                                    <td colspan="4" class="border border-gray-700 p-1 font-bold bg-gray-200 text-right">Somatória de Aulas (Exceto Rec/Exame):</td>
-                                    <td class="border border-gray-700 p-1 font-bold bg-gray-200 text-center">${classList.length}</td>
-                                </tr>
-                            </tfoot>
-                        </table>`;
-            return html;
-        };
-
-        const exportCSV = (week) => {
-            // Na implementação real, buscaria o horário semanal
-            const schedule = baseSchedule;
-            const allPeriods = periods.Manhã.concat(periods.Tarde).concat(periods.Noite).filter(p => p !== 'INTERVALO');
-
-            let csv = "Diadomes,mês,diadasemana,horário,turma,disciplina – professor\n";
-            
-            // Simulação: Itera 7 dias a partir da data de início da semana
-            const startDate = new Date(week + 'T12:00:00');
-            
-            for (let d = 0; d < 7; d++) {
-                const currentDate = new Date(startDate);
-                currentDate.setDate(startDate.getDate() + d);
-                
-                const dayStr = daysOfWeek[d % 5]; // Foco em Seg-Sex para simulação
-                const diaDoMes = currentDate.getDate();
-                const mes = currentDate.getMonth() + 1;
-                
-                classes.forEach(cls => {
-                    const classSchedule = schedule[cls.id]?.[dayStr] || [];
-                    classSchedule.forEach((slot, pIndex) => {
-                        if (slot && slot.subject) {
-                            const time = allPeriods[pIndex]; // Pega o horário real
-                            if (time) {
-                                csv += `${diaDoMes},${mes},${dayStr},"${time}",${cls.name},"${slot.subject} – ${getProfessorName(slot.professorId)}"\n`;
-                            }
-                        }
-                    });
-                });
-            }
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `horario_semanal_${week}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showMessage(`Dados da semana ${week} exportados com sucesso para CSV.`, "Sucesso");
-        };
-
-        // ---------------------------------------------------------------------
-        // 6. SETUP GERAL E EXECUÇÃO
-        // ---------------------------------------------------------------------
-
-        // Configuração dos Listeners de Navegação
-        document.querySelectorAll('.menu-item, .sub-menu-item').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const view = e.target.dataset.view;
-                if (view) {
-                    renderView(view);
-                }
-            });
-        });
-
-        // Inicia a aplicação
-        window.onload = initializeFirebase;
-        
-        // Define a visão inicial
-        renderView('visão-geral');
-        
-    </script>
+  <script src="app.js"></script>
 </body>
 </html>
+```
+
+--- style.css ---
+```css
+/* Conteúdo extraído do arquivo ifro-cores-e-layout.css (variáveis e regras base) */
+:root{
+  --if-amarelo-sol: #FFD000;
+  --if-verde-amazonia: #007a3d; /* ajuste para melhor contraste */
+  --if-azul-atlantico: #183EFF;
+  --if-vermelho-urucum: #c91f37;
+  --if-primario-escuro: #107039;
+  --bg: #ffffff;
+  --surface: #fbfbfb;
+  --text: #111;
+  --muted: #666;
+  --sidebar-width: 300px;
+  --gutter: 16px;
+  --radius: 8px;
+}
+html,body{font-family: 'Open Sans', Arial, sans-serif;color:var(--text);background:var(--bg);margin:0;padding:0}
+.app-wrap{display:flex;min-height:100vh}
+.sidebar{width:var(--sidebar-width);background:var(--if-primario-escuro);color:#fff;padding:20px;box-sizing:border-box}
+.sidebar .logo{font-weight:700;margin-bottom:18px}
+.sidebar nav a{display:block;color:inherit;padding:10px;border-radius:6px;text-decoration:none;margin-bottom:6px}
+.sidebar nav a:hover{background:rgba(255,255,255,0.06)}
+.header-institucional{background:linear-gradient(90deg,var(--if-azul-atlantico) 0%, var(--if-amarelo-sol) 100%);color:#fff;padding:24px;border-radius:8px;margin-bottom:12px}
+.main-content{flex:1;padding:var(--gutter)}
+.card{background:var(--surface);padding:16px;border-radius:var(--radius);box-shadow:0 2px 6px rgba(0,0,0,0.04);margin-bottom:12px}
+.btn{display:inline-block;padding:8px 12px;border-radius:6px;border:none;cursor:pointer;font-weight:600}
+.btn-primary{background:var(--if-verde-amazonia);color:#fff}
+.btn-danger{background:var(--if-vermelho-urucum);color:#fff}
+.form-row{display:flex;gap:12px;flex-wrap:wrap}
+.input,select,textarea{padding:8px;border-radius:6px;border:1px solid #ddd;min-width:220px}
+.table{width:100%;border-collapse:collapse}
+.table th{background:var(--if-azul-atlantico);color:#fff;padding:10px;text-align:left}
+.table td{padding:8px;border-bottom:1px solid #eee}
+.small{font-size:13px;color:var(--muted)}
+fieldset{border:1px dashed #eee;padding:12px;border-radius:6px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.timetable{display:grid;grid-template-columns:150px repeat(5,1fr);gap:4px}
+.timetable .cell{min-height:56px;border:1px solid #eee;padding:6px;background:#fff}
+.draggable{padding:6px;border-radius:6px;background:#f0f7f2;border:1px dashed #cfd}
+.export-btns{display:flex;gap:8px}
+@media (max-width:900px){.sidebar{display:none}.header-institucional{padding-left:20px}}
+```
+
+--- app.js ---
+```javascript
+// Protótipo funcional: abas, salvamento local, formulários, export simples (PDF via print e CSV)
+const tabsHtml = {
+  'inicio': `
+    <h3>Bem-vindo</h3>
+    <p>Use a barra lateral para navegar entre as abas. Este é um protótipo funcional; dados são salvos no armazenamento local do navegador.</p>
+  `,
+  'instituicao': `
+    <h3>Dados da Instituição</h3>
+    <form id="form-instituicao" class="form-card">
+      <div class="form-row"><label>Nome:</label><input class="input" name="nome"></div>
+      <div class="form-row"><label>Endereço:</label><input class="input" name="endereco"></div>
+      <div class="form-row"><label>Telefone:</label><input class="input" name="telefone"></div>
+      <div class="form-row"><label>E-mail:</label><input class="input" name="email"></div>
+      <div class="form-row"><label>Diretor Geral:</label><input class="input" name="dir_geral"></div>
+      <div class="form-row"><label>Diretor de Ensino:</label><input class="input" name="dir_ensino"></div>
+      <div class="form-row"><label>Chefe do Dep. Apoio ao Ensino:</label><input class="input" name="chefe_depto"></div>
+      <div style="margin-top:12px"><button class="btn btn-primary" id="salvar-instituicao">Salvar Instituição</button></div>
+    </form>
+
+    <hr>
+    <h4>Listas (Cursos / Turmas / Professores / Salas)</h4>
+    <div id="listas-instituicao"></div>
+  `,
+  'cadastro': `
+    <h3>Cadastro</h3>
+    <div class="grid-2">
+      <div>
+        <fieldset>
+          <legend>Professores</legend>
+          <form id="form-professor">
+            <div class="form-row"><label>Nome:</label><input class="input" name="nome"></div>
+            <div class="form-row"><label>SIAPE/CPF:</label><input class="input" name="siape"></div>
+            <div class="form-row"><label>Situação:</label>
+              <select name="situacao" class="input">
+                <option>DE</option><option>40</option><option>20</option><option>Substituto</option>
+              </select>
+            </div>
+            <div style="margin-top:8px"><button class="btn btn-primary">Salvar Professor</button></div>
+          </form>
+          <hr>
+          <div id="lista-professores" class="small"></div>
+        </fieldset>
+      </div>
+
+      <div>
+        <fieldset>
+          <legend>Horários (Períodos)</legend>
+          <div>
+            <label>Matutino (ex.: 07:30-08:20, ...)</label>
+            <textarea id="hora-matutino" rows="3" class="input">07:30-08:20,08:20-09:10,INTERVALO,09:30-10:20,10:20-11:10,11:10-12:00</textarea>
+          </div>
+          <div>
+            <label>Vespertino</label>
+            <textarea id="hora-vespertino" rows="3" class="input">13:50-14:40,14:40-15:30,INTERVALO,15:50-16:40,16:40-17:30,17:30-18:20</textarea>
+          </div>
+          <div>
+            <label>Noturno</label>
+            <textarea id="hora-noturno" rows="3" class="input">19:00-19:50,19:50-20:40,INTERVALO,20:50-21:40,21:40-22:30</textarea>
+          </div>
+          <div style="margin-top:8px"><button class="btn btn-primary" id="salvar-horarios">Salvar Horários</button></div>
+        </fieldset>
+
+        <fieldset style="margin-top:12px">
+          <legend>Turmas / Disciplinas (simplificado)</legend>
+          <div>
+            <label>Adicionar Turma (Nome | Modalidade | Sala | TurnoPrimário | TurnoSecundário)</label>
+            <input id="nova-turma" class="input" placeholder="Ex: 1A | INTEGRADO | A101 | MAT | VES">
+            <div style="margin-top:6px"><button class="btn btn-primary" id="add-turma">Adicionar Turma</button></div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  `,
+  'horario-base': `
+    <h3>Gerar Horário Base</h3>
+    <p>Botão gera um horário base simples com alocação sequencial respeitando restrições básicas salvas no cadastro (protótipo).</p>
+    <div class="export-btns">
+      <button class="btn btn-primary" id="gerar-base">Gerar Horário Base</button>
+      <button class="btn btn-outline" id="export-base-pdf">Exportar PDF</button>
+    </div>
+    <div id="preview-base" style="margin-top:12px"></div>
+  `,
+  'horario-semanal': `
+    <h3>Horário Semanal</h3>
+    <p>Escolha a semana (baseada no cadastro de dias letivos) e gere a cópia do horário base para ajustes manuais.</p>
+    <div>
+      <label>Semana (início):</label>
+      <input type="date" id="semana-inicio" class="input">
+      <div style="margin-top:8px"><button class="btn btn-primary" id="gerar-semanal">Gerar Horário Semanal</button></div>
+    </div>
+    <div id="preview-semanal" style="margin-top:12px"></div>
+  `,
+  'relatorios': `
+    <h3>Relatórios</h3>
+    <div class="grid-2">
+      <div>
+        <label>Relatório Individual (Professor)</label>
+        <select id="rel-prof" class="input"></select>
+        <div style="margin-top:8px"><button class="btn" id="export-rel-ind">Exportar PDF (Print)</button></div>
+      </div>
+      <div>
+        <label>Exportar CSV (Semana)</label>
+        <input type="date" id="csv-semana" class="input">
+        <div style="margin-top:8px"><button class="btn" id="export-csv">Exportar CSV</button></div>
+      </div>
+    </div>
+  `
+};
+
+// inicialização
+const container = document.getElementById('tab-conteudo');
+function showTab(key){ container.innerHTML = tabsHtml[key] || '<p>Em construção</p>'; attachListenersForTab(key); }
+
+document.querySelectorAll('.sidebar nav a').forEach(a=>{
+  a.addEventListener('click',e=>{ e.preventDefault(); showTab(a.dataset.tab); history.replaceState({},'',`#${a.dataset.tab}`); });
+});
+
+// carregar aba inicial
+const initial = location.hash.replace('#','') || 'inicio'; showTab(initial);
+
+// salvamento local
+function saveToLocal(key,obj){ localStorage.setItem('ifro:'+key,JSON.stringify(obj)); }
+function loadFromLocal(key){ const v = localStorage.getItem('ifro:'+key); return v ? JSON.parse(v) : null; }
+
+// listeners por aba
+function attachListenersForTab(tab){
+  if(tab==='instituicao'){
+    const form = document.getElementById('form-instituicao');
+    const listas = document.getElementById('listas-instituicao');
+    const saved = loadFromLocal('instituicao');
+    if(saved){ Object.keys(saved).forEach(k=>{ if(form[k]) form[k].value = saved[k]; }) }
+    form?.addEventListener('submit',e=>{ e.preventDefault(); const fd = Object.fromEntries(new FormData(form).entries()); saveToLocal('instituicao',fd); alert('Informações da instituição salvas.'); });
+    listas.innerHTML = `
+      <p class="small">Cursos: (exemplo)</p>
+      <ul class="small"><li>Integrado</li><li>Superior</li></ul>
+      <p class="small">Turmas salvas: <span id="count-turmas">0</span></p>
+    `;
+    const turmas = loadFromLocal('turmas')||[]; document.getElementById('count-turmas').innerText = turmas.length;
+  }
+
+  if(tab==='cadastro'){
+    // professores
+    const formProf = document.getElementById('form-professor');
+    const listaProf = document.getElementById('lista-professores');
+    const renderProf = ()=>{
+      const profs = loadFromLocal('professores')||[];
+      listaProf.innerHTML = profs.map((p,idx)=>`<div>${p.nome||'(sem nome)'} — <button onclick="__editProf(${idx})">Editar</button> <button onclick="__delProf(${idx})">Remover</button></div>`).join('')||'<div class="small">Sem professores</div>';
+      // preencher selects em relatórios
+      const relSel = document.getElementById('rel-prof'); if(relSel){ relSel.innerHTML = '<option value="">-- selecione --</option>' + profs.map(p=>`<option>${p.nome}</option>`).join(''); }
+    };
+    window.__editProf = function(i){ const profs = loadFromLocal('professores')||[]; const p = profs[i]; if(!p) return alert('Não encontrado'); const name = prompt('Editar nome',p.nome); if(name!==null){ p.nome = name; saveToLocal('professores',profs); renderProf(); } }
+    window.__delProf = function(i){ const profs = loadFromLocal('professores')||[]; if(confirm('Remover?')){ profs.splice(i,1); saveToLocal('professores',profs); renderProf(); } }
+    formProf?.addEventListener('submit',e=>{ e.preventDefault(); const fd = Object.fromEntries(new FormData(formProf).entries()); const profs = loadFromLocal('professores')||[]; profs.push(fd); saveToLocal('professores',profs); formProf.reset(); renderProf(); });
+    renderProf();
+
+    // horas
+    document.getElementById('salvar-horarios')?.addEventListener('click',e=>{ const m = document.getElementById('hora-matutino').value; const v = document.getElementById('hora-vespertino').value; const n = document.getElementById('hora-noturno').value; saveToLocal('horarios',{mat:m,ves:v,not:n}); alert('Horários salvos.'); });
+
+    // turmas
+    document.getElementById('add-turma')?.addEventListener('click',e=>{ const t = document.getElementById('nova-turma').value.trim(); if(!t) return alert('Preencha a turma'); const turmas = loadFromLocal('turmas')||[]; turmas.push(t); saveToLocal('turmas',turmas); document.getElementById('nova-turma').value=''; alert('Turma adicionada.'); });
+  }
+
+  if(tab==='horario-base'){
+    document.getElementById('gerar-base')?.addEventListener('click',()=>{
+      // algoritmo simples: pega turmas e disciplinas mínimas e aloca sequencialmente
+      const turmas = loadFromLocal('turmas')||[]; const profs = loadFromLocal('professores')||[]; const horarios = loadFromLocal('horarios') || {mat:'',ves:'',not:''};
+      const slots = (horarios.mat.split(',').concat(horarios.ves.split(','),horarios.not.split(','))).filter(Boolean).slice(0,30);
+      const schedule = {};
+      let sIdx=0;
+      turmas.forEach((t,i)=>{
+        const prof = profs[i % Math.max(1,profs.length)] || {nome:'Professor (não atribuído)'};
+        const slot = slots[sIdx++ % slots.length];
+        schedule[t] = schedule[t] || [];
+        schedule[t].push({slot,prof:prof.nome});
+      });
+      saveToLocal('horario_base',schedule);
+      document.getElementById('preview-base').innerText = JSON.stringify(schedule,null,2);
+      alert('Horário base gerado (protótipo).');
+    });
+    document.getElementById('export-base-pdf')?.addEventListener('click',()=>{ window.print(); });
+  }
+
+  if(tab==='horario-semanal'){
+    document.getElementById('gerar-semanal')?.addEventListener('click',()=>{
+      const inicio = document.getElementById('semana-inicio').value; if(!inicio) return alert('Escolha a data de início');
+      const base = loadFromLocal('horario_base')||{}; const semanal = {inicio,base};
+      const lista = loadFromLocal('horarios_semanais')||[]; lista.push(semanal); saveToLocal('horarios_semanais',lista); document.getElementById('preview-semanal').innerText = JSON.stringify(semanal,null,2); alert('Horário semanal gerado e salvo.');
+    });
+  }
+
+  if(tab==='relatorios'){
+    document.getElementById('export-rel-ind')?.addEventListener('click',()=>{ window.print(); });
+    document.getElementById('export-csv')?.addEventListener('click',()=>{
+      const date = document.getElementById('csv-semana').value; if(!date) return alert('Escolha a semana');
+      const semanal = loadFromLocal('horarios_semanais')||[]; if(semanal.length===0) return alert('Não há horários semanais salvos');
+      // montar CSV minimal
+      let csv = 'data,diadasemana,horario,turma,disciplina,professor
+';
+      semanal.forEach(s=>{ csv += `${s.inicio},SEMANA,00:00,Exemplo,Disciplina,Professor
+`; });
+      const blob = new Blob([csv],{type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'export-semana.csv'; a.click(); URL.revokeObjectURL(url);
+    });
+  }
+}
+
+// salvar tudo
+document.getElementById('save-all')?.addEventListener('click',()=>{ alert('Os dados estão sendo mantidos localmente no navegador (localStorage). Use exportações para baixar relatórios.'); });
+
+// carregar inicialmente algumas listas (professores reais fornecidos)
+(function preloadProfessores(){
+  if(!loadFromLocal('professores')){
+    const dados = [
+      {siape:'1889267',nome:'Adriana Aparecida Rigolon',email:'adriana.rigolon@ifro.edu.br'},
+      {siape:'1046329',nome:'Agmar Aparecido Felix Chaves',email:'agmar.chaves@ifro.edu.br'},
+      {siape:'1041488',nome:'Aguinaldo Pereira',email:'aguinaldo.pereira@ifro.edu.br'},
+      {siape:'3137523',nome:'Alberto Ayres Benicio',email:'alberto.benicio@ifro.edu.br'}
+    ];
+    saveToLocal('professores',dados);
+  }
+})();
+
+// expor utilitário de debug
+window.__showLocal = ()=>console.log(localStorage);
+```
+```
