@@ -284,18 +284,369 @@
       <!-- CADASTRO -> DIAS LETIVOS -->
       <div id="screen-cad-dias-letivos" class="card screen hidden">
         <h2>Dias Letivos</h2>
-        <div style="display:flex;gap:12px;flex-wrap:wrap">
-          <div style="flex:1">
-            <label>Regime</label><select id="cal-regime"><option>Integrado</option><option>Superior</option></select>
-            <label>Data</label><input type="date" id="cal-date">
-            <label>Tipo</label><select id="cal-type"><option value="letivo">Letivo</option><option value="feriado">Feriado</option><option value="recuperacao">Recuperação</option><option value="exame">Exame</option></select>
-            <div style="margin-top:8px"><button class="btn primary" id="btn-save-cal">Salvar</button> <button class="btn" id="btn-clear-cal" type="button">Limpar</button></div>
-          </div>
-          <div style="flex:2">
-            <h3>Calendário</h3>
-            <div id="list-calendar" class="list"></div>
-          </div>
+    <style>
+        /* Estilos básicos para o calendário, caso o Tailwind não esteja ativo */
+        .card {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .screen {
+            display: none;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+        }
+        .primary {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* 3 ou 4 meses por linha em desktop */
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .month-view {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+        }
+        .month-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #1f2937;
+        }
+        .day-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            font-size: 0.75em;
+            font-weight: 500;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+        .day-container {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+        .day-cell {
+            padding: 4px 0;
+            font-size: 0.8em;
+            cursor: pointer;
+            border-radius: 3px;
+            margin: 1px;
+            transition: background-color 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 25px;
+            font-weight: 600;
+            color: #4b5563;
+        }
+        .day-cell:hover:not(.empty-day) {
+            background-color: #eff6ff;
+        }
+        .empty-day {
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .current-month {
+            background-color: #f3f4f6;
+        }
+        
+        /* Cores dos Tipos de Dia */
+        .type-letivo { background-color: #d1fae5; color: #065f46; } /* Verde claro */
+        .type-recuperacao { background-color: #fef3c7; color: #92400e; } /* Amarelo claro */
+        .type-exame { background-color: #fee2e2; color: #991b1b; } /* Vermelho claro */
+        .type-feriado { background-color: #e0f2f1; color: #0f766e; } /* Ciano claro */
+
+        /* Estilo do Modal (substitui alert/confirm) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 300px;
+        }
+        .modal-content button {
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Estrutura Principal da Aplicação (Deve estar no seu corpo HTML) -->
+<div style="padding: 20px; background-color: #f7f7f7;">
+    
+    <!-- MENU (Apenas um placeholder para simular a mudança de tela) -->
+    <button onclick="document.getElementById('screen-cad-dias-letivos').style.display = 'block'; loadCalendar();">Mostrar Cadastro de Dias Letivos</button>
+
+    <!-- CADASTRO -> DIAS LETIVOS (NOVA ESTRUTURA) -->
+    <div id="screen-cad-dias-letivos" class="card screen" style="display: block;"> <!-- display: block para visualização inicial -->
+        <h2>Dias Letivos</h2>
+        
+        <!-- Controles de Regime e Ano -->
+        <div style="display: flex; gap: 20px; align-items: flex-end; margin-bottom: 20px;">
+            <div>
+                <label>Regime:</label>
+                <select id="cal-regime" onchange="loadCalendar()">
+                    <option value="Integrado">Integrado</option>
+                    <option value="Superior">Superior</option>
+                </select>
+            </div>
+            <div>
+                <label>Ano Letivo:</label>
+                <select id="cal-year" onchange="loadCalendar()">
+                    <!-- Anos serão preenchidos via JavaScript -->
+                </select>
+            </div>
         </div>
+
+        <!-- Área de Renderização do Calendário -->
+        <h3>Calendário Anual (<span id="current-regime-display">Integrado</span> - <span id="current-year-display"></span>)</h3>
+        <div id="calendar-container" class="calendar-grid">
+            <!-- Os meses e dias serão gerados aqui pelo JavaScript -->
+        </div>
+        
+    </div>
+    
+    <!-- Modal de Seleção de Tipo de Dia (Para substituir o alert/confirm) -->
+    <div id="day-type-modal" class="modal-overlay hidden" style="display: none;">
+        <div class="modal-content">
+            <h4>Selecione o Tipo para o Dia: <span id="modal-date-display"></span></h4>
+            <div id="modal-options">
+                <button onclick="saveDayType('letivo')" class="btn type-letivo">Letivo</button>
+                <button onclick="saveDayType('feriado')" class="btn type-feriado">Feriado</button>
+                <button onclick="saveDayType('recuperacao')" class="btn type-recuperacao">Recuperação</button>
+                <button onclick="saveDayType('exame')" class="btn type-exame">Exame</button>
+                <button onclick="saveDayType('clear')" class="btn" style="background-color: #fefefe; color: #333;">Limpar</button>
+            </div>
+            <button onclick="closeModal()" class="btn" style="margin-top: 15px;">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Variáveis Globais de Estado
+const MONTH_NAMES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+                     "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+const DAY_NAMES = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const DEFAULT_TYPES = {
+    'letivo': 'Letivo', 
+    'feriado': 'Feriado', 
+    'recuperacao': 'Recuperação', 
+    'exame': 'Exame'
+};
+
+let currentSelectedDate = null; // Armazena a data que está sendo editada pelo modal
+
+// Função para inicializar o seletor de anos
+function initializeYearSelector() {
+    const yearSelect = document.getElementById('cal-year');
+    const currentYear = new Date().getFullYear();
+    yearSelect.innerHTML = ''; // Limpa as opções existentes
+    
+    // Adiciona o ano atual e o próximo ano (para planejamento)
+    for (let i = -1; i <= 1; i++) {
+        const year = currentYear + i;
+        const option = document.createElement('option');
+        option.value = year;
+        option.textContent = year;
+        if (i === 0) {
+            option.selected = true;
+        }
+        yearSelect.appendChild(option);
+    }
+}
+initializeYearSelector();
+
+
+// --- FUNÇÕES DE ARMAZENAMENTO (localStorage) ---
+
+// Gera a chave de armazenamento com base no regime e ano
+function getStorageKey(regime, year) {
+    return `dias-letivos-${regime}-${year}`;
+}
+
+// Carrega todos os dias letivos para o regime e ano selecionados
+function loadDaysData(regime, year) {
+    const key = getStorageKey(regime, year);
+    const dataString = localStorage.getItem(key);
+    // Retorna um objeto onde a chave é a data (YYYY-MM-DD) e o valor é o tipo (letivo, feriado, etc.)
+    return dataString ? JSON.parse(dataString) : {};
+}
+
+// Salva os dados de volta no localStorage
+function saveDaysData(regime, year, daysData) {
+    const key = getStorageKey(regime, year);
+    localStorage.setItem(key, JSON.stringify(daysData));
+}
+
+
+// --- FUNÇÕES DE CALENDÁRIO ---
+
+// Altera a classe CSS do dia para refletir o tipo (Letivo, Feriado, etc.)
+function applyDayStyle(dayElement, dayType) {
+    // Limpa todas as classes de tipo
+    Object.keys(DEFAULT_TYPES).forEach(type => {
+        dayElement.classList.remove(`type-${type}`);
+    });
+
+    if (dayType && dayType !== 'clear') {
+        dayElement.classList.add(`type-${dayType}`);
+    }
+}
+
+// Renderiza um único mês
+function renderMonth(month, year, daysData) {
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const firstDayOfWeek = firstDay.getDay(); // 0 = Domingo, 6 = Sábado
+
+    const monthView = document.createElement('div');
+    monthView.className = 'month-view';
+
+    // Nome do Mês
+    monthView.innerHTML = `<div class="month-name">${MONTH_NAMES[month]} ${year}</div>`;
+    
+    // Cabeçalho dos Dias da Semana
+    const dayHeader = document.createElement('div');
+    dayHeader.className = 'day-header';
+    DAY_NAMES.forEach(dayName => {
+        dayHeader.innerHTML += `<span>${dayName}</span>`;
+    });
+    monthView.appendChild(dayHeader);
+
+    // Contêiner dos Dias
+    const dayContainer = document.createElement('div');
+    dayContainer.className = 'day-container';
+
+    // Dias vazios no início do mês
+    for (let i = 0; i < firstDayOfWeek; i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'day-cell empty-day';
+        dayContainer.appendChild(emptyDay);
+    }
+
+    // Dias do Mês
+    for (let day = 1; day <= lastDay; day++) {
+        const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayType = daysData[dateString];
+
+        const dayCell = document.createElement('div');
+        dayCell.className = `day-cell current-month`;
+        dayCell.textContent = day;
+        dayCell.dataset.date = dateString;
+        dayCell.onclick = () => handleDayClick(dateString, dayCell);
+
+        applyDayStyle(dayCell, dayType);
+
+        dayContainer.appendChild(dayCell);
+    }
+
+    monthView.appendChild(dayContainer);
+    return monthView;
+}
+
+// Função principal para carregar e renderizar o calendário completo
+function loadCalendar() {
+    const regime = document.getElementById('cal-regime').value;
+    const year = parseInt(document.getElementById('cal-year').value);
+
+    // Atualiza os displays na tela
+    document.getElementById('current-regime-display').textContent = regime;
+    document.getElementById('current-year-display').textContent = year;
+
+    const daysData = loadDaysData(regime, year);
+    const container = document.getElementById('calendar-container');
+    container.innerHTML = ''; // Limpa o calendário anterior
+
+    // Renderiza os 12 meses
+    for (let month = 0; month < 12; month++) {
+        const monthElement = renderMonth(month, year, daysData);
+        container.appendChild(monthElement);
+    }
+}
+
+// --- FUNÇÕES DO MODAL DE INTERAÇÃO ---
+
+// Abre o modal ao clicar em um dia
+function handleDayClick(dateString, dayElement) {
+    currentSelectedDate = dateString;
+    
+    // Exibe a data no modal
+    document.getElementById('modal-date-display').textContent = dateString;
+
+    // Exibe o modal
+    const modal = document.getElementById('day-type-modal');
+    modal.style.display = 'flex';
+}
+
+// Fecha o modal
+function closeModal() {
+    document.getElementById('day-type-modal').style.display = 'none';
+    currentSelectedDate = null;
+}
+
+// Salva a seleção do tipo de dia
+function saveDayType(type) {
+    if (!currentSelectedDate) {
+        closeModal();
+        return;
+    }
+
+    const regime = document.getElementById('cal-regime').value;
+    const year = parseInt(document.getElementById('cal-year').value);
+    
+    // 1. Carrega os dados existentes
+    const daysData = loadDaysData(regime, year);
+
+    // 2. Atualiza os dados
+    if (type === 'clear') {
+        delete daysData[currentSelectedDate];
+    } else {
+        daysData[currentSelectedDate] = type;
+    }
+
+    // 3. Salva os dados atualizados
+    saveDaysData(regime, year, daysData);
+
+    // 4. Atualiza visualmente o dia (sem recarregar o calendário inteiro)
+    const dayElement = document.querySelector(`[data-date="${currentSelectedDate}"]`);
+    if (dayElement) {
+        applyDayStyle(dayElement, type);
+    }
+
+    closeModal();
+}
+
+
+// --- INICIALIZAÇÃO ---
+
+// Carrega o calendário ao carregar a página
+window.addEventListener('load', loadCalendar); 
+</script>
       </div>
 
       <!-- RELATÓRIOS -->
