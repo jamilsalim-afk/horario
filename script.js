@@ -124,10 +124,11 @@ function mostrarConteudoDaAba(targetId) {
     });
     
     const targetSection = document.getElementById(targetId);
+    
     if (targetSection) {
         targetSection.style.display = 'block';
         
-        // Chamada de carregamento específica para a aba
+        // Chamada de carregamento específica apenas para abas que exigem dados atualizados na tabela
         if (targetId === 'cadastro-professores') {
             carregarProfessores();
         } else if (targetId === 'cadastro-horarios') {
@@ -137,13 +138,22 @@ function mostrarConteudoDaAba(targetId) {
         } else if (targetId === 'cadastro-disciplinas') {
             carregarDisciplinas();
             preencherSelectsDisciplina();
-       } else if (targetId === 'cadastro-calendario-integrado') {
+        } else if (targetId === 'cadastro-calendario-integrado') {
             carregarEventosCalendario('calendario_integrado');
         } else if (targetId === 'cadastro-calendario-superior') {
             carregarEventosCalendario('calendario_superior');
-        } else if (targetId === 'horario-base-gerar') { // NOVO
-            gerarHorarioBase(); // Tenta gerar o horário sempre que a aba é aberta
+        } else if (targetId === 'horario-base-gerar') {
+            // Verifica se a grade já foi gerada para evitar loops
+            if (!window.lastGeneratedGrade) {
+                 gerarHorarioBase(); 
+            }
         }
+        // As demais abas (relatórios, instituição) não precisam de função de carregamento aqui.
+        
+    } else {
+        // Manipula cliques em IDs que não são uma aba-conteudo, apenas por segurança
+        const mainContent = document.getElementById('conteudo-principal');
+        mainContent.innerHTML = `<h3 class="titulo-aba">Página em Desenvolvimento</h3><p>O conteúdo para a aba **${targetId.toUpperCase()}** será construído aqui.</p>`;
     }
 }
 
