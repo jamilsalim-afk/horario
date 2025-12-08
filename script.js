@@ -137,6 +137,10 @@ function mostrarConteudoDaAba(targetId) {
         } else if (targetId === 'cadastro-disciplinas') {
             carregarDisciplinas();
             preencherSelectsDisciplina();
+       } else if (targetId === 'cadastro-calendario-integrado') {
+            carregarEventosCalendario('calendario_integrado');
+        } else if (targetId === 'cadastro-calendario-superior') {
+            carregarEventosCalendario('calendario_superior');
         }
     }
 }
@@ -633,30 +637,86 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (target === 'horario') salvarHorario();
             else if (target === 'turma') salvarTurma();
             else if (target === 'disciplina') salvarDisciplina(); // Novo mapeamento
+            else if (target === 'calendario_integrado') salvarEventoCalendario('calendario_integrado');
+            else if (target === 'calendario_superior') salvarEventoCalendario('calendario_superior');
         });
     });
 });
 
-function mostrarConteudoDaAba(targetId) {
-    // ... (código para esconder e mostrar abas) ...
+// ----------------------------------------------------------------------
+// --- 7. LÓGICA DE CADASTRO DE CALENDÁRIOS ---
+// ----------------------------------------------------------------------
+
+/**
+ * Salva um evento de calendário (Integrado ou Superior).
+ * @param {string} tipoCalendario 'calendario_integrado' ou 'calendario_superior'.
+ */
+function salvarEventoCalendario(tipoCalendario) {
+    const formId = `form-cadastro-${tipoCalendario.replace('_', '-')}`;
+    const form = document.getElementById(formId);
     
-    if (targetSection) {
-        targetSection.style.display = 'block';
-        
-        // Chamada de carregamento específica para a aba
-        if (targetId === 'cadastro-professores') {
-            carregarProfessores();
-        } else if (targetId === 'cadastro-horarios') {
-            carregarHorarios();
-        } else if (targetId === 'cadastro-turmas') {
-            carregarTurmas();
-        } else if (targetId === 'cadastro-disciplinas') {
-            carregarDisciplinas();
-            preencherSelectsDisciplina();
-        } else if (targetId === 'cadastro-calendario-integrado') {
-            carregarEventosCalendario('calendario_integrado');
-        } else if (targetId === 'cadastro-calendario-superior') {
-            carregarEventosCalendario('calendario_superior');
-        }
+    // Captura dados do formulário
+    const evento = {
+        id: Date.now(), // ID único
+        tipo: form.querySelector('[name="tipo"]').value,
+        descricao: form.querySelector('[name="descricao"]').value.trim(),
+        data_inicio: form.querySelector('[name="data_inicio"]').value,
+        data_fim: form.querySelector('[name="data_fim"]').value || form.querySelector('[name="data_inicio"]').value, // Usa início se fim for vazio
+    };
+
+    if (!evento.tipo || !evento.descricao || !evento.data_inicio) {
+        alert('Preencha o Tipo, a Descrição e a Data de Início.');
+        return;
+    }
+
+    let eventos = obterDados(tipoCalendario);
+    eventos.push(evento);
+    salvarDados(tipoCalendario, eventos);
+
+    alert(`Evento '${evento.descricao}' salvo com sucesso no Calendário de ${tipoCalendario.includes('integrado') ? 'Integrado' : 'Superior'}!`);
+    form.reset();
+    carregarEventosCalendario(tipoCalendario);
+}
+
+/**
+ * Preenche a tabela com os eventos do calendário específico.
+ * @param {string} tipoCalendario 'calendario_integrado' ou 'calendario_superior'.
+ */
+function carregarEventosCalendario(tipoCalendario) {
+    const eventos = obterDados(tipoCalendario);
+    const tabelaBody = document.querySelector(`#tabela-${tipoCalendario.replace('_', '-')} tbody`);
+    if (!tabelaBody) return;
+
+    tabelaBody.innerHTML = '';
+
+    eventos
+        .sort((a, b) => new Date(a.data_inicio) - new Date(b.data_inicio)) // Ordena por data
+        .forEach(e => {
+            const row = tabelaBody.insertRow();
+            row.insertCell().textContent = e.tipo;
+            row.insertCell().textContent = e.descricao;
+            // Formatação simples da data (ex: '2025-12-08' -> '08/12/2025')
+            row.insertCell().textContent = formatarData(e.data_inicio); 
+            row.insertCell().textContent = formatarData(e.data_fim) === formatarData(e.data_inicio) ? '-' : formatarData(e.data_fim);
+            
+            const cellAcoes = row.insertCell();
+            const btnRemover = document.createElement('button');
+            btnRemover.className = 'botao-acao botao-remover';
+            btnRemover.textContent = '🗑️';
+            btnRemover.onclick = () => removerDados(tipoCalendario, e.id, e.descricao);
+            cellAcoes.appendChild(btnRemover);
+        });
+}
+
+/**
+ * Função utilitária para formatar datas (DD/MM/AAAA).
+ */
+function formatarData(dataISO) {
+    if (!dataISO) return '-';
+    try {
+        const [ano, mes, dia] = dataISO.split('-');
+        return `${dia}/${mes}/${ano}`;
+    } catch (e) {
+        return dataISO;
     }
 }
