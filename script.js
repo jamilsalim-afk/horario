@@ -141,6 +141,8 @@ function mostrarConteudoDaAba(targetId) {
             carregarEventosCalendario('calendario_integrado');
         } else if (targetId === 'cadastro-calendario-superior') {
             carregarEventosCalendario('calendario_superior');
+        } else if (targetId === 'horario-base-gerar') { // NOVO
+            gerarHorarioBase(); // Tenta gerar o horário sempre que a aba é aberta
         }
     }
 }
@@ -719,4 +721,270 @@ function formatarData(dataISO) {
     } catch (e) {
         return dataISO;
     }
+}
+
+// ----------------------------------------------------------------------
+// --- 8. LÓGICA DE GERAÇÃO DE HORÁRIO BASE (Heurística de Priorização) ---
+// ----------------------------------------------------------------------
+
+/**
+ * Mapeamento dos dias da semana e períodos.
+ */
+const DIAS_SEMANA = ['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA'];
+
+/**
+ * Gera a estrutura de todos os slots de horário disponíveis.
+ * @returns {Object} Estrutura da grade semanal.
+ */
+function inicializarGradeVazia() {
+    const grade = {};
+    const horarios = obterDados('horario'); // {matutino: [...], vespertino: [...], noturno: [...]}
+    
+    // Cria uma matriz 5xN (Dias x Slots)
+    DIAS_SEMANA.forEach(dia => {
+        grade[dia] = {};
+        
+        // Combina todos os slots de todos os turnos para aquele dia
+        ['matutino', 'vespertino', 'noturno'].forEach(periodo => {
+            if (horarios[periodo]) {
+                horarios[periodo].forEach(slotTempo => {
+                    if (slotTempo !== 'INTERVALO') {
+                        // O slot é um objeto que armazenará a disciplina alocada
+                        grade[dia][slotTempo] = { 
+                            status: 'LIVRE', // LIVRE, ALOCADO, RESTRITO, CALENDARIO
+                            periodo: periodo,
+                            turmaId: null, // Turma que ocupa o slot
+                            disciplinaId: null, // Disciplina alocada
+                            professorSiape: null // Professor alocado
+                        };
+                    }
+                });
+            }
+        });
+    });
+    
+    return grade;
+}
+
+/**
+ * Aplica restrições de PRD/PGD e a Regra das 11 Horas na grade.
+ * Isso deve ser feito ANTES da alocação de disciplinas.
+ * @param {Object} grade Grade de horário inicializada.
+ * @returns {Object} Grade com restrições aplicadas.
+ */
+function aplicarRestricoesIniciais(grade) {
+    const professores = obterDados('professor');
+    // TODO: Implementar a aplicação de restrições de Calendário (Feriados) aqui.
+
+    professores.forEach(prof => {
+        const rest = prof.restricoes;
+        
+        // 1. Aplica PRD/PGD (transforma slots em RESTRITO)
+        // Lógica de PRD/PGD é complexa, mas o conceito é simples:
+        // Se o professor tem PRD na SEGUNDA/INTEIRO, todos os slots da SEGUNDA ficam "RESTRITOS" para ele.
+        
+        // Exemplo Simplificado: PRD Principal (SEGUNDA/INTEIRO)
+        const diaPRD = rest.prd_principal?.dia;
+        const periodoPRD = rest.prd_principal?.periodo;
+        
+        if (diaPRD && DIAS_SEMANA.includes(diaPRD)) {
+            // Marca o professor como restrito para todos os slots nesse dia/período
+            Object.keys(grade[diaPRD]).forEach(slotTempo => {
+                const slotObj = grade[diaPRD][slotTempo];
+                // Se o período do slot bate com o período da restrição (ou se é INTEIRO)
+                if (periodoPRD === 'INTEIRO' || slotObj.periodo.toUpperCase().startsWith(periodoPRD)) {
+                    // Adiciona o SIAPE do professor à lista de restritos para este slot
+                    if (!slotObj.restritos) slotObj.restritos = [];
+                    slotObj.restritos.push(prof.siape);
+                }
+            });
+        }
+        
+        // 2. Aplica Regra das 11 Horas de Descanso (Verifica Noturno -> Manhã seguinte)
+        // Isso exigiria a ordem dos slots, mas o conceito é: 
+        // Se um professor tem aula no último slot da Noite (dia N), ele deve ser RESTRITO nos primeiros slots da Manhã (dia N+1).
+    });
+
+    return grade;
+}
+
+/**
+ * Executa o algoritmo heurístico de alocação de disciplinas.
+ */
+function gerarHorarioBase() {
+    const disciplinas = obterDados('disciplina');
+    const turmas = obterDados('turma');
+    let grade = inicializarGradeVazia();
+    let conflitos = [];
+    
+    // Etapa 1: Aplica Restrições de Professores e Calendário na grade
+    grade = aplicarRestricoesIniciais(grade); 
+    
+    // Etapa 2: Priorização das Disciplinas
+    // Prioridades: 
+    // 1. Disciplinas com horário fixo (alocadas primeiro)
+    // 2. Disciplinas com menos professores elegíveis (mais difíceis de encaixar)
+    // 3. Disciplinas com mais aulas semanais (para garantir aglutinação)
+    
+    // Por enquanto, apenas ordena por aulas semanais (mais fácil de aglutinar)
+    const disciplinasOrdenadas = [...disciplinas].sort((a, b) => b.aulasSemanais - a.aulasSemanais);
+    
+    // Etapa 3: Alocação Iterativa
+    disciplinasOrdenadas.forEach(disc => {
+        let aulasAlocadas = 0;
+        const aulasNecessarias = disc.aulasSemanais;
+        
+        // A lógica real exigiria uma função recursiva que tenta satisfazer a AGLUTINAÇÃO
+        // Por exemplo, se Aglutinação é '2x2' (2 dias de 2 aulas):
+        //   - Encontra o primeiro dia D1 com 2 slots consecutivos livres
+        //   - Encontra o segundo dia D2 com 2 slots consecutivos livres
+        
+        // Exemplo Simplificado: Tentar alocar cada aula individualmente (IGNORA AGLUTINAÇÃO por enquanto)
+        for (let i = 0; i < aulasNecessarias; i++) {
+            let alocado = false;
+            
+            // Loop pelos dias e slots
+            for (const dia of DIAS_SEMANA) {
+                for (const slotTempo in grade[dia]) {
+                    const slot = grade[dia][slotTempo];
+                    
+                    // Condições de Alocação (Verificação de Conflitos)
+                    const professorLivre = !slot.restritos || !slot.restritos.includes(disc.professorSiape);
+                    const turmaLivre = slot.status === 'LIVRE';
+                    
+                    if (professorLivre && turmaLivre) {
+                        // Aloca o slot
+                        slot.status = 'ALOCADO';
+                        slot.turmaId = disc.turmaId;
+                        slot.disciplinaId = disc.id;
+                        slot.professorSiape = disc.professorSiape;
+                        aulasAlocadas++;
+                        alocado = true;
+                        break; // Vai para a próxima aula dessa disciplina
+                    }
+                }
+                if (alocado) break;
+            }
+        }
+
+        // Etapa 4: Reportar Conflitos (Se não foi possível alocar todas as aulas)
+        if (aulasAlocadas < aulasNecessarias) {
+            conflitos.push({
+                disciplina: disc.nome,
+                turma: turmas.find(t => t.id === disc.turmaId)?.nome || 'N/A',
+                aulasFaltantes: aulasNecessarias - aulasAlocadas
+            });
+        }
+    });
+
+    // Etapa 5: Renderizar a Grade e Conflitos
+    renderizarGradeFinal(grade, conflitos);
+}
+
+/**
+ * Renderiza a grade de horário na seção de Horário Base.
+ * @param {Object} grade Grade de horário gerada.
+ * @param {Array} conflitos Lista de conflitos.
+ */
+function renderizarGradeFinal(grade, conflitos) {
+    const secaoHorarioBase = document.getElementById('horario-base-gerar');
+    if (!secaoHorarioBase) return;
+    
+    // Título e Botão de Geração (para reexecutar)
+    secaoHorarioBase.innerHTML = `
+        <h3 class="titulo-aba">📅 Geração de Horário Base</h3>
+        <button class="botao-acao botao-editar" onclick="gerarHorarioBase()">🔄 RE-GERAR HORÁRIO BASE</button>
+        <div id="resultado-conflitos"></div>
+        <div id="grade-horario-output"></div>
+    `;
+
+    // 1. Reportar Conflitos
+    const outputConflitos = document.getElementById('resultado-conflitos');
+    if (conflitos.length > 0) {
+        outputConflitos.innerHTML = `<p class="nota-regra">⚠️ **CONFLITOS ENCONTRADOS (${conflitos.length}):** O sistema não conseguiu alocar todas as aulas.</p>`;
+        // ... (código para listar os conflitos em uma tabela)
+    } else {
+        outputConflitos.innerHTML = `<p class="nota-regra" style="border-left-color: var(--ifro-verde);">✅ **SUCESSO:** Horário Base gerado sem conflitos conhecidos.</p>`;
+    }
+    
+    // 2. Montar a Grade Visual (Apenas para as turmas)
+    const outputGrade = document.getElementById('grade-horario-output');
+    
+    // Simplificando a visualização: Mostrar a grade por Turma, uma de cada vez.
+    const turmas = obterDados('turma');
+    const professores = obterDados('professor');
+    const disciplinas = obterDados('disciplina');
+    
+    const dropdownTurmas = `<select id="seletor-turma-grade" onchange="renderizarGradeTurma(this.value, grade, turmas, professores, disciplinas)">
+        <option value="">Selecione a Turma para Visualizar</option>
+        ${turmas.map(t => `<option value="${t.id}">${t.nome}</option>`).join('')}
+    </select>`;
+    
+    outputGrade.innerHTML = `<h4>Visualizar Grade por Turma:</h4>${dropdownTurmas}<div id="grade-turma-visual"></div>`;
+    
+    // Armazenar a grade gerada globalmente ou no DOM para ser usada na visualização
+    window.lastGeneratedGrade = grade;
+    
+    // Tentativa de renderizar a primeira turma automaticamente
+    if (turmas.length > 0) {
+        document.getElementById('seletor-turma-grade').value = turmas[0].id;
+        renderizarGradeTurma(turmas[0].id, grade, turmas, professores, disciplinas);
+    }
+}
+
+/**
+ * Função utilitária para renderizar a grade de uma turma específica.
+ */
+function renderizarGradeTurma(turmaId, grade, turmas, professores, disciplinas) {
+    const container = document.getElementById('grade-turma-visual');
+    if (!turmaId) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    const turma = turmas.find(t => t.id == turmaId);
+    if (!turma) return;
+    
+    // Extrai todos os slots únicos para montar o cabeçalho de tempo
+    const slotTempos = Object.keys(grade[DIAS_SEMANA[0]]); 
+    
+    let html = `<h5>Horário da Turma: ${turma.nome}</h5>`;
+    html += `<table class="tabela-dados tabela-horario">
+        <thead>
+            <tr><th>Horário</th>${DIAS_SEMANA.map(d => `<th>${d}</th>`).join('')}</tr>
+        </thead>
+        <tbody>`;
+        
+    slotTempos.forEach(slotTempo => {
+        html += `<tr><th>${slotTempo}</th>`; // Cabeçalho do Horário (HH:MM-HH:MM)
+        
+        DIAS_SEMANA.forEach(dia => {
+            const slot = grade[dia][slotTempo];
+            let conteudo = '';
+            let classe = 'slot-livre';
+
+            if (slot.disciplinaId && slot.turmaId == turmaId) {
+                const disc = disciplinas.find(d => d.id === slot.disciplinaId);
+                const prof = professores.find(p => p.siape === slot.professorSiape);
+                
+                conteudo = `${disc.nome} <br> <small>${prof.nome}</small>`;
+                classe = 'slot-alocado';
+            } else if (slot.restritos && slot.restritos.length > 0) {
+                conteudo = 'Restrito';
+                classe = 'slot-restrito';
+            } else if (slot.status === 'LIVRE') {
+                 // conteudo = 'Livre';
+            }
+
+            html += `<td class="${classe}">${conteudo}</td>`;
+        });
+        
+        html += `</tr>`;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+    
+    // Se for interessante, podemos mostrar um diagrama da grade
+    // 
 }
