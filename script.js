@@ -4,6 +4,8 @@ const LS_KEYS = {
     horario: 'ifro_horarios',
     turma: 'ifro_turmas',
     disciplina: 'ifro_disciplinas',
+    calendario_integrado: 'ifro_calendario_integrado',
+    calendario_superior: 'ifro_calendario_superior',
 };
 
 // Dados iniciais (Professores são os mesmos da resposta anterior, usei um placeholder)
