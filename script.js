@@ -636,3 +636,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+function mostrarConteudoDaAba(targetId) {
+    // ... (código para esconder e mostrar abas) ...
+    
+    if (targetSection) {
+        targetSection.style.display = 'block';
+        
+        // Chamada de carregamento específica para a aba
+        if (targetId === 'cadastro-professores') {
+            carregarProfessores();
+        } else if (targetId === 'cadastro-horarios') {
+            carregarHorarios();
+        } else if (targetId === 'cadastro-turmas') {
+            carregarTurmas();
+        } else if (targetId === 'cadastro-disciplinas') {
+            carregarDisciplinas();
+            preencherSelectsDisciplina();
+        } else if (targetId === 'cadastro-calendario-integrado') {
+            carregarEventosCalendario('calendario_integrado');
+        } else if (targetId === 'cadastro-calendario-superior') {
+            carregarEventosCalendario('calendario_superior');
+        }
+    }
+}
