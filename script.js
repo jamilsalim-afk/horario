@@ -96,10 +96,19 @@ function obterDados(key) {
     let dados = JSON.parse(localStorage.getItem(LS_KEYS[key]));
     
     if (!dados) {
-        // Inicialização de dados
-        if (key === 'professor') dados = PROFESSORES_INICIAIS_DATA;
-        else if (key === 'horario') dados = HORARIOS_INICIAIS;
-        else dados = [];
+        // ... (lógica de inicialização de professor, horario, turma, disciplina) ...
+
+        // NOVA LÓGICA DE INICIALIZAÇÃO DE CALENDÁRIO: Começa com um objeto vazio para o ano.
+        if (key === 'calendario_integrado' || key === 'calendario_superior') {
+             // O objeto de dados armazenará pares { 'YYYY-MM-DD': 'TIPO_DIA' }
+             dados = {}; 
+        } else if (key === 'professor') {
+             dados = PROFESSORES_INICIAIS_DATA;
+        } else if (key === 'horario') { 
+             dados = HORARIOS_INICIES;
+        } else {
+             dados = [];
+        }
         
         salvarDados(key, dados);
     }
@@ -139,9 +148,9 @@ function mostrarConteudoDaAba(targetId) {
             carregarDisciplinas();
             preencherSelectsDisciplina();
         } else if (targetId === 'cadastro-calendario-integrado') {
-            carregarEventosCalendario('calendario_integrado');
+            renderizarCalendario('integrado'); // NOVO
         } else if (targetId === 'cadastro-calendario-superior') {
-            carregarEventosCalendario('calendario_superior');
+            renderizarCalendario('superior'); // NOVO
         } else if (targetId === 'horario-base-gerar') {
             // Verifica se a grade já foi gerada para evitar loops
             if (!window.lastGeneratedGrade) {
@@ -647,92 +656,161 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.botao-salvar').forEach(button => {
         button.addEventListener('click', function() {
             const target = this.getAttribute('data-save-target');
+            
             if (target === 'professor') salvarProfessor();
             else if (target === 'horario') salvarHorario();
             else if (target === 'turma') salvarTurma();
-            else if (target === 'disciplina') salvarDisciplina(); // Novo mapeamento
-            else if (target === 'calendario_integrado') salvarEventoCalendario('calendario_integrado');
-            else if (target === 'calendario_superior') salvarEventoCalendario('calendario_superior');
+            else if (target === 'disciplina') salvarDisciplina();
+            // NOVOS SALVAMENTOS DE CALENDÁRIO
+            else if (target === 'calendario_integrado') salvarCalendario('integrado'); // CHAMADA CORRETA
+            else if (target === 'calendario_superior') salvarCalendario('superior');   // CHAMADA CORRETA
         });
     });
 });
 
 // ----------------------------------------------------------------------
-// --- 7. LÓGICA DE CADASTRO DE CALENDÁRIOS ---
+// --- 7. LÓGICA DE CADASTRO DE CALENDÁRIOS (INTERATIVO) ---
 // ----------------------------------------------------------------------
 
-/**
- * Salva um evento de calendário (Integrado ou Superior).
- * @param {string} tipoCalendario 'calendario_integrado' ou 'calendario_superior'.
- */
-function salvarEventoCalendario(tipoCalendario) {
-    const formId = `form-cadastro-${tipoCalendario.replace('_', '-')}`;
-    const form = document.getElementById(formId);
-    
-    // Captura dados do formulário
-    const evento = {
-        id: Date.now(), // ID único
-        tipo: form.querySelector('[name="tipo"]').value,
-        descricao: form.querySelector('[name="descricao"]').value.trim(),
-        data_inicio: form.querySelector('[name="data_inicio"]').value,
-        data_fim: form.querySelector('[name="data_fim"]').value || form.querySelector('[name="data_inicio"]').value, // Usa início se fim for vazio
-    };
+const NOMES_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+const DIAS_CURTOS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
-    if (!evento.tipo || !evento.descricao || !evento.data_inicio) {
-        alert('Preencha o Tipo, a Descrição e a Data de Início.');
+/**
+ * Renderiza o calendário interativo para o tipo (Integrado ou Superior).
+ * @param {string} tipo 'integrado' ou 'superior'.
+ * @param {number} ano Ano a ser renderizado.
+ */
+function renderizarCalendario(tipo) {
+    const key = `calendario_${tipo}`;
+    const ano = document.getElementById(`cal_${tipo}_ano`).value;
+    const containerVisual = document.getElementById(`grade-calendario-${tipo}-visual`);
+    const dadosCalendario = obterDados(key); // Obtém o estado salvo do calendário
+    
+    containerVisual.innerHTML = ''; // Limpa o container
+    
+    // Itera sobre todos os 12 meses
+    for (let mes = 0; mes < 12; mes++) {
+        const primeiroDia = new Date(ano, mes, 1);
+        const ultimoDia = new Date(ano, mes + 1, 0).getDate();
+        let diaSemanaInicial = primeiroDia.getDay(); // 0 (Domingo) a 6 (Sábado)
+
+        let htmlMes = `<div class="mes-calendario">
+            <h5>${NOMES_MESES[mes]} ${ano}</h5>
+            <div class="dias-semana">
+                ${DIAS_CURTOS.map(d => `<span>${d}</span>`).join('')}
+            </div>
+            <div class="grade-dias">`;
+
+        // Insere células vazias para alinhar o primeiro dia
+        for (let i = 0; i < diaSemanaInicial; i++) {
+            htmlMes += `<div class="dia-vazio"></div>`;
+        }
+
+        // Itera sobre os dias do mês
+        for (let dia = 1; dia <= ultimoDia; dia++) {
+            const data = new Date(ano, mes, dia);
+            const dataKey = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+            const tipoDiaSalvo = dadosCalendario[dataKey] || 'LETV'; // Padrão: Dia Letivo
+            
+            htmlMes += `<div class="dia-calendario" 
+                            data-data="${dataKey}" 
+                            data-tipo="${tipoDiaSalvo}"
+                            onclick="aplicarTipoDia('${tipo}', this)">
+                            ${dia}
+                        </div>`;
+        }
+
+        htmlMes += `</div></div>`;
+        containerVisual.innerHTML += htmlMes;
+    }
+}
+
+/**
+ * Aplica o tipo de dia selecionado no dropdown ao dia clicado.
+ * @param {string} tipo 'integrado' ou 'superior'.
+ * @param {HTMLElement} element O elemento do dia clicado.
+ */
+function aplicarTipoDia(tipo, element) {
+    const selectTipo = document.getElementById(`cal_${tipo}_tipo`);
+    const novoTipo = selectTipo.value;
+    
+    if (!novoTipo) {
+        alert('Por favor, selecione um Tipo de Dia na caixa acima para aplicar.');
+        return;
+    }
+    
+    // Atualiza o atributo no DOM
+    element.setAttribute('data-tipo', novoTipo);
+}
+
+/**
+ * Seleciona e aplica o tipo de dia a todos os dias de uma determinada semana (e mês).
+ * @param {string} tipo 'integrado' ou 'superior'.
+ * @param {number} diaSemana Dia da semana (1=Segunda, 6=Sábado, 0=Domingo).
+ */
+function selecionarDiaSemana(tipo, diaSemana) {
+    const selectTipo = document.getElementById(`cal_${tipo}_tipo`);
+    const novoTipo = selectTipo.value;
+    
+    if (!novoTipo) {
+        alert('Selecione um Tipo de Dia antes de usar as Ações Rápidas.');
         return;
     }
 
-    let eventos = obterDados(tipoCalendario);
-    eventos.push(evento);
-    salvarDados(tipoCalendario, eventos);
-
-    alert(`Evento '${evento.descricao}' salvo com sucesso no Calendário de ${tipoCalendario.includes('integrado') ? 'Integrado' : 'Superior'}!`);
-    form.reset();
-    carregarEventosCalendario(tipoCalendario);
+    // A função Date.getDay() retorna 0 (Domingo) a 6 (Sábado).
+    // Nossa função recebe 1 (Segunda) a 6 (Sábado) e 7 (Domingo, se necessário, mas vamos usar 0-6 do JS).
+    // Ajuste: 1=Seg (1), 2=Ter (2), ..., 5=Sex (5), 6=Sab (6), 7=Dom (0)
+    
+    const diaJS = diaSemana % 7; // Garante que 7 seja 0 (Domingo), mas como só temos 1-6 no botão, vai de 1-6.
+    
+    document.querySelectorAll(`#grade-calendario-${tipo}-visual .dia-calendario`).forEach(diaElement => {
+        const dataKey = diaElement.getAttribute('data-data');
+        const data = new Date(dataKey);
+        
+        // Compara com o dia da semana do JS (1=Seg, 6=Sab)
+        if (data.getDay() === diaSemana) {
+             diaElement.setAttribute('data-tipo', novoTipo);
+        }
+    });
 }
 
 /**
- * Preenche a tabela com os eventos do calendário específico.
- * @param {string} tipoCalendario 'calendario_integrado' ou 'calendario_superior'.
+ * Limpa o tipo de dia de todos os dias selecionados (volta para LETV).
+ * @param {string} tipo 'integrado' ou 'superior'.
  */
-function carregarEventosCalendario(tipoCalendario) {
-    const eventos = obterDados(tipoCalendario);
-    const tabelaBody = document.querySelector(`#tabela-${tipoCalendario.replace('_', '-')} tbody`);
-    if (!tabelaBody) return;
-
-    tabelaBody.innerHTML = '';
-
-    eventos
-        .sort((a, b) => new Date(a.data_inicio) - new Date(b.data_inicio)) // Ordena por data
-        .forEach(e => {
-            const row = tabelaBody.insertRow();
-            row.insertCell().textContent = e.tipo;
-            row.insertCell().textContent = e.descricao;
-            // Formatação simples da data (ex: '2025-12-08' -> '08/12/2025')
-            row.insertCell().textContent = formatarData(e.data_inicio); 
-            row.insertCell().textContent = formatarData(e.data_fim) === formatarData(e.data_inicio) ? '-' : formatarData(e.data_fim);
-            
-            const cellAcoes = row.insertCell();
-            const btnRemover = document.createElement('button');
-            btnRemover.className = 'botao-acao botao-remover';
-            btnRemover.textContent = '🗑️';
-            btnRemover.onclick = () => removerDados(tipoCalendario, e.id, e.descricao);
-            cellAcoes.appendChild(btnRemover);
-        });
+function limparSelecao(tipo) {
+    document.querySelectorAll(`#grade-calendario-${tipo}-visual .dia-calendario`).forEach(diaElement => {
+        diaElement.setAttribute('data-tipo', 'LETV');
+    });
+    alert(`Seleção de ${tipo} limpa. Todos os dias estão como Letivo Normal.`);
 }
 
 /**
- * Função utilitária para formatar datas (DD/MM/AAAA).
+ * Salva o estado atual do calendário do DOM para o Local Storage.
+ * @param {string} tipo 'integrado' ou 'superior'.
  */
-function formatarData(dataISO) {
-    if (!dataISO) return '-';
-    try {
-        const [ano, mes, dia] = dataISO.split('-');
-        return `${dia}/${mes}/${ano}`;
-    } catch (e) {
-        return dataISO;
-    }
+function salvarCalendario(tipo) {
+    const key = `calendario_${tipo}`;
+    const ano = document.getElementById(`cal_${tipo}_ano`).value;
+    const novosDados = {};
+    
+    // Itera sobre todos os dias no DOM
+    document.querySelectorAll(`#grade-calendario-${tipo}-visual .dia-calendario`).forEach(diaElement => {
+        const dataKey = diaElement.getAttribute('data-data'); // YYYY-MM-DD
+        const tipoDia = diaElement.getAttribute('data-tipo');
+        
+        // Só salva dias que não são 'LETV' (Letivo Normal) para economizar espaço
+        if (tipoDia !== 'LETV') {
+            novosDados[dataKey] = tipoDia;
+        }
+    });
+
+    // Pega os dados salvos de anos anteriores e mescla
+    // (Por enquanto, apenas sobrescrevemos o ano atual)
+    
+    salvarDados(key, novosDados);
+    alert(`Calendário Anual (${ano}) para Cursos ${tipo.toUpperCase()} salvo com sucesso!`);
 }
 
 // ----------------------------------------------------------------------
