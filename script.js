@@ -345,15 +345,11 @@ function salvarHorario() {
 // --- 5. LÓGICA DE CADASTRO DE TURMAS e DISCIPLINAS (Esboço) ---
 // ----------------------------------------------------------------------
 
+// Função salvarTurma (Mantenha como está)
 function salvarTurma() {
     const form = document.getElementById('form-cadastro-turmas');
     const turma = {
-        id: Date.now(), // ID único para a turma
-        nome: form.turma_nome.value.trim(),
-        modalidade: form.turma_modalidade.value,
-        sala: form.turma_sala.value.trim(),
-        turno_primario: form.turma_turno_primario.value,
-        turno_secundario: form.turma_turno_secundario.value,
+        // ... (lógica existente) ...
     };
 
     if (!turma.nome || !turma.modalidade) {
@@ -367,75 +363,227 @@ function salvarTurma() {
     alert(`Turma ${turma.nome} salva com sucesso!`);
     form.reset();
     carregarTurmas();
+    
+    // Atualiza a lista de turmas no dropdown de Disciplinas
+    preencherSelectsDisciplina(); 
 }
 
+// Função carregarTurmas (Mantenha como está)
 function carregarTurmas() {
-    const turmas = obterDados('turma');
-    const tabelaBody = document.querySelector('#tabela-turmas tbody');
-    if (!tabelaBody) return;
-
-    tabelaBody.innerHTML = '';
-    turmas.forEach(t => {
-        const row = tabelaBody.insertRow();
-        row.insertCell().textContent = t.nome;
-        row.insertCell().textContent = t.modalidade;
-        row.insertCell().textContent = t.sala;
-        row.insertCell().textContent = `${t.turno_primario} ${t.turno_secundario ? 'e ' + t.turno_secundario : ''}`;
-        
-        const cellAcoes = row.insertCell();
-        const btnRemover = document.createElement('button');
-        btnRemover.className = 'botao-acao botao-remover';
-        btnRemover.textContent = '🗑️';
-        btnRemover.onclick = () => removerDados('turma', t.id, t.nome);
-        cellAcoes.appendChild(btnRemover);
-    });
+    // ... (lógica existente) ...
 }
 
+
+/**
+ * Preenche os selects de Turma e Professor na aba de Cadastro de Disciplinas.
+ */
 function preencherSelectsDisciplina() {
     const turmas = obterDados('turma');
     const professores = obterDados('professor');
     const selectTurma = document.getElementById('disciplina_turma');
     const selectProfessor = document.getElementById('disciplina_professor');
     
+    // Limpar e preencher Turmas
     selectTurma.innerHTML = '<option value="">Selecione a Turma</option>';
     turmas.forEach(t => {
         selectTurma.innerHTML += `<option value="${t.id}">${t.nome} (${t.modalidade})</option>`;
     });
 
+    // Limpar e preencher Professores
     selectProfessor.innerHTML = '<option value="">Selecione o Professor</option>';
     professores.forEach(p => {
         selectProfessor.innerHTML += `<option value="${p.siape}">${p.nome} (SIAPE: ${p.siape})</option>`;
     });
     
-    // Lógica para Aglutinação (exige JS para preencher as opções corretamente)
-    document.getElementById('disciplina_aulas_semanais').addEventListener('change', preencherAglutinacao);
+    // Adiciona o ouvinte para a lógica de Aglutinação
+    const aulasInput = document.getElementById('disciplina_aulas_semanais');
+    if (!aulasInput.dataset.listenerAdded) { // Evita adicionar múltiplos listeners
+        aulasInput.addEventListener('change', preencherAglutinacao);
+        aulasInput.dataset.listenerAdded = 'true';
+    }
+    // Garante que a aglutinação seja preenchida se o valor já existir
+    preencherAglutinacao(); 
 }
 
+/**
+ * Preenche as opções de aglutinação baseadas na quantidade de aulas semanais.
+ */
 function preencherAglutinacao() {
-    const aulasSemanais = parseInt(document.getElementById('disciplina_aulas_semanais').value);
+    const aulasSemanais = parseInt(document.getElementById('disciplina_aulas_semanais').value || 0);
     const selectAglutinacao = document.getElementById('disciplina_aglutinacao');
+    const aulasInput = document.getElementById('disciplina_aulas_semanais');
     selectAglutinacao.innerHTML = '<option value="">Selecione a Aglutinação</option>';
+    selectAglutinacao.disabled = true;
 
-    if (aulasSemanais > 0) {
-        // Exemplo de aglutinação para 4 aulas
-        if (aulasSemanais === 4) {
-             selectAglutinacao.innerHTML += '<option value="2x2">2 Dias de 2 Aulas</option>';
-        } else if (aulasSemanais === 3) {
-             selectAglutinacao.innerHTML += '<option value="3x1">1 Dia de 3 Aulas</option>';
-             selectAglutinacao.innerHTML += '<option value="2+1">1 Dia de 2 Aulas + 1 Dia de 1 Aula</option>';
-        } else {
-             selectAglutinacao.innerHTML += `<option value="${aulasSemanais}x1">1 Dia de ${aulasSemanais} Aula(s)</option>`;
+    if (aulasSemanais < 1) {
+        return;
+    }
+
+    // A disciplina deve ter o número total de aulas. O sistema deve tentar dividir em blocos.
+    // As opções são: 1x1, 2x2, 3x1, 2+1, 2+3, etc.
+    // O sistema tentará usar blocos grandes (3 aulas) e blocos médios (2 aulas).
+    
+    const opcoes = [];
+    const aulasRestantes = aulasSemanais;
+    
+    // 1. Opção de uma aula por dia (Sempre disponível)
+    opcoes.push({ value: `1x${aulasSemanais}`, label: `${aulasSemanais} Dia(s) de 1 Aula` });
+    
+    // 2. Opções de blocos maiores
+    if (aulasRestantes % 2 === 0) {
+        const blocos2 = aulasRestantes / 2;
+        opcoes.push({ value: `${blocos2}x2`, label: `${blocos2} Dia(s) de 2 Aulas` });
+    }
+    
+    if (aulasRestantes % 3 === 0) {
+        const blocos3 = aulasRestantes / 3;
+        opcoes.push({ value: `${blocos3}x3`, label: `${blocos3} Dia(s) de 3 Aulas` });
+    }
+
+    // 3. Combinações Complexas (Ex: 5 e 4 aulas)
+    switch (aulasSemanais) {
+        case 3:
+            opcoes.push({ value: '2+1', label: '1 Dia de 2 Aulas + 1 Dia de 1 Aula' });
+            opcoes.push({ value: '3x1', label: '1 Dia de 3 Aulas' });
+            break;
+        case 4:
+            opcoes.push({ value: '2x2', label: '2 Dias de 2 Aulas' });
+            break;
+        case 5:
+            opcoes.push({ value: '3+2', label: '1 Dia de 3 Aulas + 1 Dia de 2 Aulas' });
+            break;
+        case 6:
+            opcoes.push({ value: '2x3', label: '2 Dias de 3 Aulas' });
+            opcoes.push({ value: '3x2', label: '3 Dias de 2 Aulas' });
+            break;
+    }
+    
+    // Filtra duplicatas e preenche o select
+    const uniqueOptions = Array.from(new Set(opcoes.map(o => o.value)))
+        .map(value => opcoes.find(o => o.value === value));
+
+    uniqueOptions.forEach(opt => {
+        selectAglutinacao.innerHTML += `<option value="${opt.value}">${opt.label}</option>`;
+    });
+
+    selectAglutinacao.disabled = false;
+    
+    // Tenta selecionar o valor atual se estiver em edição
+    const disciplinaAtual = document.getElementById('form-cadastro-disciplinas').dataset.editingId;
+    if (disciplinaAtual) {
+        const disciplina = obterDados('disciplina').find(d => d.id == disciplinaAtual);
+        if (disciplina) {
+            selectAglutinacao.value = disciplina.aglutinacao || '';
         }
     }
 }
 
+
+/**
+ * Salva as informações da disciplina no Local Storage.
+ */
 function salvarDisciplina() {
-    // Implementar a lógica de salvar e carregar disciplinas, similar a Turmas
-    alert('Função salvarDisciplina em construção...');
+    const form = document.getElementById('form-cadastro-disciplinas');
+    const disciplina = {
+        id: form.dataset.editingId || Date.now(),
+        nome: form.disciplina_nome.value.trim(),
+        turmaId: form.disciplina_turma.value,
+        professorSiape: form.disciplina_professor.value,
+        aulasSemanais: parseInt(form.disciplina_aulas_semanais.value),
+        aglutinacao: form.disciplina_aglutinacao.value,
+        fixaHorario: form.disciplina_fixa_horario.value,
+        // TODO: Adicionar campos de dia/hora se 'fixaHorario' for 'SIM'
+    };
+
+    if (!disciplina.nome || !disciplina.turmaId || !disciplina.professorSiape || disciplina.aulasSemanais < 1 || !disciplina.aglutinacao) {
+        alert('Por favor, preencha todos os campos obrigatórios (Disciplina, Turma, Professor, Aulas Semanais e Aglutinação).');
+        return;
+    }
+
+    let disciplinas = obterDados('disciplina');
+    const index = disciplinas.findIndex(d => d.id == disciplina.id);
+
+    if (index !== -1) {
+        disciplinas[index] = disciplina;
+        alert(`Disciplina ${disciplina.nome} atualizada com sucesso!`);
+    } else {
+        disciplinas.push(disciplina);
+        alert(`Disciplina ${disciplina.nome} cadastrada com sucesso!`);
+    }
+
+    salvarDados('disciplina', disciplinas);
+    form.reset();
+    form.removeAttribute('data-editing-id');
+    document.querySelector('#disciplina_aglutinacao').disabled = true; // Desativa até que as aulas sejam definidas
+    carregarDisciplinas();
 }
 
+/**
+ * Preenche a tabela de Disciplinas Cadastradas.
+ */
 function carregarDisciplinas() {
-    // Implementar a lógica de carregar a tabela de disciplinas
+    const disciplinas = obterDados('disciplina');
+    const turmas = obterDados('turma');
+    const professores = obterDados('professor');
+    const tabelaBody = document.querySelector('#tabela-disciplinas tbody');
+    if (!tabelaBody) return;
+
+    tabelaBody.innerHTML = '';
+    
+    disciplinas.forEach(d => {
+        // Encontra os nomes correspondentes para exibição
+        const turma = turmas.find(t => t.id == d.turmaId);
+        const professor = professores.find(p => p.siape == d.professorSiape);
+        
+        const row = tabelaBody.insertRow();
+        row.insertCell().textContent = d.nome;
+        row.insertCell().textContent = turma ? turma.nome : 'Turma Removida';
+        row.insertCell().textContent = professor ? professor.nome : 'Prof. Removido';
+        row.insertCell().textContent = d.aulasSemanais;
+        row.insertCell().textContent = d.aglutinacao;
+        
+        const cellAcoes = row.insertCell();
+        
+        const btnEditar = document.createElement('button');
+        btnEditar.className = 'botao-acao botao-editar';
+        btnEditar.textContent = '✏️ EDITAR';
+        btnEditar.onclick = () => editarDisciplina(d.id);
+        cellAcoes.appendChild(btnEditar);
+
+        const btnRemover = document.createElement('button');
+        btnRemover.className = 'botao-acao botao-remover';
+        btnRemover.textContent = '🗑️ REMOVER';
+        btnRemover.onclick = () => removerDados('disciplina', d.id, d.nome);
+        cellAcoes.appendChild(btnRemover);
+    });
+}
+
+/**
+ * Carrega os dados de uma disciplina no formulário para edição.
+ */
+function editarDisciplina(id) {
+    const disciplinas = obterDados('disciplina');
+    const disciplina = disciplinas.find(d => d.id == id);
+    const form = document.getElementById('form-cadastro-disciplinas');
+
+    if (disciplina) {
+        form.dataset.editingId = id; // Marca que estamos editando
+        
+        // Popula campos básicos
+        form.disciplina_nome.value = disciplina.nome;
+        form.disciplina_turma.value = disciplina.turmaId;
+        form.disciplina_professor.value = disciplina.professorSiape;
+        form.disciplina_aulas_semanais.value = disciplina.aulasSemanais;
+        form.disciplina_fixa_horario.value = disciplina.fixaHorario;
+        
+        // Recarrega as opções de aglutinação baseadas no número de aulas
+        preencherAglutinacao(); 
+        // Em seguida, define o valor específico de aglutinação
+        form.disciplina_aglutinacao.value = disciplina.aglutinacao;
+        
+        alert(`Carregando disciplina ${disciplina.nome} para edição.`);
+        form.disciplina_nome.focus();
+    }
 }
 
 // ----------------------------------------------------------------------
@@ -468,16 +616,21 @@ document.addEventListener('DOMContentLoaded', () => {
     Object.keys(LS_KEYS).forEach(obterDados); 
     
     inicializarNavegacao();
-    carregarProfessores(); // Carrega a tabela inicial
+    carregarProfessores(); // Carrega a tabela inicial de Professores
+    carregarTurmas(); // Carrega a tabela inicial de Turmas
+    carregarDisciplinas(); // Carrega a tabela inicial de Disciplinas
     
-    // Mapeamento dos botões Salvar genéricos
+    // Garante que os selects de disciplina estejam prontos
+    preencherSelectsDisciplina(); 
+    
+    // Mapeamento dos botões Salvar genéricos (Mantenha este bloco como está)
     document.querySelectorAll('.botao-salvar').forEach(button => {
         button.addEventListener('click', function() {
             const target = this.getAttribute('data-save-target');
             if (target === 'professor') salvarProfessor();
             else if (target === 'horario') salvarHorario();
             else if (target === 'turma') salvarTurma();
-            else if (target === 'disciplina') salvarDisciplina();
+            else if (target === 'disciplina') salvarDisciplina(); // Novo mapeamento
         });
     });
 });
