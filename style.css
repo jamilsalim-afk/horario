@@ -321,3 +321,46 @@ body {
     cursor: pointer;
     font-size: 0.9em;
 }
+/* --- Estilos para a Grade de Horário --- */
+
+.tabela-horario {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+.tabela-horario th, .tabela-horario td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+    font-size: 0.9em;
+    height: 60px; /* Para melhor visualização dos slots */
+}
+
+.tabela-horario th {
+    background-color: var(--ifro-azul-claro);
+    color: var(--ifro-branco);
+    font-weight: bold;
+}
+
+.tabela-horario .slot-livre {
+    background-color: #f9f9f9;
+}
+
+.tabela-horario .slot-alocado {
+    background-color: #e6ffe6; /* Verde claro */
+    border: 2px solid var(--ifro-verde);
+    font-weight: bold;
+}
+
+.tabela-horario .slot-restrito {
+    background-color: #ffe6e6; /* Vermelho claro */
+    color: #999;
+    font-style: italic;
+}
+
+#grade-horario-output h5 {
+    margin-top: 20px;
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 10px;
+}
