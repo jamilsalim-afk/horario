@@ -389,95 +389,88 @@
             </section>
             <section id="cadastro-calendario-integrado" class="aba-conteudo" style="display:none;">
                 <h3 class="titulo-aba">🗓️ Calendário - Cursos Integrados</h3>
-                <p>Defina as datas de feriados, recessos e outros dias não letivos que afetam os cursos integrados.</p>
-
-                <div class="formulario-cadastro">
-                    <form id="form-cadastro-calendario-integrado">
-                        <h4>Adicionar Evento ao Calendário Integrado</h4>
+                <div id="calendario-integrado-container">
+                    <div class="ferramentas-calendario">
+                        <h4>Ferramentas de Configuração (Integrado)</h4>
                         <div class="grid-form-basico">
                             <div class="grupo-campo">
-                                <label for="cal_int_tipo">Tipo de Dia:</label>
-                                <select id="cal_int_tipo" name="tipo" required>
-                                    <option value="">Selecione o Tipo</option>
-                                    <option value="FERIADO">Feriado Nacional/Municipal</option>
-                                    <option value="RECESSO">Recesso Escolar</option>
-                                    <option value="NAO_LETV">Dia Não Letivo (sem aula)</option>
-                                    <option value="SAB_LETIVO">Sábado Letivo</option>
+                                <label for="cal_int_ano">Ano Letivo:</label>
+                                <select id="cal_int_ano" name="ano_letivo" onchange="renderizarCalendario('integrado')" required>
+                                    <option value="2025">2025</option>
+                                    <option value="2026">2026</option>
                                 </select>
                             </div>
                             <div class="grupo-campo">
-                                <label for="cal_int_descricao">Descrição/Nome do Evento:</label>
-                                <input type="text" id="cal_int_descricao" name="descricao" required>
-                            </div>
-                            <div class="grupo-campo">
-                                <label for="cal_int_data_inicio">Data de Início:</label>
-                                <input type="date" id="cal_int_data_inicio" name="data_inicio" required>
-                            </div>
-                            <div class="grupo-campo">
-                                <label for="cal_int_data_fim">Data de Fim (Opcional, para períodos):</label>
-                                <input type="date" id="cal_int_data_fim" name="data_fim">
+                                <label for="cal_int_tipo">Tipo de Dia para Seleção:</label>
+                                <select id="cal_int_tipo" name="tipo_dia" required>
+                                    <option value="">-- Clique para Aplicar --</option>
+                                    <option value="FERIADO">1. Feriado/Ponto Facultativo</option>
+                                    <option value="RECESSO">2. Recesso Escolar</option>
+                                    <option value="NAO_LETV">3. Dia Não Letivo</option>
+                                    <option value="SAB_LETV">4. Sábado Letivo</option>
+                                    <option value="LETV">5. Dia Letivo Normal (Limpar)</option>
+                                </select>
                             </div>
                         </div>
-                    </form>
-                    <button class="botao-salvar" type="button" data-save-target="calendario_integrado">💾 SALVAR EVENTO</button>
-                </div>
-
-                <div class="lista-dados">
-                    <h4>Eventos Cadastrados (Integrado)</h4>
-                    <table class="tabela-dados" id="tabela-calendario-integrado">
-                        <thead>
-                            <tr><th>Tipo</th><th>Descrição</th><th>Início</th><th>Fim</th><th>Ações</th></tr>
-                        </thead>
-                        <tbody>
-                            </tbody>
-                    </table>
+                        
+                        <div class="botoes-acao-rapida">
+                            <h5>Ações Rápidas de Seleção:</h5>
+                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('integrado', 1)">Todas as Segundas</button>
+                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('integrado', 2)">Todas as Terças</button>
+                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('integrado', 3)">Todas as Quartas</button>
+                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('integrado', 4)">Todas as Quintas</button>
+                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('integrado', 5)">Todas as Sextas</button>
+                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('integrado', 6)">Todos os Sábados</button>
+                            <button type="button" class="botao-acao botao-remover" onclick="limparSelecao('integrado')">Limpar Seleção Atual</button>
+                        </div>
+                    </div>
+                    
+                    <button class="botao-salvar" type="button" data-save-target="calendario_integrado">💾 SALVAR CALENDÁRIO DO ANO</button>
+                    
+                    <div class="grade-calendario-anual" id="grade-calendario-integrado-visual">
+                        </div>
                 </div>
             </section>
 
             <section id="cadastro-calendario-superior" class="aba-conteudo" style="display:none;">
                 <h3 class="titulo-aba">🗓️ Calendário - Cursos Superiores</h3>
-                <p>Defina as datas de feriados, recessos e outros dias não letivos que afetam os cursos superiores.</p>
-
-                <div class="formulario-cadastro">
-                    <form id="form-cadastro-calendario-superior">
-                        <h4>Adicionar Evento ao Calendário Superior</h4>
+                 <div id="calendario-superior-container">
+                    <div class="ferramentas-calendario">
+                        <h4>Ferramentas de Configuração (Superior)</h4>
                         <div class="grid-form-basico">
                             <div class="grupo-campo">
-                                <label for="cal_sup_tipo">Tipo de Dia:</label>
-                                <select id="cal_sup_tipo" name="tipo" required>
-                                    <option value="">Selecione o Tipo</option>
-                                    <option value="FERIADO">Feriado Nacional/Municipal</option>
-                                    <option value="RECESSO">Recesso Acadêmico</option>
-                                    <option value="NAO_LETV">Dia Não Letivo (sem aula)</option>
-                                    <option value="REPO_AULA">Dia de Reposição (Letivo)</option>
+                                <label for="cal_sup_ano">Ano Letivo:</label>
+                                <select id="cal_sup_ano" name="ano_letivo" onchange="renderizarCalendario('superior')" required>
+                                    <option value="2025">2025</option>
+                                    <option value="2026">2026</option>
                                 </select>
                             </div>
                             <div class="grupo-campo">
-                                <label for="cal_sup_descricao">Descrição/Nome do Evento:</label>
-                                <input type="text" id="cal_sup_descricao" name="descricao" required>
-                            </div>
-                            <div class="grupo-campo">
-                                <label for="cal_sup_data_inicio">Data de Início:</label>
-                                <input type="date" id="cal_sup_data_inicio" name="data_inicio" required>
-                            </div>
-                            <div class="grupo-campo">
-                                <label for="cal_sup_data_fim">Data de Fim (Opcional, para períodos):</label>
-                                <input type="date" id="cal_sup_data_fim" name="data_fim">
+                                <label for="cal_sup_tipo">Tipo de Dia para Seleção:</label>
+                                <select id="cal_sup_tipo" name="tipo_dia" required>
+                                    <option value="">-- Clique para Aplicar --</option>
+                                    <option value="FERIADO">1. Feriado/Ponto Facultativo</option>
+                                    <option value="RECESSO">2. Recesso Acadêmico</option>
+                                    <option value="NAO_LETV">3. Dia Não Letivo</option>
+                                    <option value="REPO_AULA">4. Dia de Reposição (Letivo)</option>
+                                    <option value="LETV">5. Dia Letivo Normal (Limpar)</option>
+                                </select>
                             </div>
                         </div>
-                    </form>
-                    <button class="botao-salvar" type="button" data-save-target="calendario_superior">💾 SALVAR EVENTO</button>
-                </div>
-
-                <div class="lista-dados">
-                    <h4>Eventos Cadastrados (Superior)</h4>
-                    <table class="tabela-dados" id="tabela-calendario-superior">
-                        <thead>
-                            <tr><th>Tipo</th><th>Descrição</th><th>Início</th><th>Fim</th><th>Ações</th></tr>
-                        </thead>
-                        <tbody>
-                            </tbody>
-                    </table>
+                        <div class="botoes-acao-rapida">
+                            <h5>Ações Rápidas de Seleção:</h5>
+                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('superior', 1)">Todas as Segundas</button>
+                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('superior', 2)">Todas as Terças</button>
+                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('superior', 3)">Todas as Quartas</button>
+                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('superior', 4)">Todas as Quintas</button>
+                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('superior', 5)">Todas as Sextas</button>
+                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('superior', 6)">Todos os Sábados</button>
+                            <button type="button" class="botao-acao botao-remover" onclick="limparSelecao('superior')">Limpar Seleção Atual</button>
+                        </div>
+                    </div>
+                    <button class="botao-salvar" type="button" data-save-target="calendario_superior">💾 SALVAR CALENDÁRIO DO ANO</button>
+                    <div class="grade-calendario-anual" id="grade-calendario-superior-visual">
+                        </div>
                 </div>
             </section>
             
