@@ -1,44 +1,231 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gerador de Horários - IFRO Campus Cacoal (Protótipo)</title>
+/* Definição de Cores Padrão IFRO (Verde Escuro, Vermelho Destaque, Branco) */
+:root {
+    --ifro-verde: #004d40; /* Verde Escuro Institucional */
+    --ifro-vermelho: #c62828; /* Vermelho para Ações/Destaque */
+    --ifro-branco: #ffffff;
+    --ifro-cinza-claro: #f4f4f4;
+    --ifro-sombra: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
 
-  <!-- estilos -->
-  <link rel="stylesheet" href="style.css">
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
 
-  <!-- html2pdf (CDN) para geração de PDFs formatados -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
-</head>
-<body>
-  <div class="app-wrap">
-    <aside class="sidebar">
-      <div class="logo">IFRO — Horários</div>
-      <nav>
-        <a href="#" data-tab="inicio">Início</a>
-        <a href="#" data-tab="instituicao">Instituição</a>
-        <a href="#" data-tab="cadastro">Cadastro</a>
-        <a href="#" data-tab="horario-base">Horário Base</a>
-        <a href="#" data-tab="horario-semanal">Horário Semanal</a>
-        <a href="#" data-tab="relatorios">Relatórios</a>
-      </nav>
-      <hr>
-      <button class="btn btn-primary" id="save-all">Salvar Tudo (local)</button>
-    </aside>
+body {
+    background-color: var(--ifro-cinza-claro);
+    line-height: 1.6;
+}
 
-    <main class="main-content">
-      <header class="header-institucional">
-        <h1>INSTITUTO FEDERAL DE RONDÔNIA</h1>
-        <h2>CAMPUS CACOAL</h2>
-        <p>DEPARTAMENTO DE APOIO AO ENSINO</p>
-        <p>COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS</p>
-      </header>
+/* --- Cabeçalho Institucional (Item 1) --- */
+.cabecalho-institucional {
+    background-color: var(--ifro-verde);
+    color: var(--ifro-branco);
+    padding: 20px 0;
+    text-align: center;
+    box-shadow: var(--ifro-sombra);
+    margin-bottom: 20px;
+}
 
-      <section class="card" id="tab-conteudo"><!-- conteúdo dinâmico --></section>
-    </main>
-  </div>
+.cabecalho-institucional h1 {
+    font-size: 2.2em;
+    margin-bottom: 5px;
+}
 
-  <script src="app.js"></script>
-</body>
-</html>
+.cabecalho-institucional h2 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    font-weight: normal;
+    border-bottom: 2px solid var(--ifro-vermelho);
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+.cabecalho-institucional p {
+    font-size: 1em;
+    margin: 3px 0;
+}
+
+/* --- Layout Principal (Barra Lateral + Conteúdo) --- */
+.container-principal {
+    display: flex;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* --- Barra Lateral (Side Bar) --- */
+.barra-lateral {
+    width: 250px;
+    padding: 20px;
+    background-color: var(--ifro-branco);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh; /* Para que a barra lateral preencha a tela verticalmente */
+    overflow-y: auto;
+}
+
+.barra-lateral h3, .barra-lateral h4 {
+    color: var(--ifro-verde);
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.barra-lateral nav a {
+    display: block;
+    color: #333;
+    padding: 10px 15px;
+    text-decoration: none;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.barra-lateral nav a:hover {
+    background-color: #e0f2f1; /* Tom de verde claro */
+    color: var(--ifro-verde);
+}
+
+.barra-lateral nav a.ativo {
+    background-color: var(--ifro-vermelho);
+    color: var(--ifro-branco);
+    font-weight: bold;
+}
+
+.sub-menu {
+    margin-left: 15px;
+    border-left: 2px solid #ccc;
+    padding-left: 5px;
+}
+
+.sub-menu a {
+    font-size: 0.9em;
+    padding: 5px 10px;
+    margin-bottom: 2px;
+}
+
+/* --- Conteúdo Principal (Main Content) --- */
+.conteudo-principal {
+    flex-grow: 1;
+    padding: 20px 40px;
+}
+
+.titulo-aba {
+    color: var(--ifro-verde);
+    border-bottom: 3px solid var(--ifro-vermelho);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+.aba-conteudo {
+    background-color: var(--ifro-branco);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: var(--ifro-sombra);
+}
+
+/* --- Estilo de Formulário --- */
+.formulario-cadastro h4 {
+    color: var(--ifro-vermelho);
+    margin-top: 25px;
+    margin-bottom: 15px;
+    border-left: 4px solid var(--ifro-vermelho);
+    padding-left: 10px;
+}
+
+.grupo-campo {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.grupo-campo label {
+    font-weight: bold;
+    color: var(--ifro-verde);
+    margin-bottom: 5px;
+}
+
+.grupo-campo input[type="text"],
+.grupo-campo select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+    max-width: 400px;
+}
+
+/* --- Botão Salvar --- */
+.botao-salvar {
+    background-color: var(--ifro-verde);
+    color: var(--ifro-branco);
+    border: none;
+    padding: 12px 25px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    margin-top: 20px;
+    transition: background-color 0.2s;
+}
+
+.botao-salvar:hover {
+    background-color: #00695c; /* Tom mais escuro do verde */
+}
+
+/* --- Tabela de Dados --- */
+.lista-professores {
+    margin-top: 40px;
+}
+
+.tabela-dados {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.tabela-dados th, .tabela-dados td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+}
+
+.tabela-dados th {
+    background-color: var(--ifro-verde);
+    color: var(--ifro-branco);
+    font-weight: bold;
+}
+
+.tabela-dados tr:nth-child(even) {
+    background-color: var(--ifro-cinza-claro);
+}
+
+/* --- Botões de Ação na Tabela --- */
+.botao-acao {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 5px;
+    font-weight: bold;
+    transition: opacity 0.2s;
+}
+
+.botao-acao:hover {
+    opacity: 0.8;
+}
+
+.botao-editar {
+    background-color: #1e88e5; /* Azul para editar */
+    color: var(--ifro-branco);
+}
+
+.botao-remover {
+    background-color: var(--ifro-vermelho);
+    color: var(--ifro-branco);
+}
