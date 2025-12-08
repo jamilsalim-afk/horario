@@ -158,7 +158,7 @@ function mostrarConteudoDaAba(targetId) {
 }
 
 function inicializarNavegacao() {
-    const links = document.querySelectorAll('.link-menu, .sub-link-menu');
+    // ... (restante da função) ...
 
     links.forEach(link => {
         link.addEventListener('click', function(e) {
@@ -169,9 +169,11 @@ function inicializarNavegacao() {
 
             let targetId = this.getAttribute('href').substring(1);
             
-            // Se o link principal 'CADASTRO' for clicado, direciona para o primeiro sub-link
-            if (targetId === 'cadastro') {
-                targetId = 'cadastro-professores';
+            // Tratamento para links de Menu Principal que não são uma seção
+            if (targetId === 'cadastro' || targetId === 'instituicao-cadastro') {
+                // Se clicar em Cadastro, vai para a primeira sub-aba (Professores)
+                targetId = 'cadastro-professores'; 
+                // Ativa o sub-link de professores
                 document.querySelector('a[href="#cadastro-professores"]').classList.add('ativo');
             }
             
