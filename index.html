@@ -20,7 +20,7 @@
             <h3>Menu Principal</h3>
             <nav>
                 <a href="#instituicao-cadastro" class="link-menu">🏠 INSTITUIÇÃO</a>
-                <a href="#cadastro-professores" class="link-menu ativo">✍️ CADASTRO</a>
+                <a href="#cadastro" class="link-menu ativo">✍️ CADASTRO</a>
                 <a href="#relatorio-individual" class="link-menu">📄 RELATÓRIO</a>
                 <a href="#horario-base-gerar" class="link-menu">📅 HORÁRIO BASE</a>
                 <a href="#horario-semanal-gerar" class="link-menu">🗓️ HORÁRIO SEMANAL</a>
@@ -47,7 +47,7 @@
 
         <main class="conteudo-principal" id="conteudo-principal">
             
-            <section id="cadastro-professores" class="aba-conteudo">
+            <section id="cadastro-professores" class="aba-conteudo" style="display: block;">
                 <h3 class="titulo-aba">✍️ Cadastro de Professores</h3>
 
                 <div class="formulario-cadastro">
@@ -85,14 +85,14 @@
                         <div class="grid-restricoes">
                             <div class="grupo-restricao prd-pgd">
                                 <h5>PRD (Preparação Didática) - Principal</h5>
-                                <select name="prd_principal_dia" required>
+                                <select name="prd_principal_dia" id="prd_principal_dia" required>
                                     <option value="">Escolher DIA da Semana</option>
                                     <option value="SEGUNDA">SEGUNDA</option>
                                     <option value="TERCA">TERÇA</option>
                                     <option value="QUINTA">QUINTA</option>
                                     <option value="SEXTA">SEXTA</option>
                                 </select>
-                                <select name="prd_principal_periodo" required>
+                                <select name="prd_principal_periodo" id="prd_principal_periodo" required>
                                     <option value="">Escolher PERÍODO</option>
                                     <option value="INTEIRO">DIA INTEIRO</option>
                                     <option value="MATUTINO">MATUTINO</option>
@@ -102,14 +102,14 @@
 
                             <div class="grupo-restricao prd-pgd">
                                 <h5>PRD (Preparação Didática) - Secundária (Opcional)</h5>
-                                <select name="prd_secundaria_dia">
+                                <select name="prd_secundaria_dia" id="prd_secundaria_dia">
                                     <option value="">Escolher DIA da Semana</option>
                                     <option value="SEGUNDA">SEGUNDA</option>
                                     <option value="TERCA">TERÇA</option>
                                     <option value="QUINTA">QUINTA</option>
                                     <option value="SEXTA">SEXTA</option>
                                 </select>
-                                <select name="prd_secundaria_periodo">
+                                <select name="prd_secundaria_periodo" id="prd_secundaria_periodo">
                                     <option value="">Escolher PERÍODO</option>
                                     <option value="INTEIRO">DIA INTEIRO</option>
                                     <option value="MATUTINO">MATUTINO</option>
@@ -119,14 +119,14 @@
 
                             <div class="grupo-restricao prd-pgd">
                                 <h5>PGD (Gestão de Desempenho) - Principal</h5>
-                                <select name="pgd_principal_dia" required>
+                                <select name="pgd_principal_dia" id="pgd_principal_dia" required>
                                     <option value="">Escolher DIA da Semana</option>
                                     <option value="SEGUNDA">SEGUNDA</option>
                                     <option value="TERCA">TERÇA</option>
                                     <option value="QUINTA">QUINTA</option>
                                     <option value="SEXTA">SEXTA</option>
                                 </select>
-                                <select name="pgd_principal_periodo" required>
+                                <select name="pgd_principal_periodo" id="pgd_principal_periodo" required>
                                     <option value="">Escolher PERÍODO</option>
                                     <option value="INTEIRO">DIA INTEIRO</option>
                                     <option value="MATUTINO">MATUTINO</option>
@@ -136,14 +136,14 @@
 
                             <div class="grupo-restricao prd-pgd">
                                 <h5>PGD (Gestão de Desempenho) - Secundária (Opcional)</h5>
-                                <select name="pgd_secundaria_dia">
+                                <select name="pgd_secundaria_dia" id="pgd_secundaria_dia">
                                     <option value="">Escolher DIA da Semana</option>
                                     <option value="SEGUNDA">SEGUNDA</option>
                                     <option value="TERCA">TERÇA</option>
                                     <option value="QUINTA">QUINTA</option>
                                     <option value="SEXTA">SEXTA</option>
                                 </select>
-                                <select name="pgd_secundaria_periodo">
+                                <select name="pgd_secundaria_periodo" id="pgd_secundaria_periodo">
                                     <option value="">Escolher PERÍODO</option>
                                     <option value="INTEIRO">DIA INTEIRO</option>
                                     <option value="MATUTINO">MATUTINO</option>
@@ -157,8 +157,8 @@
                             
                             <div class="grupo-restricao">
                                 <h5>Período Completo Livre</h5>
-                                <label>Não Trabalhar Manhã:</label>
-                                <select name="restricao_manha">
+                                <label for="restricao_manha">Não Trabalhar Manhã:</label>
+                                <select name="restricao_manha" id="restricao_manha">
                                     <option value="">Nenhum Dia</option>
                                     <option value="SEGUNDA">Segunda</option>
                                     <option value="TERCA">Terça</option>
@@ -166,16 +166,16 @@
                                     <option value="QUINTA">Quinta</option>
                                     <option value="SEXTA">Sexta</option>
                                 </select>
-                                <label>Não Trabalhar Tarde:</label>
-                                <select name="restricao_tarde">
+                                <label for="restricao_tarde">Não Trabalhar Tarde:</label>
+                                <select name="restricao_tarde" id="restricao_tarde">
                                     <option value="">Nenhum Dia</option>
                                     <option value="SEGUNDA">Segunda</option>
                                     <option value="TERCA">Terça</option>
                                     <option value="QUINTA">Quinta</option>
                                     <option value="SEXTA">Sexta</option>
                                 </select>
-                                <label>Não Trabalhar Noite:</label>
-                                <select name="restricao_noite">
+                                <label for="restricao_noite">Não Trabalhar Noite:</label>
+                                <select name="restricao_noite" id="restricao_noite">
                                     <option value="">Nenhum Dia</option>
                                     <option value="SEGUNDA">Segunda</option>
                                     <option value="TERCA">Terça</option>
@@ -187,33 +187,33 @@
                             
                             <div class="grupo-restricao">
                                 <h5>Aulas Pontuais Restritas</h5>
-                                <label>Não a Primeira da Manhã:</label>
-                                <select name="restricao_primeira_manha">
+                                <label for="restricao_primeira_manha">Não a Primeira da Manhã:</label>
+                                <select name="restricao_primeira_manha" id="restricao_primeira_manha">
                                     <option value="NAO">Não</option>
                                     <option value="SIM">Sim</option>
                                 </select>
-                                <label>Não as Duas Primeiras da Manhã:</label>
-                                <select name="restricao_duas_primeiras_manha">
+                                <label for="restricao_duas_primeiras_manha">Não as Duas Primeiras da Manhã:</label>
+                                <select name="restricao_duas_primeiras_manha" id="restricao_duas_primeiras_manha">
                                     <option value="NAO">Não</option>
                                     <option value="SIM">Sim</option>
                                 </select>
-                                <label>Não a Última da Manhã:</label>
-                                <select name="restricao_ultima_manha">
+                                <label for="restricao_ultima_manha">Não a Última da Manhã:</label>
+                                <select name="restricao_ultima_manha" id="restricao_ultima_manha">
                                     <option value="NAO">Não</option>
                                     <option value="SIM">Sim</option>
                                 </select>
-                                <label>Não a Primeira da Tarde:</label>
-                                <select name="restricao_primeira_tarde">
+                                <label for="restricao_primeira_tarde">Não a Primeira da Tarde:</label>
+                                <select name="restricao_primeira_tarde" id="restricao_primeira_tarde">
                                     <option value="NAO">Não</option>
                                     <option value="SIM">Sim</option>
                                 </select>
-                                <label>Não a Última da Tarde:</label>
-                                <select name="restricao_ultima_tarde">
+                                <label for="restricao_ultima_tarde">Não a Última da Tarde:</label>
+                                <select name="restricao_ultima_tarde" id="restricao_ultima_tarde">
                                     <option value="NAO">Não</option>
                                     <option value="SIM">Sim</option>
                                 </select>
-                                <label>Não as Duas Últimas da Tarde:</label>
-                                <select name="restricao_duas_ultimas_tarde">
+                                <label for="restricao_duas_ultimas_tarde">Não as Duas Últimas da Tarde:</label>
+                                <select name="restricao_duas_ultimas_tarde" id="restricao_duas_ultimas_tarde">
                                     <option value="NAO">Não</option>
                                     <option value="SIM">Sim</option>
                                 </select>
@@ -222,12 +222,12 @@
                     
                     </form>
                     
-                    <button class="botao-salvar" type="button" onclick="salvarProfessor()">💾 SALVAR INFORMAÇÕES</button>
+                    <button class="botao-salvar" type="button" data-save-target="professor">💾 SALVAR INFORMAÇÕES</button>
                 </div>
 
                 <div class="lista-professores">
                     <h4>Lista de Docentes Cadastrados (Editar/Remover)</h4>
-                    <table class="tabela-dados">
+                    <table class="tabela-dados" id="tabela-professores">
                         <thead>
                             <tr>
                                 <th>SIAPE</th>
@@ -243,15 +243,161 @@
                 </div>
             </section>
             
+            <section id="cadastro-horarios" class="aba-conteudo" style="display:none;">
+                 <h3 class="titulo-aba">⏰ Cadastro de Horários (Períodos)</h3>
+                 
+                 <form id="form-cadastro-horarios" class="formulario-cadastro">
+                    
+                    <h4>Horário Matutino</h4>
+                    <div id="horarios-matutino" class="container-horarios">
+                        </div>
+                    <button type="button" class="botao-acao botao-editar" onclick="adicionarCampoHorario('matutino')">➕ Inserir Novo Horário Matutino</button>
+
+                    <h4>Horário Vespertino</h4>
+                    <div id="horarios-vespertino" class="container-horarios">
+                        </div>
+                    <button type="button" class="botao-acao botao-editar" onclick="adicionarCampoHorario('vespertino')">➕ Inserir Novo Horário Vespertino</button>
+                    
+                    <h4>Horário Noturno</h4>
+                    <div id="horarios-noturno" class="container-horarios">
+                        </div>
+                    <button type="button" class="botao-acao botao-editar" onclick="adicionarCampoHorario('noturno')">➕ Inserir Novo Horário Noturno</button>
+
+                    <button class="botao-salvar" type="button" data-save-target="horario">💾 SALVAR INFORMAÇÕES</button>
+                 </form>
+                 
+                 <div class="lista-dados">
+                    <h4>Horários Cadastrados (Visão Geral)</h4>
+                    </div>
+            </section>
+
+            <section id="cadastro-turmas" class="aba-conteudo" style="display:none;">
+                 <h3 class="titulo-aba">👥 Cadastro de Turmas</h3>
+                 
+                 <form id="form-cadastro-turmas" class="formulario-cadastro">
+                    <div class="grid-form-basico">
+                        <div class="grupo-campo">
+                            <label for="turma_nome">Nome da Turma:</label>
+                            <input type="text" id="turma_nome" name="turma_nome" required>
+                        </div>
+                        <div class="grupo-campo">
+                            <label for="turma_modalidade">Modalidade:</label>
+                            <select id="turma_modalidade" name="turma_modalidade" required>
+                                <option value="">Selecione</option>
+                                <option value="INTEGRADO">INTEGRADO</option>
+                                <option value="SUPERIOR_1_TURNO">SUPERIOR (1 Turno)</option>
+                                <option value="SUPERIOR_2_TURNOS">SUPERIOR (2 Turnos)</option>
+                            </select>
+                        </div>
+                        <div class="grupo-campo">
+                            <label for="turma_sala">Sala Padrão:</label>
+                            <input type="text" id="turma_sala" name="turma_sala" placeholder="Ex: Sala 101" required>
+                        </div>
+                        <div class="grupo-campo">
+                            <label for="turma_turno_primario">Turno Primário:</label>
+                            <select id="turma_turno_primario" name="turma_turno_primario" required>
+                                <option value="">Selecione</option>
+                                <option value="MANHA">Manhã</option>
+                                <option value="TARDE">Tarde</option>
+                                <option value="NOITE">Noite</option>
+                            </select>
+                        </div>
+                        <div class="grupo-campo">
+                            <label for="turma_turno_secundario">Turno Secundário (Opcional):</label>
+                            <select id="turma_turno_secundario" name="turma_turno_secundario">
+                                <option value="">Nenhum/Opcional</option>
+                                <option value="MANHA">Manhã</option>
+                                <option value="TARDE">Tarde</option>
+                                <option value="NOITE">Noite</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="botao-salvar" type="button" data-save-target="turma">💾 SALVAR INFORMAÇÕES</button>
+                 </form>
+                 <div class="lista-dados">
+                    <h4>Lista de Turmas Cadastradas</h4>
+                    <table class="tabela-dados" id="tabela-turmas">
+                        <thead>
+                            <tr><th>Nome</th><th>Modalidade</th><th>Sala</th><th>Turnos</th><th>Ações</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                 </div>
+            </section>
+
+            <section id="cadastro-disciplinas" class="aba-conteudo" style="display:none;">
+                 <h3 class="titulo-aba">📚 Cadastro de Disciplinas</h3>
+                 
+                 <form id="form-cadastro-disciplinas" class="formulario-cadastro">
+                    <div class="grid-form-basico">
+                        <div class="grupo-campo">
+                            <label for="disciplina_nome">Nome da Disciplina:</label>
+                            <input type="text" id="disciplina_nome" name="disciplina_nome" required>
+                        </div>
+                        <div class="grupo-campo">
+                            <label for="disciplina_turma">Turma Associada:</label>
+                            <select id="disciplina_turma" name="disciplina_turma" required>
+                                <option value="">Carregar Turmas...</option>
+                            </select>
+                        </div>
+                        <div class="grupo-campo">
+                            <label for="disciplina_professor">Professor Vinculado:</label>
+                            <select id="disciplina_professor" name="disciplina_professor" required>
+                                <option value="">Carregar Professores...</option>
+                            </select>
+                        </div>
+                        <div class="grupo-campo">
+                            <label for="disciplina_aulas_semanais">Aulas Semanais:</label>
+                            <input type="number" id="disciplina_aulas_semanais" name="disciplina_aulas_semanais" min="1" max="10" required>
+                        </div>
+                    </div>
+
+                    <h4>Restrições de Aglutinação e Fixação de Horário</h4>
+                    <div class="grid-form-basico">
+                        <div class="grupo-campo">
+                            <label for="disciplina_fixa_horario">Fixar em Horário Específico?</label>
+                            <select id="disciplina_fixa_horario" name="disciplina_fixa_horario">
+                                <option value="NAO">Não (Gerar Automaticamente)</option>
+                                <option value="SIM">Sim (Definir Dia/Hora abaixo)</option>
+                            </select>
+                        </div>
+                        <div class="grupo-campo">
+                            <label for="disciplina_aglutinacao">Opção de Aglutinação:</label>
+                            <select id="disciplina_aglutinacao" name="disciplina_aglutinacao" required>
+                                <option value="">Selecione (Baseado em Aulas Semanais)</option>
+                                </select>
+                        </div>
+                    </div>
+                    
+                    <button class="botao-salvar" type="button" data-save-target="disciplina">💾 SALVAR INFORMAÇÕES</button>
+                 </form>
+                 <div class="lista-dados">
+                    <h4>Lista de Disciplinas Cadastradas</h4>
+                    <table class="tabela-dados" id="tabela-disciplinas">
+                        <thead>
+                            <tr><th>Disciplina</th><th>Turma</th><th>Professor</th><th>Aulas Semanais</th><th>Aglutinação</th><th>Ações</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                 </div>
+            </section>
+            
             <section id="instituicao-cadastro" class="aba-conteudo" style="display:none;">
                  <h3 class="titulo-aba">🏠 Cadastro da Instituição</h3>
-                 <p>Campos para Nome, Endereço, Telefone, E-mail, Diretores, Chefes de Departamento.</p>
+                 <p>Campos para Nome, Endereço, Diretores, etc.</p>
+                 <div class="lista-dados"><h4>Lista de Cursos e Turmas (Baseado nos Cadastros)</h4></div>
             </section>
-            <section id="cadastro-horarios" class="aba-conteudo" style="display:none;">
-                 <h3 class="titulo-aba">⏰ Horários (Períodos)</h3>
-                 <p>Configuração dos períodos Matutino, Vespertino e Noturno.</p>
-            </section>
-            </main>
+            <section id="cadastro-calendario-integrado" class="aba-conteudo" style="display:none;"><h3 class="titulo-aba">📅 Calendário - Integrado</h3></section>
+            <section id="cadastro-calendario-superior" class="aba-conteudo" style="display:none;"><h3 class="titulo-aba">📅 Calendário - Superior</h3></section>
+            
+            <section id="relatorio-individual" class="aba-conteudo" style="display:none;"><h3 class="titulo-aba">📄 Relatório Individual</h3></section>
+            <section id="relatorio-turma" class="aba-conteudo" style="display:none;"><h3 class="titulo-aba">📄 Relatório de Turma</h3></section>
+            <section id="relatorio-disciplina" class="aba-conteudo" style="display:none;"><h3 class="titulo-aba">📄 Relatório de Disciplina</h3></section>
+            <section id="relatorio-csv" class="aba-conteudo" style="display:none;"><h3 class="titulo-aba">📄 Exportar CSV (Semana)</h3></section>
+            <section id="horario-base-gerar" class="aba-conteudo" style="display:none;"><h3 class="titulo-aba">📅 Geração de Horário Base</h3></section>
+            <section id="horario-semanal-gerar" class="aba-conteudo" style="display:none;"><h3 class="titulo-aba">🗓️ Geração de Horário Semanal</h3></section>
+
+        </main>
     </div>
     
     <script src="script.js"></script>
