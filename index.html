@@ -387,8 +387,99 @@
                  <p>Campos para Nome, Endereço, Diretores, etc.</p>
                  <div class="lista-dados"><h4>Lista de Cursos e Turmas (Baseado nos Cadastros)</h4></div>
             </section>
-            <section id="cadastro-calendario-integrado" class="aba-conteudo" style="display:none;"><h3 class="titulo-aba">📅 Calendário - Integrado</h3></section>
-            <section id="cadastro-calendario-superior" class="aba-conteudo" style="display:none;"><h3 class="titulo-aba">📅 Calendário - Superior</h3></section>
+            <section id="cadastro-calendario-integrado" class="aba-conteudo" style="display:none;">
+                <h3 class="titulo-aba">🗓️ Calendário - Cursos Integrados</h3>
+                <p>Defina as datas de feriados, recessos e outros dias não letivos que afetam os cursos integrados.</p>
+
+                <div class="formulario-cadastro">
+                    <form id="form-cadastro-calendario-integrado">
+                        <h4>Adicionar Evento ao Calendário Integrado</h4>
+                        <div class="grid-form-basico">
+                            <div class="grupo-campo">
+                                <label for="cal_int_tipo">Tipo de Dia:</label>
+                                <select id="cal_int_tipo" name="tipo" required>
+                                    <option value="">Selecione o Tipo</option>
+                                    <option value="FERIADO">Feriado Nacional/Municipal</option>
+                                    <option value="RECESSO">Recesso Escolar</option>
+                                    <option value="NAO_LETV">Dia Não Letivo (sem aula)</option>
+                                    <option value="SAB_LETIVO">Sábado Letivo</option>
+                                </select>
+                            </div>
+                            <div class="grupo-campo">
+                                <label for="cal_int_descricao">Descrição/Nome do Evento:</label>
+                                <input type="text" id="cal_int_descricao" name="descricao" required>
+                            </div>
+                            <div class="grupo-campo">
+                                <label for="cal_int_data_inicio">Data de Início:</label>
+                                <input type="date" id="cal_int_data_inicio" name="data_inicio" required>
+                            </div>
+                            <div class="grupo-campo">
+                                <label for="cal_int_data_fim">Data de Fim (Opcional, para períodos):</label>
+                                <input type="date" id="cal_int_data_fim" name="data_fim">
+                            </div>
+                        </div>
+                    </form>
+                    <button class="botao-salvar" type="button" data-save-target="calendario_integrado">💾 SALVAR EVENTO</button>
+                </div>
+
+                <div class="lista-dados">
+                    <h4>Eventos Cadastrados (Integrado)</h4>
+                    <table class="tabela-dados" id="tabela-calendario-integrado">
+                        <thead>
+                            <tr><th>Tipo</th><th>Descrição</th><th>Início</th><th>Fim</th><th>Ações</th></tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="cadastro-calendario-superior" class="aba-conteudo" style="display:none;">
+                <h3 class="titulo-aba">🗓️ Calendário - Cursos Superiores</h3>
+                <p>Defina as datas de feriados, recessos e outros dias não letivos que afetam os cursos superiores.</p>
+
+                <div class="formulario-cadastro">
+                    <form id="form-cadastro-calendario-superior">
+                        <h4>Adicionar Evento ao Calendário Superior</h4>
+                        <div class="grid-form-basico">
+                            <div class="grupo-campo">
+                                <label for="cal_sup_tipo">Tipo de Dia:</label>
+                                <select id="cal_sup_tipo" name="tipo" required>
+                                    <option value="">Selecione o Tipo</option>
+                                    <option value="FERIADO">Feriado Nacional/Municipal</option>
+                                    <option value="RECESSO">Recesso Acadêmico</option>
+                                    <option value="NAO_LETV">Dia Não Letivo (sem aula)</option>
+                                    <option value="REPO_AULA">Dia de Reposição (Letivo)</option>
+                                </select>
+                            </div>
+                            <div class="grupo-campo">
+                                <label for="cal_sup_descricao">Descrição/Nome do Evento:</label>
+                                <input type="text" id="cal_sup_descricao" name="descricao" required>
+                            </div>
+                            <div class="grupo-campo">
+                                <label for="cal_sup_data_inicio">Data de Início:</label>
+                                <input type="date" id="cal_sup_data_inicio" name="data_inicio" required>
+                            </div>
+                            <div class="grupo-campo">
+                                <label for="cal_sup_data_fim">Data de Fim (Opcional, para períodos):</label>
+                                <input type="date" id="cal_sup_data_fim" name="data_fim">
+                            </div>
+                        </div>
+                    </form>
+                    <button class="botao-salvar" type="button" data-save-target="calendario_superior">💾 SALVAR EVENTO</button>
+                </div>
+
+                <div class="lista-dados">
+                    <h4>Eventos Cadastrados (Superior)</h4>
+                    <table class="tabela-dados" id="tabela-calendario-superior">
+                        <thead>
+                            <tr><th>Tipo</th><th>Descrição</th><th>Início</th><th>Fim</th><th>Ações</th></tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </section>
             
             <section id="relatorio-individual" class="aba-conteudo" style="display:none;"><h3 class="titulo-aba">📄 Relatório Individual</h3></section>
             <section id="relatorio-turma" class="aba-conteudo" style="display:none;"><h3 class="titulo-aba">📄 Relatório de Turma</h3></section>
