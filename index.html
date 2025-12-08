@@ -1,231 +1,120 @@
-/* Definição de Cores Padrão IFRO (Verde Escuro, Vermelho Destaque, Branco) */
-:root {
-    --ifro-verde: #004d40; /* Verde Escuro Institucional */
-    --ifro-vermelho: #c62828; /* Vermelho para Ações/Destaque */
-    --ifro-branco: #ffffff;
-    --ifro-cinza-claro: #f4f4f4;
-    --ifro-sombra: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDFP - Gerenciamento de Horários | IFRO Cacoal</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕒</text></svg>">
+</head>
+<body>
+    <header class="cabecalho-institucional">
+        <h1>INSTITUTO FEDERAL DE RONDÔNIA</h1>
+        <h2>CAMPUS CACOAL</h2>
+        <p>DEPARTAMENTO DE APOIO AO ENSINO</p>
+        <p>COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS</p>
+    </header>
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: Arial, sans-serif;
-}
+    <div class="container-principal">
+        <aside class="barra-lateral">
+            <h3>Menu Principal</h3>
+            <nav>
+                <a href="#instituicao" class="link-menu ativo">🏠 INSTITUIÇÃO</a>
+                <a href="#cadastro" class="link-menu">✍️ CADASTRO</a>
+                <a href="#relatorio" class="link-menu">📄 RELATÓRIO</a>
+                <a href="#horario-base" class="link-menu">📅 HORÁRIO BASE</a>
+                <a href="#horario-semanal" class="link-menu">🗓️ HORÁRIO SEMANAL</a>
+            </nav>
+            <hr>
+            <h4>Sub-Menus de Cadastro</h4>
+            <nav class="sub-menu">
+                <a href="#cadastro-professores" class="sub-link-menu">Professores</a>
+                <a href="#cadastro-horarios" class="sub-link-menu">Horários (Períodos)</a>
+                <a href="#cadastro-turmas" class="sub-link-menu">Turmas</a>
+                <a href="#cadastro-disciplinas" class="sub-link-menu">Disciplinas</a>
+                <a href="#cadastro-calendario-integrado" class="sub-link-menu">Calendário - Integrado</a>
+                <a href="#cadastro-calendario-superior" class="sub-link-menu">Calendário - Superior</a>
+            </nav>
+            <hr>
+            <h4>Sub-Menus de Relatório</h4>
+            <nav class="sub-menu">
+                <a href="#relatorio-individual" class="sub-link-menu">Individual</a>
+                <a href="#relatorio-turma" class="sub-link-menu">Turma</a>
+                <a href="#relatorio-disciplina" class="sub-link-menu">Disciplina</a>
+                <a href="#relatorio-csv" class="sub-link-menu">Exportar CSV (Semana)</a>
+            </nav>
+        </aside>
 
-body {
-    background-color: var(--ifro-cinza-claro);
-    line-height: 1.6;
-}
+        <main class="conteudo-principal" id="conteudo-principal">
+            <section id="cadastro-professores" class="aba-conteudo">
+                <h3 class="titulo-aba">✍️ Cadastro de Professores</h3>
 
-/* --- Cabeçalho Institucional (Item 1) --- */
-.cabecalho-institucional {
-    background-color: var(--ifro-verde);
-    color: var(--ifro-branco);
-    padding: 20px 0;
-    text-align: center;
-    box-shadow: var(--ifro-sombra);
-    margin-bottom: 20px;
-}
+                <div class="formulario-cadastro">
+                    <h4>Dados Básicos</h4>
+                    <div class="grupo-campo">
+                        <label for="nome">Nome:</label>
+                        <input type="text" id="nome" name="nome">
+                    </div>
+                    <div class="grupo-campo">
+                        <label for="siape">SIAPE/CPF:</label>
+                        <input type="text" id="siape" name="siape">
+                    </div>
+                    <h4>Restrições PRD e PGD</h4>
+                    <h4>Restrições Gerais</h4>
+                    <button class="botao-salvar" onclick="salvarProfessor()">💾 SALVAR INFORMAÇÕES</button>
+                </div>
 
-.cabecalho-institucional h1 {
-    font-size: 2.2em;
-    margin-bottom: 5px;
-}
+                <div class="lista-professores">
+                    <h4>Lista de Docentes Cadastrados</h4>
+                    <table class="tabela-dados">
+                        <thead>
+                            <tr>
+                                <th>SIAPE</th>
+                                <th>Nome</th>
+                                <th>E-mail</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1889267</td>
+                                <td>Adriana Aparecida Rigolon</td>
+                                <td>adriana.rigolon@ifro.edu.br</td>
+                                <td>
+                                    <button class="botao-acao botao-editar">✏️ EDITAR</button>
+                                    <button class="botao-acao botao-remover">🗑️ REMOVER</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                    </table>
+                </div>
 
-.cabecalho-institucional h2 {
-    font-size: 1.5em;
-    margin-bottom: 10px;
-    font-weight: normal;
-    border-bottom: 2px solid var(--ifro-vermelho);
-    display: inline-block;
-    padding-bottom: 5px;
-}
+            </section>
+        </main>
+    </div>
+    
+    <script>
+        // Função para simular a mudança de abas apenas com o CSS/DOM
+        document.querySelectorAll('.link-menu, .sub-link-menu').forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Previne o comportamento padrão do link
+                e.preventDefault(); 
+                
+                // Remove a classe 'ativo' de todos os links principais e sub-links
+                document.querySelectorAll('.link-menu').forEach(l => l.classList.remove('ativo'));
+                document.querySelectorAll('.sub-link-menu').forEach(l => l.classList.remove('ativo'));
 
-.cabecalho-institucional p {
-    font-size: 1em;
-    margin: 3px 0;
-}
+                // Adiciona a classe 'ativo' ao link clicado
+                this.classList.add('ativo');
 
-/* --- Layout Principal (Barra Lateral + Conteúdo) --- */
-.container-principal {
-    display: flex;
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-
-/* --- Barra Lateral (Side Bar) --- */
-.barra-lateral {
-    width: 250px;
-    padding: 20px;
-    background-color: var(--ifro-branco);
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
-    flex-shrink: 0;
-    position: sticky;
-    top: 0;
-    height: 100vh; /* Para que a barra lateral preencha a tela verticalmente */
-    overflow-y: auto;
-}
-
-.barra-lateral h3, .barra-lateral h4 {
-    color: var(--ifro-verde);
-    margin-bottom: 15px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
-}
-
-.barra-lateral nav a {
-    display: block;
-    color: #333;
-    padding: 10px 15px;
-    text-decoration: none;
-    margin-bottom: 5px;
-    border-radius: 4px;
-    transition: background-color 0.2s, color 0.2s;
-}
-
-.barra-lateral nav a:hover {
-    background-color: #e0f2f1; /* Tom de verde claro */
-    color: var(--ifro-verde);
-}
-
-.barra-lateral nav a.ativo {
-    background-color: var(--ifro-vermelho);
-    color: var(--ifro-branco);
-    font-weight: bold;
-}
-
-.sub-menu {
-    margin-left: 15px;
-    border-left: 2px solid #ccc;
-    padding-left: 5px;
-}
-
-.sub-menu a {
-    font-size: 0.9em;
-    padding: 5px 10px;
-    margin-bottom: 2px;
-}
-
-/* --- Conteúdo Principal (Main Content) --- */
-.conteudo-principal {
-    flex-grow: 1;
-    padding: 20px 40px;
-}
-
-.titulo-aba {
-    color: var(--ifro-verde);
-    border-bottom: 3px solid var(--ifro-vermelho);
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-    font-size: 1.8em;
-}
-
-.aba-conteudo {
-    background-color: var(--ifro-branco);
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: var(--ifro-sombra);
-}
-
-/* --- Estilo de Formulário --- */
-.formulario-cadastro h4 {
-    color: var(--ifro-vermelho);
-    margin-top: 25px;
-    margin-bottom: 15px;
-    border-left: 4px solid var(--ifro-vermelho);
-    padding-left: 10px;
-}
-
-.grupo-campo {
-    margin-bottom: 15px;
-    display: flex;
-    flex-direction: column;
-}
-
-.grupo-campo label {
-    font-weight: bold;
-    color: var(--ifro-verde);
-    margin-bottom: 5px;
-}
-
-.grupo-campo input[type="text"],
-.grupo-campo select {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    width: 100%;
-    max-width: 400px;
-}
-
-/* --- Botão Salvar --- */
-.botao-salvar {
-    background-color: var(--ifro-verde);
-    color: var(--ifro-branco);
-    border: none;
-    padding: 12px 25px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: bold;
-    margin-top: 20px;
-    transition: background-color 0.2s;
-}
-
-.botao-salvar:hover {
-    background-color: #00695c; /* Tom mais escuro do verde */
-}
-
-/* --- Tabela de Dados --- */
-.lista-professores {
-    margin-top: 40px;
-}
-
-.tabela-dados {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-
-.tabela-dados th, .tabela-dados td {
-    border: 1px solid #ddd;
-    padding: 12px;
-    text-align: left;
-}
-
-.tabela-dados th {
-    background-color: var(--ifro-verde);
-    color: var(--ifro-branco);
-    font-weight: bold;
-}
-
-.tabela-dados tr:nth-child(even) {
-    background-color: var(--ifro-cinza-claro);
-}
-
-/* --- Botões de Ação na Tabela --- */
-.botao-acao {
-    padding: 8px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-right: 5px;
-    font-weight: bold;
-    transition: opacity 0.2s;
-}
-
-.botao-acao:hover {
-    opacity: 0.8;
-}
-
-.botao-editar {
-    background-color: #1e88e5; /* Azul para editar */
-    color: var(--ifro-branco);
-}
-
-.botao-remover {
-    background-color: var(--ifro-vermelho);
-    color: var(--ifro-branco);
-}
+                // Aqui, em um sistema real, você carregaria o conteúdo da aba correspondente
+                // Como não temos a lógica JavaScript/backend, apenas mostramos o link ativo.
+                
+                // A lógica de conteúdo dinâmico (com JavaScript) seria necessária para realmente mudar as seções (elementos <section>)
+                const targetId = this.getAttribute('href').substring(1);
+                console.log(`Simulando carregamento da aba: ${targetId}`);
+            });
+        });
+    <script src="script.js"></script>
+</body>
+</html>
