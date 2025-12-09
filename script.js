@@ -179,16 +179,16 @@ function inicializarNavegacao() {
 
             let targetId = this.getAttribute('href').substring(1);
             
-            // Tratamento para links de Menu Principal que não são uma seção
-            if (targetId === 'cadastro' || targetId === 'instituicao-cadastro') {
-                // Se clicar em Cadastro, vai para a primeira sub-aba (Professores)
-                targetId = 'cadastro-professores'; 
-                // Ativa o sub-link de professores
-                const profLink = document.querySelector('a[href="#cadastro-professores"]');
-                if (profLink) {
-                   profLink.classList.add('ativo');
-                }
-            }
+          // Tratamento para links de Menu Principal que não são uma seção
+    if (targetId === 'cadastro' || targetId === 'instituicao-cadastro') {
+        // Se clicar em Cadastro, vai para a primeira sub-aba (Professores)
+        targetId = 'cadastro-professores'; 
+        // Ativa o sub-link de professores
+        const profLink = document.querySelector('a[href="#cadastro-professores"]');
+        if (profLink) { // <-- Verificação adicionada
+           profLink.classList.add('ativo');
+        }
+    }
             
             mostrarConteudoDaAba(targetId);
         });
