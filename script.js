@@ -1037,6 +1037,15 @@ function professorRestrito(siape, dia, slotTempo, grade) {
     if (isSlotMatutino) {
         const diaAnteriorIndex = (DIAS_SEMANA.indexOf(dia) + 4) % 5; // Mapeia 0->4, 1->0, 2->1, etc.
         const diaAnterior = DIAS_SEMANA[diaAnteriorIndex];
+        const DIAS_SEMANA = ['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA'];
+// Mapeamento: Dia atual -> Dia anterior na sequência letiva
+const DIA_ANTERIOR = {
+    'SEGUNDA': 'SEXTA',
+    'TERCA': 'SEGUNDA',
+    'QUARTA': 'TERCA',
+    'QUINTA': 'QUARTA',
+    'SEXTA': 'QUINTA'
+};
         
         // Verifica se o professor está escalado no último slot noturno do dia anterior
         const ultimoSlotNoturno = slotsNoturno[slotsNoturno.length - 1];
@@ -1111,61 +1120,57 @@ function encontrarBlocoAglutinado(grade, numAulas, turmaId, professorSiape) {
  * Executa o algoritmo heurístico de alocação de disciplinas.
  */
 function gerarHorarioBase() {
-    // 1. Obter Dados
+    // 1. Obter Dados e Inicializar
     const disciplinas = obterDados('disciplina');
     const turmas = obterDados('turma');
-    const professores = obterDados('professor');
-    const dadosCalendario = obterDados('calendario_integrado'); // Usaremos o integrado como base por enquanto
     let grade = inicializarGradeVazia();
     let conflitos = [];
     
-    // Etapa 1: Aplica Restrições de Professores (PGD/PRD) na grade
     grade = aplicarRestricoesIniciais(grade); 
     
-    // Etapa 2: Priorização das Disciplinas
-    // Ordenar para tentar alocar disciplinas mais complexas primeiro (por aglutinação)
-    const disciplinasOrdenadas = [...disciplinas].sort((a, b) => b.aulasSemanais - a.aulasSemanais);
+    // Etapa 2: Priorização
+    // Disciplinas com mais aulas e maior aglutinação são alocadas primeiro.
+    const disciplinasOrdenadas = [...disciplinas].sort((a, b) => {
+        // Exemplo: '3+2' tem prioridade sobre '1x5' (maior soma de aulas)
+        return b.aulasSemanais - a.aulasSemanais; 
+    });
     
-    // Etapa 3: Alocação com Aglutinação
+    // Etapa 3: Alocação por Blocos (Aglutinação)
     disciplinasOrdenadas.forEach(disc => {
         let aulasAlocadas = 0;
         const aulasNecessarias = disc.aulasSemanais;
         
-        // Exemplo: Aglutinação "3+2" -> blocos de 3 e 2 aulas
-        const partesAglutinacao = disc.aglutinacao.split('+').map(p => {
+        // Parse da Aglutinação (Ex: "3+2" -> [3, 2]; "2x2" -> [2, 2])
+        let blocosParaAlocar = [];
+        
+        disc.aglutinacao.split('+').forEach(p => {
             if (p.includes('x')) {
-                // Ex: "2x2" -> [2, 2]
                 const [dias, aulas] = p.split('x').map(Number);
-                return Array(dias).fill(aulas);
+                blocosParaAlocar.push(...Array(dias).fill(aulas));
+            } else {
+                blocosParaAlocar.push(Number(p));
             }
-            return [Number(p)]; // Ex: "3" -> [3]
-        }).flat(); // [3, 2]
-        
-        // Tentativa de alocação para cada bloco necessário (parte da aglutinação)
-        let blocosParaAlocar = [...partesAglutinacao];
-        
-        // Se a aglutinação não foi totalmente definida (ex: 5 aulas, mas aglutinação 2x2), 
-        // o resto é alocado individualmente, mas aqui assumimos que partesAglutinacao soma aulasNecessarias.
-
-        const blocosAlocados = [];
+        });
         
         // Tenta alocar os blocos maiores primeiro
         blocosParaAlocar.sort((a, b) => b - a);
-
+        
+        // Tenta alocar cada bloco
         blocosParaAlocar.forEach(tamanhoBloco => {
-            const bloco = encontrarBlocoAglutinado(grade, tamanhoBloco, disc.turmaId, disc.professorSiape);
-            
-            if (bloco) {
-                // Se um bloco foi encontrado, aloca os slots
-                bloco.slots.forEach(slotTempo => {
-                    const slot = grade[bloco.dia][slotTempo];
-                    slot.status = 'ALOCADO';
-                    slot.turmaId = disc.turmaId;
-                    slot.disciplinaId = disc.id;
-                    slot.professorSiape = disc.professorSiape;
-                    aulasAlocadas++;
-                });
-                blocosAlocados.push(bloco);
+            if (aulasAlocadas < aulasNecessarias) {
+                const bloco = encontrarBlocoAglutinado(grade, tamanhoBloco, disc.turmaId, disc.professorSiape);
+                
+                if (bloco) {
+                    // Aloca os slots encontrados
+                    bloco.slots.forEach(slotTempo => {
+                        const slot = grade[bloco.dia][slotTempo];
+                        slot.status = 'ALOCADO';
+                        slot.turmaId = disc.turmaId;
+                        slot.disciplinaId = disc.id;
+                        slot.professorSiape = disc.professorSiape;
+                        aulasAlocadas++;
+                    });
+                }
             }
         });
         
@@ -1175,18 +1180,20 @@ function gerarHorarioBase() {
                 disciplina: disc.nome,
                 turma: turmas.find(t => t.id === disc.turmaId)?.nome || 'N/A',
                 aulasFaltantes: aulasNecessarias - aulasAlocadas,
-                motivo: 'FALHA NA AGLUTINAÇÃO ou CONFLITO DE RESTRICÃO'
+                motivo: 'FALHA NA AGLUTINAÇÃO OU CONFLITO DE RESTRICÃO'
             });
         }
     });
 
-    // Etapa 5: Renderizar a Grade e Conflitos
+    // Etapa 5: Renderizar
     renderizarGradeFinal(grade, conflitos);
     
-    // Exibe o diagrama de como o processo se deu.
-    // 
+    // Visualização do Fluxo de Alocação:
+    // O algoritmo começa com restrições rígidas e tenta encaixar blocos grandes
+    // antes de blocos pequenos, priorizando o preenchimento da grade.
+    
 }
-
+        
 /**
  * Renderiza a grade de horário na seção de Horário Base.
  * @param {Object} grade Grade de horário gerada.
@@ -1204,6 +1211,102 @@ function renderizarGradeFinal(grade, conflitos) {
         <div id="grade-horario-output"></div>
     `;
 
+    /**
+ * Verifica se um slot está livre para uma determinada Turma e Professor.
+ * Inclui verificações de 11h de descanso e Calendário.
+ * @param {Object} grade A grade de horário atual.
+ * @param {string} dia Dia da semana.
+ * @param {string} slotTempo ID do slot de tempo.
+ * @param {string} turmaId ID da turma.
+ * @param {string} professorSiape SIAPE do professor.
+ * @returns {string|null} O motivo do conflito (Ex: 'TURMA_OCUPADA', '11H_DESCANSO', 'RESTRITO') ou null se livre.
+ */
+function verificarConflitosSlot(grade, dia, slotTempo, turmaId, professorSiape) {
+    const slot = grade[dia][slotTempo];
+    const horarios = obterDados('horario');
+
+    // 1. Conflito de Turma (Slot já alocado)
+    if (slot.turmaId !== null && slot.turmaId === turmaId) {
+        return 'TURMA_OCUPADA';
+    }
+    if (slot.disciplinaId !== null) { // Turma ocupada por outra disciplina
+        return 'TURMA_OCUPADA';
+    }
+
+    // 2. Conflito de Professor (PRD/PGD aplicado inicialmente)
+    if (slot.restritos && slot.restritos.includes(professorSiape)) {
+        return 'PROFESSOR_RESTRITO';
+    }
+
+    // 3. Conflito das 11 Horas de Descanso
+    const slotsMatutino = horarios.matutino || [];
+    const slotsNoturno = horarios.noturno || [];
+
+    if (slotsMatutino.includes(slotTempo)) {
+        const diaAnterior = DIA_ANTERIOR[dia];
+        const ultimoSlotNoturno = slotsNoturno[slotsNoturno.length - 1];
+        
+        // Verifica se o dia anterior existe e se o professor estava no último noturno
+        if (grade[diaAnterior] && grade[diaAnterior][ultimoSlotNoturno] && 
+            grade[diaAnterior][ultimoSlotNoturno].professorSiape === professorSiape) {
+            
+            return '11H_DESCANSO'; 
+        }
+    }
+    
+    // 4. Conflito de Calendário (Dia Não Letivo)
+    // Para simplificação da GERAÇÃO BASE (semanal), ignoraremos o calendário aqui.
+    // O calendário só deve afetar a VERIFICAÇÃO FINAL da carga horária, pois o horário base é semanal/recorrente.
+
+    return null; // Slot está livre para Turma e Professor
+}
+
+/**
+ * Tenta encontrar um bloco de slots consecutivos (aglutinação) disponível.
+ * @param {Object} grade A grade atual.
+ * @param {number} numAulas O tamanho do bloco de aulas a aglutinar (ex: 2 ou 3).
+ * @returns {Object|null} {dia: string, slots: Array<string>} ou null se não encontrar.
+ */
+function encontrarBlocoAglutinado(grade, numAulas, turmaId, professorSiape) {
+    const slotTempos = Object.keys(grade.SEGUNDA || {}); 
+    if (slotTempos.length === 0) return null; 
+    
+    for (const dia of DIAS_SEMANA) {
+        for (let i = 0; i <= slotTempos.length - numAulas; i++) {
+            let slotsCandidatos = [];
+            let blocoLivre = true;
+            
+            for (let j = 0; j < numAulas; j++) {
+                const slotTempo = slotTempos[i + j];
+                
+                // 1. Verifica se o slot é válido e não gera conflito
+                const conflito = verificarConflitosSlot(grade, dia, slotTempo, turmaId, professorSiape);
+                
+                if (conflito !== null) {
+                    blocoLivre = false;
+                    break;
+                }
+                
+                // 2. Garante que os slots são consecutivos dentro de um mesmo período (Manhã/Tarde/Noite)
+                if (j > 0) {
+                    const periodoAtual = grade[dia][slotTempo].periodo;
+                    const periodoAnterior = grade[dia][slotTempos[i + j - 1]].periodo;
+                    if (periodoAtual !== periodoAnterior) {
+                        blocoLivre = false;
+                        break;
+                    }
+                }
+                
+                slotsCandidatos.push(slotTempo);
+            }
+            
+            if (blocoLivre) {
+                return { dia: dia, slots: slotsCandidatos };
+            }
+        }
+    }
+    return null;
+}
     // 1. Reportar Conflitos
     const outputConflitos = document.getElementById('resultado-conflitos');
     if (conflitos.length > 0) {
