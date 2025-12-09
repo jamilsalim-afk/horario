@@ -1,701 +1,75 @@
-// --- Definições Globais e Chaves de Local Storage ---
+// ======================================================================
+// --- 1. VARIÁVEIS GLOBAIS E FUNÇÕES AUXILIARES (SIMPLES) ---
+// ======================================================================
+
 const LS_KEYS = {
-    professor: 'ifro_professores',
-    horario: 'ifro_horarios',
-    turma: 'ifro_turmas',
-    disciplina: 'ifro_disciplinas',
-    calendario_integrado: 'ifro_calendario_integrado',
-    calendario_superior: 'ifro_calendario_superior',
+    professor: 'SCHEDULER_PROFESSOR',
+    horario: 'SCHEDULER_HORARIO',
+    turma: 'SCHEDULER_TURMA',
+    disciplina: 'SCHEDULER_DISCIPLINA',
+    calendario_integrado: 'SCHEDULER_CAL_INT',
+    calendario_superior: 'SCHEDULER_CAL_SUP'
 };
 
-// Dados iniciais (Professores são os mesmos da resposta anterior, usei um placeholder)
-const PROFESSORES_INICIAIS_DATA = [
-    { siape: '1889267', nome: 'Adriana Aparecida Rigolon', email: 'adriana.rigolon@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1046329', nome: 'Agmar Aparecido Felix Chaves', email: 'agmar.chaves@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1041488', nome: 'Aguinaldo Pereira', email: 'aguinaldo.pereira@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '3137523', nome: 'Alberto Ayres Benicio', email: 'alberto.benicio@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '3495475', nome: 'Aline da Silva Correa Valerio Sakyrabiar', email: 'aline.sakyrabiar@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '1825596', nome: 'Andreia Maciel da Silva', email: 'andreia.maciel@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '3433716', nome: 'Angelica Fernandes Estok', email: 'angelica.estok@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '1810830', nome: 'Angelita Aparecida Coutinho Picazevicz', email: 'angelita.aparecida@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '2240652', nome: 'Arilson Ramos', email: 'arilson.ramos@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '2309875', nome: 'Ayrton Schupp Pinheiro Oliveira', email: 'ayrton.oliveira@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1132760', nome: 'Barbara Ferreira Fadul', email: 'barbara.fadul@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '3304216', nome: 'Cirlania Pereira Batista', email: 'cirlania.batista@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '2060029', nome: 'Claudemir Miranda Barboza', email: 'claudemir.barboza@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '3503067', nome: 'Claudia Aline Puerari Goncalves', email: 'claudia.puerari@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '1209877', nome: 'Daphne Chiara Antonio', email: 'daphne.chiara@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '2395951', nome: 'Debora Costa Barroso Correa', email: 'debora.correa@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '2046133', nome: 'Dheimy da Silva Novelli', email: 'dheimy.novelli@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '3003852', nome: 'Dhieisi Ebert Bolsanello', email: 'dhieisi.ebert@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1885797', nome: 'Edmilson Maria de Brito', email: 'edmilson.brito@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1318225', nome: 'Edna Cristiane da Matta', email: 'edna.matta@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '2157441', nome: 'Eduardo Lucas Jorge Serapiao', email: 'eduardo.lucas@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1223755', nome: 'Erick Rodrigo de Oliveira Mesquita', email: 'erick.mesquita@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '2322486', nome: 'Eslei Justiniano dos Reis', email: 'eslei.reis@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1120066', nome: 'Gabriel Tenorio dos Santos', email: 'gabriel.santos@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '3388929', nome: 'Gian Willian Tavares de Souza', email: 'gian.souza@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '2261097', nome: 'Gilson Divino Araujo da Silva', email: 'gilson.silva@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1424350', nome: 'Gilson Pedro Ranzula', email: 'gilson.ranzula@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1267347', nome: 'Heloisa Helena Ribeiro de Miranda', email: 'heloisa.miranda@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '3504810', nome: 'Henri Francis Ternes de Oliveira', email: 'henri.oliveira@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '3062344', nome: 'Henrique Silva Servio', email: 'henrique.servio@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1459246', nome: 'Ingrid Leticia Menezes Barbosa', email: 'ingrid.leticia@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1934082', nome: 'Iramaia Grespan Ferreira de Aquino', email: 'iramaia.grespan@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '2107472', nome: 'Irlan Cordeiro de Souza', email: 'irlan.cordeiro@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '2046612', nome: 'Isis Lazzarini Foroni', email: 'isis.foroni@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '3494080', nome: 'Jefferson Lemes Pinto', email: 'jefferson.pinto@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '1115608', nome: 'Jhonata Lemos da Silva', email: 'jhonata.silva@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1900386', nome: 'Joel Martins Braga Junior', email: 'joel.martins@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '2298332', nome: 'Joelson Barral do Espirito Santo', email: 'joelson.santo@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1866708', nome: 'Jorge da Silva Werneck', email: 'jorge.werneck@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '2119073', nome: 'Jose de Anchieta Almeida da Silva', email: 'jose.silva@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1251214', nome: 'Jose Nilson Rosa Baraldi Molis', email: 'jose.molis@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '1296169', nome: 'Juliana Ferraz Huback Rodrigues', email: 'juliana.rodrigues@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1905870', nome: 'Juliana Maria Freitas de Assis Holanda', email: 'juliana.holanda@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '3469321', nome: 'Juliane Lima Araujo', email: 'juliane.araujo@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '1831654', nome: 'Juliano Alves de Deus', email: 'juliano.alves@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '3098146', nome: 'Julio Eduardo Neves dos Santos', email: 'julio.santos@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1206844', nome: 'Jussara Maria Oliveira de Araujo', email: 'jussara.araujo@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '3501741', nome: 'Leia Marcia dos Santos Kempim', email: 'leia.kempim@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '2354704', nome: 'Leonardo dos Santos Franca Shockness', email: 'leonardo.shockness@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '3421792', nome: 'Lilian Andrea dos Santos', email: 'lilian.santos@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '3499505', nome: 'Lilian Barbosa da Silva Lurde', email: 'lilian.barbosa@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '1084749', nome: 'Lilian Catiuscia Eifler Firme da Silva', email: 'lilian.silva@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '3145683', nome: 'Luciana Alves Ranzula', email: 'luciana.ranzula@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '2164739', nome: 'Magno Batista Amorim', email: 'magno.amorim@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '2161540', nome: 'Marcilei Serafim Germano', email: 'marcilei.germano@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1094604', nome: 'Marco Aurelio Nunes de Barros', email: 'marco.barros@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1420464', nome: 'Maria Angelica Petrini', email: 'maria.petrini@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1818605', nome: 'Maria Cristiana de Freitas da Costa', email: 'maria.cristiana@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '3469237', nome: 'Paula Michelli da Silva Franco Belmont', email: 'paula.belmont@ifro.edu.br', situacao: 'Substituto', restricoes: {} },
-    { siape: '1786119', nome: 'Sergio Nunes de Jesus', email: 'sergio.nunes@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '2186164', nome: 'Sirley Leite Freitas', email: 'sirley.freitas@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1055473', nome: 'Thiago Jose Sampaio Kaiser', email: 'thiago.kaiser@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '2164510', nome: 'Tiago Roberto Silva Santos', email: 'tiago.santos@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1452652', nome: 'Uberlando Tiburtino Leite', email: 'uberlando@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1411784', nome: 'Uirande Oliveira Costa', email: 'uirande.costa@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    { siape: '1886531', nome: 'Vera Lucia Lopes Silveira', email: 'vera.lucia@ifro.edu.br', situacao: 'DE', restricoes: {} },
-    ];
-
-const HORARIOS_INICIAIS = {
-    matutino: ['07:30-08:20', '08:20-09:10', 'INTERVALO', '09:30-10:20', '10:20-11:10', '11:10-12:00'],
-    vespertino: ['13:50-14:40', '14:40-15:30', 'INTERVALO', '15:50-16:40', '16:40-17:30', '17:30-18:20'],
-    noturno: ['19:00-19:50', '19:50-20:40', 'INTERVALO', '20:50-21:40', '21:40-22:30'],
+// Dados de Exemplo (para inicializar se o Local Storage estiver vazio)
+const PROFESSORES_INICIAIS_DATA = []; 
+const HORARIOS_INICIES = { 
+    matutino: ['07:30-08:20', '08:20-09:10', '09:10-10:00', 'INTERVALO', '10:20-11:10', '11:10-12:00'], 
+    vespertino: ['13:30-14:20', '14:20-15:10', 'INTERVALO', '15:30-16:20', '16:20-17:10'], 
+    noturno: ['18:30-19:20', '19:20-20:10', 'INTERVALO', '20:30-21:20', '21:20-22:10'] 
 };
-
-
-// ----------------------------------------------------------------------
-// --- 1. FUNÇÕES DE PERSISTÊNCIA (GENÉRICAS) ---
-// ----------------------------------------------------------------------
 
 /**
  * Obtém dados do Local Storage, inicializando se estiver vazio.
+ * @param {string} key Chave lógica dos dados (ex: 'professor', 'horario').
  */
 function obterDados(key) {
-    let dados = JSON.parse(localStorage.getItem(LS_KEYS[key]));
+    const lsKey = LS_KEYS[key];
+    let dados = JSON.parse(localStorage.getItem(lsKey));
     
     if (!dados) {
-        // ... (lógica de inicialização de professor, horario, turma, disciplina) ...
-
-        // NOVA LÓGICA DE INICIALIZAÇÃO DE CALENDÁRIO: Começa com um objeto vazio para o ano.
         if (key === 'calendario_integrado' || key === 'calendario_superior') {
-             // O objeto de dados armazenará pares { 'YYYY-MM-DD': 'TIPO_DIA' }
-             dados = {}; 
+            dados = {};
         } else if (key === 'professor') {
-             dados = PROFESSORES_INICIAIS_DATA;
-        } else if (key === 'horario') { 
-             dados = HORARIOS_INICIES;
+            dados = JSON.parse(JSON.stringify(PROFESSORES_INICIAIS_DATA));
+        } else if (key === 'horario') {
+            dados = JSON.parse(JSON.stringify(HORARIOS_INICIES));
         } else {
-             dados = [];
+            dados = [];
         }
-        
-        salvarDados(key, dados);
+        // Não salva o padrão, apenas retorna para ser usado
     }
     return dados;
 }
 
 /**
  * Salva dados no Local Storage.
+ * @param {string} key Chave lógica dos dados.
+ * @param {Object|Array} dados Os dados a serem salvos.
  */
 function salvarDados(key, dados) {
-    localStorage.setItem(LS_KEYS[key], JSON.stringify(dados));
+    const lsKey = LS_KEYS[key];
+    localStorage.setItem(lsKey, JSON.stringify(dados));
 }
-
-
-// ----------------------------------------------------------------------
-// --- 2. LÓGICA DE NAVEGAÇÃO E RECARGA ---
-// ----------------------------------------------------------------------
-
-function mostrarConteudoDaAba(targetId) {
-    document.querySelectorAll('.aba-conteudo').forEach(section => {
-        section.style.display = 'none';
-    });
-    
-    const targetSection = document.getElementById(targetId);
-    
-    if (targetSection) {
-        targetSection.style.display = 'block';
-        
-        // Chamada de carregamento específica apenas para abas que exigem dados atualizados na tabela
-        if (targetId === 'cadastro-professores') {
-            carregarProfessores();
-        } else if (targetId === 'cadastro-horarios') {
-            carregarHorarios();
-        } else if (targetId === 'cadastro-turmas') {
-            carregarTurmas();
-        } else if (targetId === 'cadastro-disciplinas') {
-            carregarDisciplinas();
-            preencherSelectsDisciplina();
-        } else if (targetId === 'cadastro-calendario-integrado') {
-            renderizarCalendario('integrado'); // NOVO
-        } else if (targetId === 'cadastro-calendario-superior') {
-            renderizarCalendario('superior'); // NOVO
-        } else if (targetId === 'horario-base-gerar') {
-            // Verifica se a grade já foi gerada para evitar loops
-            if (!window.lastGeneratedGrade) {
-                 gerarHorarioBase(); 
-            }
-        }
-        // As demais abas (relatórios, instituição) não precisam de função de carregamento aqui.
-        
-    } else {
-        // Manipula cliques em IDs que não são uma aba-conteudo, apenas por segurança
-        const mainContent = document.getElementById('conteudo-principal');
-        mainContent.innerHTML = `<h3 class="titulo-aba">Página em Desenvolvimento</h3><p>O conteúdo para a aba **${targetId.toUpperCase()}** será construído aqui.</p>`;
-    }
-}
-
-function inicializarNavegacao() {
-    // CORREÇÃO CRÍTICA: Definir a variável 'links'
-    const links = document.querySelectorAll('.link-menu, .sub-link-menu');
-
-    links.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-
-            document.querySelectorAll('.link-menu, .sub-link-menu').forEach(l => l.classList.remove('ativo'));
-            this.classList.add('ativo');
-
-            let targetId = this.getAttribute('href').substring(1);
-            
-          // Tratamento para links de Menu Principal que não são uma seção
-    if (targetId === 'cadastro' || targetId === 'instituicao-cadastro') {
-        // Se clicar em Cadastro, vai para a primeira sub-aba (Professores)
-        targetId = 'cadastro-professores'; 
-        // Ativa o sub-link de professores
-        const profLink = document.querySelector('a[href="#cadastro-professores"]');
-        if (profLink) { // <-- Verificação adicionada
-           profLink.classList.add('ativo');
-        }
-    }
-            
-            mostrarConteudoDaAba(targetId);
-        });
-    });
-
-    // Garante que a primeira aba visível seja carregada ao iniciar
-    const abaInicial = document.querySelector('.aba-conteudo[style*="block"]');
-    if (abaInicial) {
-        mostrarConteudoDaAba(abaInicial.id);
-    } else {
-        // Se nenhuma estiver visível, força a abertura da primeira aba de cadastro
-        mostrarConteudoDaAba('cadastro-professores');
-    }
-}
-
-// ----------------------------------------------------------------------
-// --- 3. LÓGICA DE CADASTRO DE PROFESSOR (Com Restrições Expandidas) ---
-// ----------------------------------------------------------------------
-
-function capturarRestricoesProfessor() {
-    return {
-        // Exemplo de captura de todas as restrições
-        prd_principal: {
-            dia: document.getElementById('prd_principal_dia').value,
-            periodo: document.getElementById('prd_principal_periodo').value
-        },
-        pgd_principal: {
-            dia: document.getElementById('pgd_principal_dia').value,
-            periodo: document.getElementById('pgd_principal_periodo').value
-        },
-        gerais: {
-            restricao_manha: document.getElementById('restricao_manha').value,
-            restricao_primeira_manha: document.getElementById('restricao_primeira_manha').value,
-            // ... capture todos os outros campos aqui ...
-        }
-    };
-}
-
-function salvarProfessor() {
-    const nome = document.getElementById('nome').value.trim();
-    const siape = document.getElementById('siape').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const situacao = document.getElementById('situacao').value;
-    
-    if (!nome || !siape || !email) {
-        alert('Por favor, preencha Nome, SIAPE/CPF e E-mail.');
-        return;
-    }
-
-    let professores = obterDados('professor');
-    const professorExistenteIndex = professores.findIndex(p => p.siape === siape);
-    const restricoes = capturarRestricoesProfessor();
-
-    const novoProfessor = { nome, siape, email, situacao, restricoes };
-
-    if (professorExistenteIndex !== -1) {
-        // Edição (o SIAPE estará desativado, então usamos ele como chave)
-        professores[professorExistenteIndex] = { ...professores[professorExistenteIndex], ...novoProfessor };
-        alert(`Professor(a) ${nome} (SIAPE: ${siape}) atualizado(a) com sucesso!`);
-    } else {
-        // Novo
-        professores.push(novoProfessor);
-        alert(`Professor(a) ${nome} cadastrado(a) com sucesso!`);
-    }
-
-    salvarDados('professor', professores);
-    document.getElementById('form-cadastro-professor').reset();
-    document.getElementById('siape').removeAttribute('disabled');
-    carregarProfessores();
-}
-
-function carregarProfessores() {
-    const professores = obterDados('professor');
-    const tabelaBody = document.querySelector('#tabela-professores tbody');
-    if (!tabelaBody) return;
-
-    tabelaBody.innerHTML = '';
-
-    professores.forEach(professor => {
-        const row = tabelaBody.insertRow();
-        row.insertCell().textContent = professor.siape;
-        row.insertCell().textContent = professor.nome;
-        row.insertCell().textContent = professor.email;
-        row.insertCell().textContent = professor.situacao;
-        
-        const cellAcoes = row.insertCell();
-        
-        const btnEditar = document.createElement('button');
-        btnEditar.className = 'botao-acao botao-editar';
-        btnEditar.textContent = '✏️ EDITAR';
-        btnEditar.onclick = () => editarProfessor(professor.siape);
-        cellAcoes.appendChild(btnEditar);
-
-        const btnRemover = document.createElement('button');
-        btnRemover.className = 'botao-acao botao-remover';
-        btnRemover.textContent = '🗑️ REMOVER';
-        btnRemover.onclick = () => removerDados('professor', professor.siape, professor.nome);
-        cellAcoes.appendChild(btnRemover);
-    });
-}
-
-function editarProfessor(siape) {
-    const professores = obterDados('professor');
-    const professor = professores.find(p => p.siape === siape);
-
-    if (professor) {
-        document.getElementById('nome').value = professor.nome;
-        document.getElementById('siape').value = professor.siape;
-        document.getElementById('email').value = professor.email;
-        document.getElementById('situacao').value = professor.situacao;
-        document.getElementById('siape').setAttribute('disabled', 'true');
-        
-        // TODO: Popular todos os campos de restrição com professor.restricoes
-        
-        document.getElementById('nome').focus();
-        alert(`Carregando dados de ${professor.nome} para edição.`);
-    }
-}
-
-
-// ----------------------------------------------------------------------
-// --- 4. LÓGICA DE CADASTRO DE HORÁRIOS ---
-// ----------------------------------------------------------------------
-
-function carregarHorarios() {
-    const horarios = obterDados('horario');
-    
-    // Matutino
-    const containerMatutino = document.getElementById('horarios-matutino');
-    containerMatutino.innerHTML = '';
-    horarios.matutino.forEach(tempo => adicionarCampoHorario('matutino', tempo));
-
-    // Vespertino
-    const containerVespertino = document.getElementById('horarios-vespertino');
-    containerVespertino.innerHTML = '';
-    horarios.vespertino.forEach(tempo => adicionarCampoHorario('vespertino', tempo));
-
-    // Noturno
-    const containerNoturno = document.getElementById('horarios-noturno');
-    containerNoturno.innerHTML = '';
-    horarios.noturno.forEach(tempo => adicionarCampoHorario('noturno', tempo));
-}
-
-function adicionarCampoHorario(periodo, valor = '') {
-    const container = document.getElementById(`horarios-${periodo}`);
-    
-    const div = document.createElement('div');
-    div.className = 'item-horario';
-    
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.name = `${periodo}_horario[]`; // Array de horários
-    input.value = valor;
-    input.placeholder = 'HH:MM-HH:MM ou INTERVALO';
-    
-    const btnRemover = document.createElement('button');
-    btnRemover.type = 'button';
-    btnRemover.className = 'botao-remover-horario';
-    btnRemover.textContent = '🗑️';
-    btnRemover.onclick = () => div.remove();
-    
-    div.appendChild(input);
-    div.appendChild(btnRemover);
-    container.appendChild(div);
-}
-
-function salvarHorario() {
-    const novosHorarios = {
-        matutino: [],
-        vespertino: [],
-        noturno: []
-    };
-    
-    // Captura os horários dos inputs
-    ['matutino', 'vespertino', 'noturno'].forEach(periodo => {
-        const inputs = document.querySelectorAll(`#horarios-${periodo} input`);
-        inputs.forEach(input => {
-            if (input.value.trim()) {
-                novosHorarios[periodo].push(input.value.trim().toUpperCase());
-            }
-        });
-    });
-
-    salvarDados('horario', novosHorarios);
-    alert('Horários de Períodos salvos com sucesso!');
-    carregarHorarios();
-}
-
-
-// ----------------------------------------------------------------------
-// --- 5. LÓGICA DE CADASTRO DE TURMAS e DISCIPLINAS (Esboço) ---
-// ----------------------------------------------------------------------
-
-// Função salvarTurma (Mantenha como está)
-function salvarTurma() {
-    const form = document.getElementById('form-cadastro-turmas');
-    const turma = {
-        // ... (lógica existente) ...
-    };
-
-    if (!turma.nome || !turma.modalidade) {
-        alert('Preencha os campos obrigatórios da turma.');
-        return;
-    }
-
-    let turmas = obterDados('turma');
-    turmas.push(turma);
-    salvarDados('turma', turmas);
-    alert(`Turma ${turma.nome} salva com sucesso!`);
-    form.reset();
-    carregarTurmas();
-    
-    // Atualiza a lista de turmas no dropdown de Disciplinas
-    preencherSelectsDisciplina(); 
-}
-
-// Função carregarTurmas (Mantenha como está)
-function carregarTurmas() {
-    // ... (lógica existente) ...
-}
-
-
-/**
- * Preenche os selects de Turma e Professor na aba de Cadastro de Disciplinas.
- */
-function preencherSelectsDisciplina() {
-    const turmas = obterDados('turma');
-    const professores = obterDados('professor');
-    const selectTurma = document.getElementById('disciplina_turma');
-    const selectProfessor = document.getElementById('disciplina_professor');
-    
-    // Limpar e preencher Turmas
-    selectTurma.innerHTML = '<option value="">Selecione a Turma</option>';
-    turmas.forEach(t => {
-        selectTurma.innerHTML += `<option value="${t.id}">${t.nome} (${t.modalidade})</option>`;
-    });
-
-    // Limpar e preencher Professores
-    selectProfessor.innerHTML = '<option value="">Selecione o Professor</option>';
-    professores.forEach(p => {
-        selectProfessor.innerHTML += `<option value="${p.siape}">${p.nome} (SIAPE: ${p.siape})</option>`;
-    });
-    
-    // Adiciona o ouvinte para a lógica de Aglutinação
-    const aulasInput = document.getElementById('disciplina_aulas_semanais');
-    if (!aulasInput.dataset.listenerAdded) { // Evita adicionar múltiplos listeners
-        aulasInput.addEventListener('change', preencherAglutinacao);
-        aulasInput.dataset.listenerAdded = 'true';
-    }
-    // Garante que a aglutinação seja preenchida se o valor já existir
-    preencherAglutinacao(); 
-}
-
-/**
- * Preenche as opções de aglutinação baseadas na quantidade de aulas semanais.
- */
-function preencherAglutinacao() {
-    const aulasSemanais = parseInt(document.getElementById('disciplina_aulas_semanais').value || 0);
-    const selectAglutinacao = document.getElementById('disciplina_aglutinacao');
-    const aulasInput = document.getElementById('disciplina_aulas_semanais');
-    selectAglutinacao.innerHTML = '<option value="">Selecione a Aglutinação</option>';
-    selectAglutinacao.disabled = true;
-
-    if (aulasSemanais < 1) {
-        return;
-    }
-
-    // A disciplina deve ter o número total de aulas. O sistema deve tentar dividir em blocos.
-    // As opções são: 1x1, 2x2, 3x1, 2+1, 2+3, etc.
-    // O sistema tentará usar blocos grandes (3 aulas) e blocos médios (2 aulas).
-    
-    const opcoes = [];
-    const aulasRestantes = aulasSemanais;
-    
-    // 1. Opção de uma aula por dia (Sempre disponível)
-    opcoes.push({ value: `1x${aulasSemanais}`, label: `${aulasSemanais} Dia(s) de 1 Aula` });
-    
-    // 2. Opções de blocos maiores
-    if (aulasRestantes % 2 === 0) {
-        const blocos2 = aulasRestantes / 2;
-        opcoes.push({ value: `${blocos2}x2`, label: `${blocos2} Dia(s) de 2 Aulas` });
-    }
-    
-    if (aulasRestantes % 3 === 0) {
-        const blocos3 = aulasRestantes / 3;
-        opcoes.push({ value: `${blocos3}x3`, label: `${blocos3} Dia(s) de 3 Aulas` });
-    }
-
-    // 3. Combinações Complexas (Ex: 5 e 4 aulas)
-    switch (aulasSemanais) {
-        case 3:
-            opcoes.push({ value: '2+1', label: '1 Dia de 2 Aulas + 1 Dia de 1 Aula' });
-            opcoes.push({ value: '3x1', label: '1 Dia de 3 Aulas' });
-            break;
-        case 4:
-            opcoes.push({ value: '2x2', label: '2 Dias de 2 Aulas' });
-            break;
-        case 5:
-            opcoes.push({ value: '3+2', label: '1 Dia de 3 Aulas + 1 Dia de 2 Aulas' });
-            break;
-        case 6:
-            opcoes.push({ value: '2x3', label: '2 Dias de 3 Aulas' });
-            opcoes.push({ value: '3x2', label: '3 Dias de 2 Aulas' });
-            break;
-    }
-    
-    // Filtra duplicatas e preenche o select
-    const uniqueOptions = Array.from(new Set(opcoes.map(o => o.value)))
-        .map(value => opcoes.find(o => o.value === value));
-
-    uniqueOptions.forEach(opt => {
-        selectAglutinacao.innerHTML += `<option value="${opt.value}">${opt.label}</option>`;
-    });
-
-    selectAglutinacao.disabled = false;
-    
-    // Tenta selecionar o valor atual se estiver em edição
-    const disciplinaAtual = document.getElementById('form-cadastro-disciplinas').dataset.editingId;
-    if (disciplinaAtual) {
-        const disciplina = obterDados('disciplina').find(d => d.id == disciplinaAtual);
-        if (disciplina) {
-            selectAglutinacao.value = disciplina.aglutinacao || '';
-        }
-    }
-}
-
-
-/**
- * Salva as informações da disciplina no Local Storage.
- */
-function salvarDisciplina() {
-    const form = document.getElementById('form-cadastro-disciplinas');
-    const disciplina = {
-        id: form.dataset.editingId || Date.now(),
-        nome: form.disciplina_nome.value.trim(),
-        turmaId: form.disciplina_turma.value,
-        professorSiape: form.disciplina_professor.value,
-        aulasSemanais: parseInt(form.disciplina_aulas_semanais.value),
-        aglutinacao: form.disciplina_aglutinacao.value,
-        fixaHorario: form.disciplina_fixa_horario.value,
-        // TODO: Adicionar campos de dia/hora se 'fixaHorario' for 'SIM'
-    };
-
-    if (!disciplina.nome || !disciplina.turmaId || !disciplina.professorSiape || disciplina.aulasSemanais < 1 || !disciplina.aglutinacao) {
-        alert('Por favor, preencha todos os campos obrigatórios (Disciplina, Turma, Professor, Aulas Semanais e Aglutinação).');
-        return;
-    }
-
-    let disciplinas = obterDados('disciplina');
-    const index = disciplinas.findIndex(d => d.id == disciplina.id);
-
-    if (index !== -1) {
-        disciplinas[index] = disciplina;
-        alert(`Disciplina ${disciplina.nome} atualizada com sucesso!`);
-    } else {
-        disciplinas.push(disciplina);
-        alert(`Disciplina ${disciplina.nome} cadastrada com sucesso!`);
-    }
-
-    salvarDados('disciplina', disciplinas);
-    form.reset();
-    form.removeAttribute('data-editing-id');
-    document.querySelector('#disciplina_aglutinacao').disabled = true; // Desativa até que as aulas sejam definidas
-    carregarDisciplinas();
-}
-
-/**
- * Preenche a tabela de Disciplinas Cadastradas.
- */
-function carregarDisciplinas() {
-    const disciplinas = obterDados('disciplina');
-    const turmas = obterDados('turma');
-    const professores = obterDados('professor');
-    const tabelaBody = document.querySelector('#tabela-disciplinas tbody');
-    if (!tabelaBody) return;
-
-    tabelaBody.innerHTML = '';
-    
-    disciplinas.forEach(d => {
-        // Encontra os nomes correspondentes para exibição
-        const turma = turmas.find(t => t.id == d.turmaId);
-        const professor = professores.find(p => p.siape == d.professorSiape);
-        
-        const row = tabelaBody.insertRow();
-        row.insertCell().textContent = d.nome;
-        row.insertCell().textContent = turma ? turma.nome : 'Turma Removida';
-        row.insertCell().textContent = professor ? professor.nome : 'Prof. Removido';
-        row.insertCell().textContent = d.aulasSemanais;
-        row.insertCell().textContent = d.aglutinacao;
-        
-        const cellAcoes = row.insertCell();
-        
-        const btnEditar = document.createElement('button');
-        btnEditar.className = 'botao-acao botao-editar';
-        btnEditar.textContent = '✏️ EDITAR';
-        btnEditar.onclick = () => editarDisciplina(d.id);
-        cellAcoes.appendChild(btnEditar);
-
-        const btnRemover = document.createElement('button');
-        btnRemover.className = 'botao-acao botao-remover';
-        btnRemover.textContent = '🗑️ REMOVER';
-        btnRemover.onclick = () => removerDados('disciplina', d.id, d.nome);
-        cellAcoes.appendChild(btnRemover);
-    });
-}
-
-/**
- * Carrega os dados de uma disciplina no formulário para edição.
- */
-function editarDisciplina(id) {
-    const disciplinas = obterDados('disciplina');
-    const disciplina = disciplinas.find(d => d.id == id);
-    const form = document.getElementById('form-cadastro-disciplinas');
-
-    if (disciplina) {
-        form.dataset.editingId = id; // Marca que estamos editando
-        
-        // Popula campos básicos
-        form.disciplina_nome.value = disciplina.nome;
-        form.disciplina_turma.value = disciplina.turmaId;
-        form.disciplina_professor.value = disciplina.professorSiape;
-        form.disciplina_aulas_semanais.value = disciplina.aulasSemanais;
-        form.disciplina_fixa_horario.value = disciplina.fixaHorario;
-        
-        // Recarrega as opções de aglutinação baseadas no número de aulas
-        preencherAglutinacao(); 
-        // Em seguida, define o valor específico de aglutinação
-        form.disciplina_aglutinacao.value = disciplina.aglutinacao;
-        
-        alert(`Carregando disciplina ${disciplina.nome} para edição.`);
-        form.disciplina_nome.focus();
-    }
-}
-
-// ----------------------------------------------------------------------
-// --- 6. FUNÇÃO GENÉRICA DE REMOÇÃO E INICIALIZAÇÃO ---
-// ----------------------------------------------------------------------
-
-function removerDados(key, id, nome) {
-    if (confirm(`Tem certeza que deseja remover ${key} ${nome}?`)) {
-        let dados = obterDados(key);
-        
-        if (key === 'professor') {
-            dados = dados.filter(d => d.siape !== id);
-        } else {
-            // Assume que outros cadastros usam o 'id' (timestamp)
-            dados = dados.filter(d => d.id !== id);
-        }
-        
-        salvarDados(key, dados);
-        
-        // Recarregar a tabela correta
-        if (key === 'professor') carregarProfessores();
-        if (key === 'turma') carregarTurmas();
-        
-        alert(`${key} ${nome} removido(a) com sucesso.`);
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Garante que os dados iniciais existam
-    Object.keys(LS_KEYS).forEach(key => obterDados(key)); 
-    
-    // 1. Inicializa a navegação e listeners de clique
-    inicializarNavegacao(); 
-    
-    // 2. Mapeamento dos botões Salvar genéricos
-    document.querySelectorAll('.botao-salvar').forEach(button => {
-        button.addEventListener('click', function() {
-            const target = this.getAttribute('data-save-target');
-            
-            if (target === 'professor') salvarProfessor();
-            else if (target === 'horario') salvarHorario();
-            else if (target === 'turma') salvarTurma();
-            else if (target === 'disciplina') salvarDisciplina();
-            else if (target === 'calendario_integrado') salvarCalendario('integrado');
-            else if (target === 'calendario_superior') salvarCalendario('superior');
-        });
-    });
-
-    // 3. Garante que a primeira aba 'Professores' seja exibida ao carregar.
-    // Isso é essencial, pois o CSS inicial não define nenhuma aba como 'block'.
-    mostrarConteudoDaAba('cadastro-professores');
-    
-    // Otimização: Carregar os dados de tabela APENAS ao abrir a aba, 
-    // por isso as chamadas de carregarProfessores/carregarTurmas foram movidas 
-    // para dentro da função mostrarConteudoDaAba.
-});
-
-// ----------------------------------------------------------------------
-// --- 7. LÓGICA DE CADASTRO DE CALENDÁRIOS (INTERATIVO CÍCLICO) ---
-// ----------------------------------------------------------------------
+// ======================================================================
+// --- 2. LÓGICA DE CADASTRO DE CALENDÁRIOS (INTERATIVO CÍCLICO) ---
+// ======================================================================
 
 const NOMES_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
                      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-const DIAS_CURTOS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+// D, S, T, Q, Q, S, S (Domingo = 0)
+const DIAS_CURTOS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']; 
 
 /**
  * Sequência de status ao clicar:
  * LETV -> NAO_LETV -> FERIADO -> RECUPERACAO -> EXAME -> LETV
  */
 const CICLO_STATUS = [
-    'LETV',          // Padrão (Dia Letivo Normal)
-    'NAO_LETV',      // 1 Clique
-    'FERIADO',       // 2 Cliques
-    'RECUPERACAO',   // 3 Cliques
-    'EXAME'          // 4 Cliques
+    'LETV',      // 0: Padrão (Dia Letivo Normal)
+    'NAO_LETV',  // 1: Não Letivo
+    'FERIADO',   // 2: Feriado
+    'RECUPERACAO', // 3: Recuperação
+    'EXAME'      // 4: Exame
 ];
 
 /**
@@ -736,6 +110,7 @@ function renderizarCalendario(tipo) {
             const diaSemana = (dia + diaSemanaInicial - 1) % 7; 
             const isWeekend = diaSemana === 0 || diaSemana === 6; // 0=Dom, 6=Sáb
 
+            // Adiciona a classe data-tipo para refletir o status
             htmlMes += `<div class="dia-calendario ${isWeekend ? 'fim-semana' : ''}" 
                             data-data="${dataKey}" 
                             data-tipo="${tipoDiaSalvo}"
@@ -759,7 +134,7 @@ function aplicarTipoDiaCiclico(element) {
     // Encontra o índice atual e calcula o próximo (cíclico)
     let indexAtual = CICLO_STATUS.indexOf(tipoAtual);
     
-    // Se não encontrou (erro ou tipo não padrão), começa em LETV
+    // Se não encontrou (erro ou tipo não padrão), começa em LETV (0)
     if (indexAtual === -1) {
         indexAtual = 0;
     }
@@ -772,43 +147,34 @@ function aplicarTipoDiaCiclico(element) {
 }
 
 /**
- * Aplica ações rápidas a vários dias (ex: todas as segundas, ou mês inteiro).
+ * Aplica o mesmo tipo de dia a todos os dias de uma determinada semana do ano.
  * @param {string} tipo 'integrado' ou 'superior'.
- * @param {string} acao Tipo de ação ('diaSemana' ou 'mes').
- * @param {number} valor Valor da ação (dia da semana JS: 0-6, ou mês JS: 0-11).
- * @param {string} novoTipo O tipo de dia a ser aplicado.
+ * @param {number} diaSemana Dia da semana (0=Domingo, 1=Segunda, ..., 6=Sábado).
  */
-function aplicarAcaoRapida(tipo, acao, valor, novoTipo) {
-    const ano = document.getElementById(`cal_${tipo}_ano`).value;
-    const diasAfetados = [];
+function selecionarDiaSemana(tipo, diaSemana) {
+    const selectTipo = document.getElementById(`cal_${tipo}_tipo`);
+    const novoTipo = selectTipo.value;
+    
+    if (!novoTipo) {
+        alert('Selecione um Tipo de Dia antes de usar as Ações Rápidas.');
+        return;
+    }
 
+    let diasAfetados = 0;
+    
     document.querySelectorAll(`#grade-calendario-${tipo}-visual .dia-calendario`).forEach(diaElement => {
         const dataKey = diaElement.getAttribute('data-data');
-        const data = new Date(dataKey);
+        // Usar 'T12:00:00' corrige problemas de fuso horário (DST)
+        const data = new Date(dataKey + 'T12:00:00'); 
         
-        let deveAplicar = false;
-
-        if (acao === 'diaSemana') {
-            // JS getDay(): 0 (Domingo) a 6 (Sábado).
-            // Nossos botões usam 1 (Segunda) a 6 (Sábado).
-            // Exemplo: valor 1 (Segunda), data.getDay() deve ser 1.
-            if (data.getDay() === valor) {
-                 deveAplicar = true;
-            }
-        }
-        // Se acao === 'mes', implementaremos mais tarde.
-
-        if (deveAplicar) {
-             diaElement.setAttribute('data-tipo', novoTipo);
-             diasAfetados.push(dataKey);
+        // Compara com o dia da semana do JS (0=Dom, 1=Seg, ..., 6=Sab)
+        if (data.getDay() === diaSemana) {
+            diaElement.setAttribute('data-tipo', novoTipo);
+            diasAfetados++;
         }
     });
-
-    if (diasAfetados.length > 0) {
-        alert(`${diasAfetados.length} dias foram definidos como ${novoTipo}.`);
-    } else {
-        alert('Nenhum dia foi alterado. Verifique o ano selecionado.');
-    }
+    
+    alert(`${diasAfetados} dias (todas as ${DIAS_CURTOS[diaSemana]}s) foram definidos como ${novoTipo}.`);
 }
 
 /**
@@ -832,76 +198,6 @@ function salvarCalendario(tipo) {
     const novosDados = {};
     
     document.querySelectorAll(`#grade-calendario-${tipo}-visual .dia-calendario`).forEach(diaElement => {
-        const dataKey = diaElement.getAttribute('data-data');
-        const tipoDia = diaElement.getAttribute('data-tipo');
-        
-        // Salva apenas dias que não são 'LETV' para economizar espaço
-        if (tipoDia !== 'LETV') {
-            novosDados[dataKey] = tipoDia;
-        }
-    });
-    
-    // Salvamos a grade completa do ano em uma única chave.
-    // Para salvar anos diferentes, a chave de LS deveria ser dinamica (ex: 'ifro_cal_int_2025')
-    // Por enquanto, manteremos a chave simples, focando no ano selecionado.
-    
-    salvarDados(key, novosDados);
-    alert(`Calendário Anual (${ano}) para Cursos ${tipo.toUpperCase()} salvo com sucesso!`);
-}
-
-/**
- * Seleciona e aplica o tipo de dia a todos os dias de uma determinada semana (e mês).
- * @param {string} tipo 'integrado' ou 'superior'.
- * @param {number} diaSemana Dia da semana (1=Segunda, 6=Sábado, 0=Domingo).
- */
-function selecionarDiaSemana(tipo, diaSemana) {
-    const selectTipo = document.getElementById(`cal_${tipo}_tipo`);
-    const novoTipo = selectTipo.value;
-    
-    if (!novoTipo) {
-        alert('Selecione um Tipo de Dia antes de usar as Ações Rápidas.');
-        return;
-    }
-
-    // A função Date.getDay() retorna 0 (Domingo) a 6 (Sábado).
-    // Nossa função recebe 1 (Segunda) a 6 (Sábado) e 7 (Domingo, se necessário, mas vamos usar 0-6 do JS).
-    // Ajuste: 1=Seg (1), 2=Ter (2), ..., 5=Sex (5), 6=Sab (6), 7=Dom (0)
-    
-    const diaJS = diaSemana % 7; // Garante que 7 seja 0 (Domingo), mas como só temos 1-6 no botão, vai de 1-6.
-    
-    document.querySelectorAll(`#grade-calendario-${tipo}-visual .dia-calendario`).forEach(diaElement => {
-        const dataKey = diaElement.getAttribute('data-data');
-        const data = new Date(dataKey);
-        
-        // Compara com o dia da semana do JS (1=Seg, 6=Sab)
-        if (data.getDay() === diaSemana) {
-             diaElement.setAttribute('data-tipo', novoTipo);
-        }
-    });
-}
-
-/**
- * Limpa o tipo de dia de todos os dias selecionados (volta para LETV).
- * @param {string} tipo 'integrado' ou 'superior'.
- */
-function limparSelecao(tipo) {
-    document.querySelectorAll(`#grade-calendario-${tipo}-visual .dia-calendario`).forEach(diaElement => {
-        diaElement.setAttribute('data-tipo', 'LETV');
-    });
-    alert(`Seleção de ${tipo} limpa. Todos os dias estão como Letivo Normal.`);
-}
-
-/**
- * Salva o estado atual do calendário do DOM para o Local Storage.
- * @param {string} tipo 'integrado' ou 'superior'.
- */
-function salvarCalendario(tipo) {
-    const key = `calendario_${tipo}`;
-    const ano = document.getElementById(`cal_${tipo}_ano`).value;
-    const novosDados = {};
-    
-    // Itera sobre todos os dias no DOM
-    document.querySelectorAll(`#grade-calendario-${tipo}-visual .dia-calendario`).forEach(diaElement => {
         const dataKey = diaElement.getAttribute('data-data'); // YYYY-MM-DD
         const tipoDia = diaElement.getAttribute('data-tipo');
         
@@ -911,25 +207,30 @@ function salvarCalendario(tipo) {
         }
     });
 
-    // Pega os dados salvos de anos anteriores e mescla
-    // (Por enquanto, apenas sobrescrevemos o ano atual)
-    
     salvarDados(key, novosDados);
     alert(`Calendário Anual (${ano}) para Cursos ${tipo.toUpperCase()} salvo com sucesso!`);
 }
+// ======================================================================
+// --- 3. LÓGICA DE GERAÇÃO DE HORÁRIO BASE (Heurística de Priorização) ---
+// ======================================================================
 
-// ----------------------------------------------------------------------
-// --- 8. LÓGICA DE GERAÇÃO DE HORÁRIO BASE (Heurística de Priorização) ---
-// ----------------------------------------------------------------------
-
-/**
- * Mapeamento dos dias da semana e períodos.
- */
 const DIAS_SEMANA = ['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA'];
 
 /**
+ * Mapeamento: Dia atual -> Dia anterior na sequência letiva
+ * Usado para a Regra das 11 Horas de descanso.
+ */
+const DIA_ANTERIOR = {
+    'SEGUNDA': 'SEXTA',
+    'TERCA': 'SEGUNDA',
+    'QUARTA': 'TERCA',
+    'QUINTA': 'QUARTA',
+    'SEXTA': 'QUINTA'
+};
+
+/**
  * Gera a estrutura de todos os slots de horário disponíveis.
- * @returns {Object} Estrutura da grade semanal.
+ * @returns {Object} Estrutura da grade semanal vazia.
  */
 function inicializarGradeVazia() {
     const grade = {};
@@ -943,14 +244,16 @@ function inicializarGradeVazia() {
         ['matutino', 'vespertino', 'noturno'].forEach(periodo => {
             if (horarios[periodo]) {
                 horarios[periodo].forEach(slotTempo => {
-                    if (slotTempo !== 'INTERVALO') {
+                    // Ignora o slot de intervalo
+                    if (slotTempo !== 'INTERVALO') { 
                         // O slot é um objeto que armazenará a disciplina alocada
                         grade[dia][slotTempo] = { 
-                            status: 'LIVRE', // LIVRE, ALOCADO, RESTRITO, CALENDARIO
+                            status: 'LIVRE', // LIVRE, ALOCADO, RESTRITO
                             periodo: periodo,
                             turmaId: null, // Turma que ocupa o slot
                             disciplinaId: null, // Disciplina alocada
-                            professorSiape: null // Professor alocado
+                            professorSiape: null, // Professor alocado
+                            restritos: [] // Array de SIAPEs de professores restritos (PRD/PGD)
                         };
                     }
                 });
@@ -962,10 +265,9 @@ function inicializarGradeVazia() {
 }
 
 /**
- * Aplica restrições de PRD/PGD e a Regra das 11 Horas na grade.
- * Isso deve ser feito ANTES da alocação de disciplinas.
+ * Aplica restrições de PRD/PGD na grade.
  * @param {Object} grade Grade de horário inicializada.
- * @returns {Object} Grade com restrições aplicadas.
+ * @returns {Object} Grade com restrições de PGD/PRD aplicadas.
  */
 function aplicarRestricoesIniciais(grade) {
     const professores = obterDados('professor');
@@ -974,7 +276,7 @@ function aplicarRestricoesIniciais(grade) {
         const rest = prof.restricoes;
 
         // 1. PRD / PGD
-        if (rest.prd_principal &&
+        if (rest && rest.prd_principal &&
             rest.prd_principal.dia &&
             rest.prd_principal.periodo) {
             
@@ -988,69 +290,58 @@ function aplicarRestricoesIniciais(grade) {
                     if (periodoPRD === 'INTEIRO' ||
                         slotObj.periodo.toUpperCase().startsWith(periodoPRD)) {
 
-                        if (!slotObj.restritos) slotObj.restritos = [];
+                        // Marca o professor como restrito no slot
                         slotObj.restritos.push(prof.siape);
                     }
                 });
             }
         }
-
-        // 2. Regras de Descanso (11h) — ainda não implementado
     });
 
     return grade;
 }
-// ... (Mantenha as definições de DIAS_SEMANA e inicializarGradeVazia) ...
 
 /**
- * Verifica se um professor tem restrição (PGD/PRD/11h) em um slot.
- * @param {string} siape SIAPE do professor.
- * @param {string} dia Dia da semana.
- * @param {string} slotTempo ID do slot de tempo.
- * @param {Object} grade Estrutura de grade (para verificar restritos).
- * @returns {boolean} True se o professor está restrito neste slot.
+ * Verifica se um slot está livre para uma determinada Turma e Professor,
+ * incluindo verificações de 11h de descanso.
  */
-function professorRestrito(siape, dia, slotTempo, grade) {
-    // 1. Verifica Restrições de PRD/PGD
+function verificarConflitosSlot(grade, dia, slotTempo, turmaId, professorSiape) {
     const slot = grade[dia][slotTempo];
-    if (slot && slot.restritos && slot.restritos.includes(siape)) {
-        return true;
-    }
-    
-    // 2. Verifica Restrição das 11 Horas (Complexo, mas essencial)
-    // Se hoje é segunda e o professor teve aula no último slot da sexta passada, ele deveria ser restrito.
-    // Simplificação: Se o professor tem aula no slot NOTURNO (último horário) no dia anterior, ele é restrito no MATUTINO (primeiro horário) de hoje.
     const horarios = obterDados('horario');
-    
+
+    // 1. Conflito de Turma (Slot já alocado)
+    if (slot.disciplinaId !== null) { 
+        return 'TURMA_OCUPADA';
+    }
+
+    // 2. Conflito de Professor (PRD/PGD)
+    if (slot.restritos && slot.restritos.includes(professorSiape)) {
+        return 'PROFESSOR_RESTRITO';
+    }
+
+    // 3. Conflito das 11 Horas de Descanso (Regra Rígida)
     const slotsMatutino = horarios.matutino || [];
     const slotsNoturno = horarios.noturno || [];
     
-    const isSlotMatutino = slotsMatutino.includes(slotTempo);
-    
-    if (isSlotMatutino) {
-        const diaAnteriorIndex = (DIAS_SEMANA.indexOf(dia) + 4) % 5; // Mapeia 0->4, 1->0, 2->1, etc.
-        const diaAnterior = DIAS_SEMANA[diaAnteriorIndex];
-        const DIAS_SEMANA = ['SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA'];
-// Mapeamento: Dia atual -> Dia anterior na sequência letiva
-const DIA_ANTERIOR = {
-    'SEGUNDA': 'SEXTA',
-    'TERCA': 'SEGUNDA',
-    'QUARTA': 'TERCA',
-    'QUINTA': 'QUARTA',
-    'SEXTA': 'QUINTA'
-};
+    // O conflito das 11h geralmente só ocorre no primeiro horário matutino
+    const isSlotMatutinoPrimeiro = slotsMatutino[0] === slotTempo; 
+
+    if (isSlotMatutinoPrimeiro) {
+        const diaAnterior = DIA_ANTERIOR[dia]; 
         
-        // Verifica se o professor está escalado no último slot noturno do dia anterior
-        const ultimoSlotNoturno = slotsNoturno[slotsNoturno.length - 1];
-        if (grade[diaAnterior] && grade[diaAnterior][ultimoSlotNoturno] && 
-            grade[diaAnterior][ultimoSlotNoturno].professorSiape === siape) {
+        if (diaAnterior) {
+            const ultimoSlotNoturno = slotsNoturno[slotsNoturno.length - 1];
             
-            // CONFLITO DE 11 HORAS!
-            return true; 
+            // Verifica se o professor está escalado no último slot noturno do dia anterior
+            if (grade[diaAnterior] && grade[diaAnterior][ultimoSlotNoturno] && 
+                grade[diaAnterior][ultimoSlotNoturno].professorSiape === professorSiape) {
+                
+                return '11H_DESCANSO'; 
+            }
         }
     }
     
-    return false;
+    return null; // Slot está livre para Turma e Professor
 }
 
 /**
@@ -1062,37 +353,31 @@ const DIA_ANTERIOR = {
  * @returns {Object|null} {dia: string, slots: Array<string>} ou null se não encontrar.
  */
 function encontrarBlocoAglutinado(grade, numAulas, turmaId, professorSiape) {
-    // CORREÇÃO: Pega os slots do primeiro dia da grade (SEGUNDA) de forma segura.
+    // Garante que há slots para iterar
     const slotTempos = Object.keys(grade.SEGUNDA || {}); 
-    
-    // Se não houver slots de horário definidos, não há como gerar
-    if (slotTempos.length === 0) return null;
+    if (slotTempos.length === 0) return null; 
     
     for (const dia of DIAS_SEMANA) {
         for (let i = 0; i <= slotTempos.length - numAulas; i++) {
-            let blocoLivre = true;
             let slotsCandidatos = [];
+            let blocoLivre = true;
             
-            // Verifica os N slots consecutivos
             for (let j = 0; j < numAulas; j++) {
                 const slotTempo = slotTempos[i + j];
-                const slot = grade[dia][slotTempo];
                 
-                // CRITÉRIOS:
-                // 1. Slot deve existir (não ser intervalo)
-                // 2. Turma deve estar LIVRE
-                // 3. Professor não deve ter restrição (PGD/11h)
-                if (!slot || slot.turmaId !== null || professorRestrito(professorSiape, dia, slotTempo, grade)) {
+                // 1. Verifica se o slot não gera conflito para Turma/Professor/Restrições
+                const conflito = verificarConflitosSlot(grade, dia, slotTempo, turmaId, professorSiape);
+                
+                if (conflito !== null) {
                     blocoLivre = false;
                     break;
                 }
                 
-                // 4. Se for bloco > 1, não deve haver intervalo entre os slots
+                // 2. Garante que os slots são consecutivos dentro de um mesmo período (Manhã/Tarde/Noite)
                 if (j > 0) {
-                    // Aqui precisaríamos de um mapeamento de tempo para checar se há intervalo no meio.
-                    // Simplificação: Assume-se que a lista de slotTempos já removeu os intervalos.
-                    // Se o slot estiver em períodos diferentes (ex: último da manhã e primeiro da tarde), é inválido.
-                    if (grade[dia][slotTempos[i + j - 1]].periodo !== slot.periodo) {
+                    const periodoAtual = grade[dia][slotTempo].periodo;
+                    const periodoAnterior = grade[dia][slotTempos[i + j - 1]].periodo;
+                    if (periodoAtual !== periodoAnterior) {
                         blocoLivre = false;
                         break;
                     }
@@ -1119,12 +404,11 @@ function gerarHorarioBase() {
     let grade = inicializarGradeVazia();
     let conflitos = [];
     
+    // Aplica restrições estáticas (PGD/PRD)
     grade = aplicarRestricoesIniciais(grade); 
     
-    // Etapa 2: Priorização
-    // Disciplinas com mais aulas e maior aglutinação são alocadas primeiro.
+    // Etapa 2: Priorização (Maior número de aulas primeiro)
     const disciplinasOrdenadas = [...disciplinas].sort((a, b) => {
-        // Exemplo: '3+2' tem prioridade sobre '1x5' (maior soma de aulas)
         return b.aulasSemanais - a.aulasSemanais; 
     });
     
@@ -1133,13 +417,14 @@ function gerarHorarioBase() {
         let aulasAlocadas = 0;
         const aulasNecessarias = disc.aulasSemanais;
         
-        // Parse da Aglutinação (Ex: "3+2" -> [3, 2]; "2x2" -> [2, 2])
+        // Parse da Aglutinação (Ex: "3+2" -> [3, 2]; "2x2" -> [2, 2, 2, 2])
         let blocosParaAlocar = [];
         
         disc.aglutinacao.split('+').forEach(p => {
             if (p.includes('x')) {
                 const [dias, aulas] = p.split('x').map(Number);
-                blocosParaAlocar.push(...Array(dias).fill(aulas));
+                // Ex: '2x2' significa 2 blocos de 2 aulas
+                blocosParaAlocar.push(...Array(dias).fill(aulas)); 
             } else {
                 blocosParaAlocar.push(Number(p));
             }
@@ -1151,6 +436,7 @@ function gerarHorarioBase() {
         // Tenta alocar cada bloco
         blocosParaAlocar.forEach(tamanhoBloco => {
             if (aulasAlocadas < aulasNecessarias) {
+                // Tenta encontrar um bloco livre para a Turma e o Professor
                 const bloco = encontrarBlocoAglutinado(grade, tamanhoBloco, disc.turmaId, disc.professorSiape);
                 
                 if (bloco) {
@@ -1181,12 +467,8 @@ function gerarHorarioBase() {
     // Etapa 5: Renderizar
     renderizarGradeFinal(grade, conflitos);
     
-    // Visualização do Fluxo de Alocação:
-    // O algoritmo começa com restrições rígidas e tenta encaixar blocos grandes
-    // antes de blocos pequenos, priorizando o preenchimento da grade.
-    
 }
-        
+
 /**
  * Renderiza a grade de horário na seção de Horário Base.
  * @param {Object} grade Grade de horário gerada.
@@ -1196,138 +478,38 @@ function renderizarGradeFinal(grade, conflitos) {
     const secaoHorarioBase = document.getElementById('horario-base-gerar');
     if (!secaoHorarioBase) return;
     
-    // Título e Botão de Geração (para reexecutar)
+    // 1. Configura a UI de Output
+    const turmas = obterDados('turma');
+    const dropdownTurmas = `<select id="seletor-turma-grade" onchange="renderizarGradeTurma(this.value, window.lastGeneratedGrade, turmas, professores, disciplinas)">
+        <option value="">Selecione a Turma para Visualizar</option>
+        ${turmas.map(t => `<option value="${t.id}">${t.nome}</option>`).join('')}
+    </select>`;
+
     secaoHorarioBase.innerHTML = `
         <h3 class="titulo-aba">📅 Geração de Horário Base</h3>
         <button class="botao-acao botao-editar" onclick="gerarHorarioBase()">🔄 RE-GERAR HORÁRIO BASE</button>
         <div id="resultado-conflitos"></div>
-        <div id="grade-horario-output"></div>
+        <div id="grade-horario-output">
+            <h4>Visualizar Grade por Turma:</h4>
+            ${dropdownTurmas}
+            <div id="grade-turma-visual"></div>
+        </div>
     `;
 
-    /**
- * Verifica se um slot está livre para uma determinada Turma e Professor.
- * Inclui verificações de 11h de descanso e Calendário.
- * @param {Object} grade A grade de horário atual.
- * @param {string} dia Dia da semana.
- * @param {string} slotTempo ID do slot de tempo.
- * @param {string} turmaId ID da turma.
- * @param {string} professorSiape SIAPE do professor.
- * @returns {string|null} O motivo do conflito (Ex: 'TURMA_OCUPADA', '11H_DESCANSO', 'RESTRITO') ou null se livre.
- */
-function verificarConflitosSlot(grade, dia, slotTempo, turmaId, professorSiape) {
-    const slot = grade[dia][slotTempo];
-    const horarios = obterDados('horario');
-
-    // 1. Conflito de Turma (Slot já alocado)
-    if (slot.turmaId !== null && slot.turmaId === turmaId) {
-        return 'TURMA_OCUPADA';
-    }
-    if (slot.disciplinaId !== null) { // Turma ocupada por outra disciplina
-        return 'TURMA_OCUPADA';
-    }
-
-    // 2. Conflito de Professor (PRD/PGD aplicado inicialmente)
-    if (slot.restritos && slot.restritos.includes(professorSiape)) {
-        return 'PROFESSOR_RESTRITO';
-    }
-
-    // 3. Conflito das 11 Horas de Descanso
-    const slotsMatutino = horarios.matutino || [];
-    const slotsNoturno = horarios.noturno || [];
-
-    if (slotsMatutino.includes(slotTempo)) {
-        const diaAnterior = DIA_ANTERIOR[dia];
-        const ultimoSlotNoturno = slotsNoturno[slotsNoturno.length - 1];
-        
-        // Verifica se o dia anterior existe e se o professor estava no último noturno
-        if (grade[diaAnterior] && grade[diaAnterior][ultimoSlotNoturno] && 
-            grade[diaAnterior][ultimoSlotNoturno].professorSiape === professorSiape) {
-            
-            return '11H_DESCANSO'; 
-        }
-    }
-    
-    // 4. Conflito de Calendário (Dia Não Letivo)
-    // Para simplificação da GERAÇÃO BASE (semanal), ignoraremos o calendário aqui.
-    // O calendário só deve afetar a VERIFICAÇÃO FINAL da carga horária, pois o horário base é semanal/recorrente.
-
-    return null; // Slot está livre para Turma e Professor
-}
-
-/**
- * Tenta encontrar um bloco de slots consecutivos (aglutinação) disponível.
- * @param {Object} grade A grade atual.
- * @param {number} numAulas O tamanho do bloco de aulas a aglutinar (ex: 2 ou 3).
- * @returns {Object|null} {dia: string, slots: Array<string>} ou null se não encontrar.
- */
-function encontrarBlocoAglutinado(grade, numAulas, turmaId, professorSiape) {
-    const slotTempos = Object.keys(grade.SEGUNDA || {}); 
-    if (slotTempos.length === 0) return null; 
-    
-    for (const dia of DIAS_SEMANA) {
-        for (let i = 0; i <= slotTempos.length - numAulas; i++) {
-            let slotsCandidatos = [];
-            let blocoLivre = true;
-            
-            for (let j = 0; j < numAulas; j++) {
-                const slotTempo = slotTempos[i + j];
-                
-                // 1. Verifica se o slot é válido e não gera conflito
-                const conflito = verificarConflitosSlot(grade, dia, slotTempo, turmaId, professorSiape);
-                
-                if (conflito !== null) {
-                    blocoLivre = false;
-                    break;
-                }
-                
-                // 2. Garante que os slots são consecutivos dentro de um mesmo período (Manhã/Tarde/Noite)
-                if (j > 0) {
-                    const periodoAtual = grade[dia][slotTempo].periodo;
-                    const periodoAnterior = grade[dia][slotTempos[i + j - 1]].periodo;
-                    if (periodoAtual !== periodoAnterior) {
-                        blocoLivre = false;
-                        break;
-                    }
-                }
-                
-                slotsCandidatos.push(slotTempo);
-            }
-            
-            if (blocoLivre) {
-                return { dia: dia, slots: slotsCandidatos };
-            }
-        }
-    }
-    return null;
-}
-    // 1. Reportar Conflitos
+    // 2. Reportar Conflitos
     const outputConflitos = document.getElementById('resultado-conflitos');
     if (conflitos.length > 0) {
+        // Exibir a lista detalhada de conflitos aqui
         outputConflitos.innerHTML = `<p class="nota-regra">⚠️ **CONFLITOS ENCONTRADOS (${conflitos.length}):** O sistema não conseguiu alocar todas as aulas.</p>`;
-        // ... (código para listar os conflitos em uma tabela)
     } else {
         outputConflitos.innerHTML = `<p class="nota-regra" style="border-left-color: var(--ifro-verde);">✅ **SUCESSO:** Horário Base gerado sem conflitos conhecidos.</p>`;
     }
     
-    // 2. Montar a Grade Visual (Apenas para as turmas)
-    const outputGrade = document.getElementById('grade-horario-output');
-    
-    // Simplificando a visualização: Mostrar a grade por Turma, uma de cada vez.
-    const turmas = obterDados('turma');
+    // 3. Renderizar a Primeira Turma
+    window.lastGeneratedGrade = grade; // Armazena globalmente para ser usada pelo onchange
     const professores = obterDados('professor');
     const disciplinas = obterDados('disciplina');
     
-    const dropdownTurmas = `<select id="seletor-turma-grade" onchange="renderizarGradeTurma(this.value, grade, turmas, professores, disciplinas)">
-        <option value="">Selecione a Turma para Visualizar</option>
-        ${turmas.map(t => `<option value="${t.id}">${t.nome}</option>`).join('')}
-    </select>`;
-    
-    outputGrade.innerHTML = `<h4>Visualizar Grade por Turma:</h4>${dropdownTurmas}<div id="grade-turma-visual"></div>`;
-    
-    // Armazenar a grade gerada globalmente ou no DOM para ser usada na visualização
-    window.lastGeneratedGrade = grade;
-    
-    // Tentativa de renderizar a primeira turma automaticamente
     if (turmas.length > 0) {
         document.getElementById('seletor-turma-grade').value = turmas[0].id;
         renderizarGradeTurma(turmas[0].id, grade, turmas, professores, disciplinas);
@@ -1338,36 +520,24 @@ function encontrarBlocoAglutinado(grade, numAulas, turmaId, professorSiape) {
  * Função utilitária para renderizar a grade de uma turma específica.
  */
 function renderizarGradeTurma(turmaId, grade, turmas, professores, disciplinas) {
-    // ... (código para inicializar) ...
-    const dadosCalendario = obterDados('calendario_integrado'); // Obtem o calendário
-    
-    // ... (loop slotTempos.forEach) ...
-        
-        DIAS_SEMANA.forEach(dia => {
-            const slot = grade[dia][slotTempo];
-            let conteudo = '';
-            let classe = 'slot-livre';
+    const container = document.getElementById('grade-turma-visual');
+    if (!container || !grade) {
+        container.innerHTML = `<p>Grade não gerada ou container ausente.</p>`;
+        return;
+    }
 
-            // Primeiro: Checar Restrição do Calendário
-            const dataHoje = moment().day(dia).format('YYYY-MM-DD'); // Retorna a data de hoje para o dia da semana atual
-            const tipoDia = dadosCalendario[dataHoje] || 'LETV';
-
-            if (tipoDia !== 'LETV') {
-                conteudo = tipoDia;
-                classe = 'slot-calendario';
-            } else if (slot.disciplinaId && slot.turmaId == turmaId) {
-                // ... (lógica de slot alocado existente) ...
-            } 
-            // ... (restante da lógica de slot livre/restrito) ...
-            
-            html += `<td class="${classe}">${conteudo}</td>`;
-        });
-    
     const turma = turmas.find(t => t.id == turmaId);
-    if (!turma) return;
+    if (!turma) {
+        container.innerHTML = `<p>Selecione uma Turma para visualizar.</p>`;
+        return;
+    }
     
     // Extrai todos os slots únicos para montar o cabeçalho de tempo
-    const slotTempos = Object.keys(grade[DIAS_SEMANA[0]]); 
+    const slotTempos = Object.keys(grade[DIAS_SEMANA[0]] || {}); 
+    if (slotTempos.length === 0) {
+        container.innerHTML = `<p>Horários não configurados (Turnos Vazios).</p>`;
+        return;
+    }
     
     let html = `<h5>Horário da Turma: ${turma.nome}</h5>`;
     html += `<table class="tabela-dados tabela-horario">
@@ -1384,18 +554,23 @@ function renderizarGradeTurma(turmaId, grade, turmas, professores, disciplinas) 
             let conteudo = '';
             let classe = 'slot-livre';
 
-            if (slot.disciplinaId && slot.turmaId == turmaId) {
+            if (!slot) { // Deve ser um intervalo ou dia inválido (embora já filtrado)
+                conteudo = '';
+                classe = 'slot-vazio';
+            } else if (slot.disciplinaId && slot.turmaId == turmaId) {
+                // Slot Alocado para esta Turma
                 const disc = disciplinas.find(d => d.id === slot.disciplinaId);
                 const prof = professores.find(p => p.siape === slot.professorSiape);
                 
-                conteudo = `${disc.nome} <br> <small>${prof.nome}</small>`;
+                conteudo = `${disc.nome || 'DISCIPLINA N/A'} <br> <small>${prof?.nome || 'PROF N/A'}</small>`;
                 classe = 'slot-alocado';
             } else if (slot.restritos && slot.restritos.length > 0) {
-                conteudo = 'Restrito';
-                classe = 'slot-restrito';
-            } else if (slot.status === 'LIVRE') {
-                 // conteudo = 'Livre';
-            }
+                // Slot Restrito para Algum Professor (Visualização de Turma, não Professor)
+                // Se a turma está livre, mas o slot é restrito para outros, mostra como livre (ou usa outra cor)
+                // conteudo = 'Restrito (Prof)'; 
+                // classe = 'slot-restrito';
+                // Deixa como livre para não poluir a visualização da turma
+            } 
 
             html += `<td class="${classe}">${conteudo}</td>`;
         });
@@ -1405,7 +580,573 @@ function renderizarGradeTurma(turmaId, grade, turmas, professores, disciplinas) 
 
     html += `</tbody></table>`;
     container.innerHTML = html;
-    
-    // Se for interessante, podemos mostrar um diagrama da grade
-    // 
 }
+// ======================================================================
+// --- 4. LÓGICA DE CADASTRO DE PROFESSORES ---
+// ======================================================================
+
+/**
+ * Adiciona ou atualiza os dados de um professor no Local Storage.
+ */
+function salvarProfessor() {
+    const siape = document.getElementById('prof_siape').value;
+    const nome = document.getElementById('prof_nome').value;
+    const email = document.getElementById('prof_email').value;
+    const campus = document.getElementById('prof_campus').value;
+    const prdDia = document.getElementById('prof_prd_dia').value;
+    const prdPeriodo = document.getElementById('prof_prd_periodo').value;
+    
+    if (!siape || !nome || !campus) {
+        alert('SIAPE, Nome e Campus são obrigatórios.');
+        return;
+    }
+
+    let professores = obterDados('professor');
+    const novoProfessor = {
+        siape: siape,
+        nome: nome,
+        email: email,
+        campus: campus,
+        restricoes: {
+            prd_principal: {
+                dia: prdDia,
+                periodo: prdPeriodo // MATUTINO, VESPERTINO, NOTURNO, INTEIRO
+            },
+            // Outras restrições futuras (ex: preferência de dia, limite de aulas diárias)
+        }
+    };
+
+    const index = professores.findIndex(p => p.siape === siape);
+
+    if (index !== -1) {
+        professores[index] = novoProfessor; // Atualiza
+        alert(`Professor ${nome} (SIAPE ${siape}) atualizado!`);
+    } else {
+        professores.push(novoProfessor); // Adiciona
+        alert(`Professor ${nome} (SIAPE ${siape}) cadastrado!`);
+    }
+
+    salvarDados('professor', professores);
+    renderizarTabelaProfessores();
+    document.getElementById('form-professor').reset(); // Limpa o formulário após salvar
+}
+
+/**
+ * Renderiza a tabela de professores cadastrados.
+ */
+function renderizarTabelaProfessores() {
+    const professores = obterDados('professor');
+    const container = document.getElementById('tabela-professores-container');
+    
+    if (!container) return;
+
+    let html = `
+        <table class="tabela-dados">
+            <thead>
+                <tr>
+                    <th>SIAPE</th>
+                    <th>Nome</th>
+                    <th>Campus</th>
+                    <th>Restrição (PGD/PRD)</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    professores.forEach(prof => {
+        const prd = prof.restricoes.prd_principal;
+        const restDesc = prd.dia && prd.periodo ? `${prd.dia} (${prd.periodo})` : 'Nenhuma';
+
+        html += `
+            <tr>
+                <td>${prof.siape}</td>
+                <td>${prof.nome}</td>
+                <td>${prof.campus}</td>
+                <td>${restDesc}</td>
+                <td>
+                    <button onclick="carregarProfessorParaEdicao('${prof.siape}')">✏️ Editar</button>
+                    <button class="botao-remover" onclick="removerProfessor('${prof.siape}')">🗑️ Remover</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+}
+
+/**
+ * Carrega dados do professor para edição no formulário.
+ * @param {string} siape SIAPE do professor a ser carregado.
+ */
+function carregarProfessorParaEdicao(siape) {
+    const professores = obterDados('professor');
+    const prof = professores.find(p => p.siape === siape);
+
+    if (prof) {
+        document.getElementById('prof_siape').value = prof.siape;
+        document.getElementById('prof_nome').value = prof.nome;
+        document.getElementById('prof_email').value = prof.email;
+        document.getElementById('prof_campus').value = prof.campus;
+        
+        const prd = prof.restricoes.prd_principal;
+        document.getElementById('prof_prd_dia').value = prd.dia || '';
+        document.getElementById('prof_prd_periodo').value = prd.periodo || '';
+        
+        // Desabilita a edição do SIAPE após carregar
+        document.getElementById('prof_siape').disabled = true; 
+        alert(`Professor ${prof.nome} carregado para edição.`);
+    }
+}
+
+/**
+ * Remove um professor pelo SIAPE.
+ * @param {string} siape SIAPE do professor a ser removido.
+ */
+function removerProfessor(siape) {
+    if (confirm(`Tem certeza que deseja remover o professor com SIAPE ${siape}?`)) {
+        let professores = obterDados('professor');
+        professores = professores.filter(p => p.siape !== siape);
+        salvarDados('professor', professores);
+        renderizarTabelaProfessores();
+        alert('Professor removido com sucesso.');
+    }
+}
+// ======================================================================
+// --- 5. LÓGICA DE CADASTRO DE TURMAS ---
+// ======================================================================
+
+/**
+ * Gera um ID único simples.
+ * @returns {string} ID único.
+ */
+function gerarIdUnico() {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2, 5);
+}
+
+/**
+ * Adiciona ou atualiza uma turma no Local Storage.
+ */
+function salvarTurma() {
+    const id = document.getElementById('turma_id').value || gerarIdUnico();
+    const nome = document.getElementById('turma_nome').value;
+    const nivel = document.getElementById('turma_nivel').value; // INTEGRADO, SUPERIOR
+    const turno = document.getElementById('turma_turno').value; // MATUTINO, VESPERTINO, NOTURNO
+
+    if (!nome || !nivel || !turno) {
+        alert('Nome, Nível e Turno são obrigatórios.');
+        return;
+    }
+
+    let turmas = obterDados('turma');
+    const novaTurma = {
+        id: id,
+        nome: nome,
+        nivel: nivel,
+        turno: turno
+    };
+
+    const index = turmas.findIndex(t => t.id === id);
+
+    if (index !== -1) {
+        turmas[index] = novaTurma; // Atualiza
+        alert(`Turma ${nome} atualizada!`);
+    } else {
+        turmas.push(novaTurma); // Adiciona
+        alert(`Turma ${nome} cadastrada!`);
+    }
+
+    salvarDados('turma', turmas);
+    renderizarTabelaTurmas();
+    document.getElementById('form-turma').reset();
+    document.getElementById('turma_id').value = ''; // Limpa o ID escondido
+}
+
+/**
+ * Renderiza a tabela de turmas cadastradas.
+ */
+function renderizarTabelaTurmas() {
+    const turmas = obterDados('turma');
+    const container = document.getElementById('tabela-turmas-container');
+    
+    if (!container) return;
+
+    let html = `
+        <table class="tabela-dados">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Nível</th>
+                    <th>Turno</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    turmas.forEach(t => {
+        html += `
+            <tr>
+                <td>${t.nome}</td>
+                <td>${t.nivel}</td>
+                <td>${t.turno}</td>
+                <td>
+                    <button onclick="carregarTurmaParaEdicao('${t.id}')">✏️ Editar</button>
+                    <button class="botao-remover" onclick="removerTurma('${t.id}')">🗑️ Remover</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+}
+
+/**
+ * Carrega dados da turma para edição no formulário.
+ * @param {string} id ID da turma a ser carregada.
+ */
+function carregarTurmaParaEdicao(id) {
+    const turmas = obterDados('turma');
+    const turma = turmas.find(t => t.id === id);
+
+    if (turma) {
+        document.getElementById('turma_id').value = turma.id;
+        document.getElementById('turma_nome').value = turma.nome;
+        document.getElementById('turma_nivel').value = turma.nivel;
+        document.getElementById('turma_turno').value = turma.turno;
+        alert(`Turma ${turma.nome} carregada para edição.`);
+    }
+}
+
+/**
+ * Remove uma turma pelo ID.
+ * @param {string} id ID da turma a ser removida.
+ */
+function removerTurma(id) {
+    if (confirm('Tem certeza que deseja remover esta turma? Todas as disciplinas associadas deverão ser verificadas manualmente.')) {
+        let turmas = obterDados('turma');
+        turmas = turmas.filter(t => t.id !== id);
+        salvarDados('turma', turmas);
+        renderizarTabelaTurmas();
+        alert('Turma removida com sucesso.');
+    }
+}
+// ======================================================================
+// --- 6. LÓGICA DE CADASTRO DE DISCIPLINAS ---
+// ======================================================================
+
+/**
+ * Popula os dropdowns de Turma e Professor no formulário de Disciplina.
+ */
+function popularSelectsDisciplina() {
+    const turmas = obterDados('turma');
+    const professores = obterDados('professor');
+    
+    const selectTurma = document.getElementById('disc_turma');
+    const selectProfessor = document.getElementById('disc_professor');
+
+    // Limpa selects
+    selectTurma.innerHTML = '<option value="">Selecione a Turma</option>';
+    selectProfessor.innerHTML = '<option value="">Selecione o Professor</option>';
+
+    // Popula Turmas
+    turmas.forEach(t => {
+        selectTurma.innerHTML += `<option value="${t.id}">${t.nome} (${t.turno})</option>`;
+    });
+
+    // Popula Professores
+    professores.forEach(p => {
+        selectProfessor.innerHTML += `<option value="${p.siape}">${p.nome} (${p.siape})</option>`;
+    });
+}
+
+/**
+ * Adiciona ou atualiza uma disciplina.
+ */
+function salvarDisciplina() {
+    const id = document.getElementById('disc_id').value || gerarIdUnico();
+    const nome = document.getElementById('disc_nome').value;
+    const turmaId = document.getElementById('disc_turma').value;
+    const professorSiape = document.getElementById('disc_professor').value;
+    const aulasSemanais = parseInt(document.getElementById('disc_aulas_semanais').value);
+    const aglutinacao = document.getElementById('disc_aglutinacao').value;
+
+    if (!nome || !turmaId || !professorSiape || isNaN(aulasSemanais) || !aglutinacao) {
+        alert('Todos os campos são obrigatórios.');
+        return;
+    }
+    
+    // Validação de Aglutinação vs. Aulas Semanais
+    const totalAglutinacao = aglutinacao.split('+').reduce((sum, block) => {
+        if (block.includes('x')) {
+            const [dias, aulas] = block.split('x').map(Number);
+            return sum + (dias * aulas);
+        }
+        return sum + Number(block);
+    }, 0);
+
+    if (totalAglutinacao !== aulasSemanais) {
+        alert(`Erro: A soma da aglutinação (${totalAglutinacao} aulas) não corresponde às Aulas Semanais (${aulasSemanais}).`);
+        return;
+    }
+
+    let disciplinas = obterDados('disciplina');
+    const novaDisciplina = {
+        id: id,
+        nome: nome,
+        turmaId: turmaId,
+        professorSiape: professorSiape,
+        aulasSemanais: aulasSemanais,
+        aglutinacao: aglutinacao // Ex: "3+2" ou "2x2+1"
+    };
+
+    const index = disciplinas.findIndex(d => d.id === id);
+
+    if (index !== -1) {
+        disciplinas[index] = novaDisciplina; // Atualiza
+        alert(`Disciplina ${nome} atualizada!`);
+    } else {
+        disciplinas.push(novaDisciplina); // Adiciona
+        alert(`Disciplina ${nome} cadastrada!`);
+    }
+
+    salvarDados('disciplina', disciplinas);
+    renderizarTabelaDisciplinas();
+    document.getElementById('form-disciplina').reset();
+    document.getElementById('disc_id').value = '';
+}
+
+/**
+ * Renderiza a tabela de disciplinas cadastradas.
+ */
+function renderizarTabelaDisciplinas() {
+    const disciplinas = obterDados('disciplina');
+    const turmas = obterDados('turma');
+    const professores = obterDados('professor');
+    const container = document.getElementById('tabela-disciplinas-container');
+    
+    if (!container) return;
+
+    let html = `
+        <table class="tabela-dados">
+            <thead>
+                <tr>
+                    <th>Disciplina</th>
+                    <th>Turma</th>
+                    <th>Prof. (SIAPE)</th>
+                    <th>Carga Semanal</th>
+                    <th>Aglutinação</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    disciplinas.forEach(d => {
+        const turma = turmas.find(t => t.id === d.turmaId)?.nome || 'N/A';
+        const prof = professores.find(p => p.siape === d.professorSiape)?.nome || 'N/A';
+        
+        html += `
+            <tr>
+                <td>${d.nome}</td>
+                <td>${turma}</td>
+                <td>${prof} (${d.professorSiape})</td>
+                <td>${d.aulasSemanais}</td>
+                <td>${d.aglutinacao}</td>
+                <td>
+                    <button onclick="carregarDisciplinaParaEdicao('${d.id}')">✏️ Editar</button>
+                    <button class="botao-remover" onclick="removerDisciplina('${d.id}')">🗑️ Remover</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+}
+
+/**
+ * Carrega dados da disciplina para edição.
+ * @param {string} id ID da disciplina.
+ */
+function carregarDisciplinaParaEdicao(id) {
+    const disciplinas = obterDados('disciplina');
+    const disc = disciplinas.find(d => d.id === id);
+
+    if (disc) {
+        // Assegura que os selects estejam populados antes de carregar
+        popularSelectsDisciplina(); 
+        
+        document.getElementById('disc_id').value = disc.id;
+        document.getElementById('disc_nome').value = disc.nome;
+        document.getElementById('disc_turma').value = disc.turmaId;
+        document.getElementById('disc_professor').value = disc.professorSiape;
+        document.getElementById('disc_aulas_semanais').value = disc.aulasSemanais;
+        document.getElementById('disc_aglutinacao').value = disc.aglutinacao;
+        
+        alert(`Disciplina ${disc.nome} carregada para edição.`);
+    }
+}
+
+/**
+ * Remove uma disciplina.
+ * @param {string} id ID da disciplina.
+ */
+function removerDisciplina(id) {
+    if (confirm('Tem certeza que deseja remover esta disciplina?')) {
+        let disciplinas = obterDados('disciplina');
+        disciplinas = disciplinas.filter(d => d.id !== id);
+        salvarDados('disciplina', disciplinas);
+        renderizarTabelaDisciplinas();
+        alert('Disciplina removida com sucesso.');
+    }
+}
+// ======================================================================
+// --- 7. LÓGICA DE CONFIGURAÇÃO DE HORÁRIOS (SLOTS DE TEMPO) ---
+// ======================================================================
+
+/**
+ * Adiciona um slot de horário (aula ou intervalo) a um turno.
+ * @param {string} turno 'matutino', 'vespertino' ou 'noturno'.
+ * @param {boolean} isIntervalo Se true, adiciona 'INTERVALO'.
+ */
+function adicionarSlot(turno, isIntervalo) {
+    let horarios = obterDados('horario');
+    const slotInput = document.getElementById(`slot_${turno}_input`);
+    
+    if (isIntervalo) {
+        horarios[turno].push('INTERVALO');
+    } else {
+        const novoSlot = slotInput.value;
+        const padraoHorario = /^\d{2}:\d{2}-\d{2}:\d{2}$/;
+
+        if (!padraoHorario.test(novoSlot)) {
+            alert('Formato de horário inválido. Use HH:MM-HH:MM (ex: 07:30-08:20).');
+            return;
+        }
+        
+        horarios[turno].push(novoSlot);
+        slotInput.value = ''; // Limpa o campo
+    }
+
+    salvarDados('horario', horarios);
+    renderizarHorariosConfiguracao();
+}
+
+/**
+ * Remove um slot de horário de um turno.
+ * @param {string} turno 'matutino', 'vespertino' ou 'noturno'.
+ * @param {number} index Índice do slot a ser removido.
+ */
+function removerSlot(turno, index) {
+    if (confirm(`Tem certeza que deseja remover este slot do turno ${turno}?`)) {
+        let horarios = obterDados('horario');
+        horarios[turno].splice(index, 1);
+        salvarDados('horario', horarios);
+        renderizarHorariosConfiguracao();
+    }
+}
+
+/**
+ * Renderiza a visualização da grade de horários configurados.
+ */
+function renderizarHorariosConfiguracao() {
+    const horarios = obterDados('horario');
+    const turnos = ['matutino', 'vespertino', 'noturno'];
+    const container = document.getElementById('horarios-config-visual');
+    
+    if (!container) return;
+    
+    let html = '';
+
+    turnos.forEach(turno => {
+        const slots = horarios[turno] || [];
+        
+        html += `
+            <div class="config-turno">
+                <h4>Turno ${turno.toUpperCase()}</h4>
+                <div class="lista-slots">
+        `;
+        
+        if (slots.length === 0) {
+             html += `<p class="nota-regra">Nenhum slot definido para este turno.</p>`;
+        }
+
+        slots.forEach((slot, index) => {
+            const isIntervalo = slot === 'INTERVALO';
+            const classe = isIntervalo ? 'tag-intervalo' : 'tag-slot';
+            const conteudo = isIntervalo ? 'INTERVALO' : slot;
+            
+            html += `
+                <span class="${classe}">
+                    ${conteudo} 
+                    <button onclick="removerSlot('${turno}', ${index})" title="Remover Slot">x</button>
+                </span>
+            `;
+        });
+        
+        html += `
+                </div>
+                <div class="controles-slot">
+                    <input type="text" id="slot_${turno}_input" placeholder="HH:MM-HH:MM">
+                    <button class="botao-acao" onclick="adicionarSlot('${turno}', false)">+ Aula</button>
+                    <button class="botao-editar" onclick="adicionarSlot('${turno}', true)">+ Intervalo</button>
+                </div>
+            </div>
+            <hr>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+// ======================================================================
+// --- 8. LÓGICA DE INICIALIZAÇÃO DA APLICAÇÃO ---
+// ======================================================================
+
+/**
+ * Função principal para inicializar o estado da aplicação ao carregar a página.
+ */
+function inicializarSistema() {
+    console.log('Sistema de Agendamento Inicializado.');
+    
+    // 1. Configurações de Horário (Slots)
+    if (document.getElementById('horarios-config-visual')) {
+        renderizarHorariosConfiguracao();
+    }
+    
+    // 2. Cadastro de Professores
+    if (document.getElementById('tabela-professores-container')) {
+        renderizarTabelaProfessores();
+    }
+
+    // 3. Cadastro de Turmas
+    if (document.getElementById('tabela-turmas-container')) {
+        renderizarTabelaTurmas();
+    }
+
+    // 4. Cadastro de Disciplinas (Requer Professores e Turmas)
+    if (document.getElementById('tabela-disciplinas-container')) {
+        popularSelectsDisciplina();
+        renderizarTabelaDisciplinas();
+    }
+
+    // 5. Calendário (Assume-se que o ano padrão está selecionado)
+    if (document.getElementById('grade-calendario-integrado-visual')) {
+        // Assume renderização inicial para o ano atual
+        const anoAtual = new Date().getFullYear();
+        document.getElementById('cal_integrado_ano').value = anoAtual;
+        document.getElementById('cal_superior_ano').value = anoAtual;
+        renderizarCalendario('integrado');
+        renderizarCalendario('superior');
+    }
+
+    // 6. Horário Base (Não renderiza automaticamente, aguarda o clique em "Gerar")
+    // O algoritmo de geração é acionado pelo botão 'Gerar Horário Base'.
+}
+
+// Associa a função de inicialização ao evento de carregamento da página
+// window.onload = inicializarSistema; 
+// Se o script for carregado no final do BODY, basta chamar:
+// inicializarSistema();
