@@ -1193,7 +1193,160 @@ function inicializarSistema() {
         renderizarCalendario('superior');
     }
 
+    /**
+ * Adiciona a lógica de troca de abas a todos os links de menu (principal e sub-menus).
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    // Selecionadores baseados no seu HTML
+    const linksMenu = document.querySelectorAll('.link-menu, .sub-link-menu');
+    const abasConteudo = document.querySelectorAll('.aba-conteudo');
+    const linksMenuPrincipal = document.querySelectorAll('.link-menu');
+
+    // Função para mostrar a aba correspondente ao link clicado
+    function mostrarAba(targetId, linkClicado) {
+        // 1. Esconde todas as abas de conteúdo
+        abasConteudo.forEach(aba => {
+            aba.style.display = 'none';
+        });
+
+        // 2. Remove a classe 'ativo' de TODOS os links
+        linksMenu.forEach(link => {
+            link.classList.remove('ativo');
+        });
+
+        // 3. Mostra a aba alvo
+        const abaAlvo = document.querySelector(targetId);
+        if (abaAlvo) {
+            abaAlvo.style.display = 'block';
+        }
+
+        // 4. Marca o link clicado como ativo
+        linkClicado.classList.add('ativo');
+
+        // Lógica de Ativação do Menu Principal (Ex: se clica em 'Professores', 'CADASTRO' fica ativo)
+        const principalId = targetId.startsWith('#cadastro') ? '#cadastro'
+                          : targetId.startsWith('#relatorio') ? '#relatorio-individual' 
+                          : targetId; // Padrão
+
+        // Se o target for um sub-link, garante que o link principal correspondente seja ativado
+        if (!linkClicado.classList.contains('link-menu')) {
+            const linkPrincipal = document.querySelector(`a[href="${principalId}"].link-menu`);
+            if (linkPrincipal) {
+                linkPrincipal.classList.add('ativo');
+            }
+        }
+    }
+
+    // Adiciona o event listener a cada link
+    linksMenu.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault(); // Impede o comportamento padrão do link (navegar/rolar)
+            const targetId = link.getAttribute('href');
+            mostrarAba(targetId, link);
+        });
+    });
+
+    // Inicialização: Garante que a primeira aba ativa no HTML é exibida ao carregar a página
+    const linkAtivoInicial = document.querySelector('.link-menu.ativo, .sub-link-menu.ativo');
+    if (linkAtivoInicial) {
+        const idInicial = linkAtivoInicial.getAttribute('href');
+        document.querySelector(idInicial).style.display = 'block';
+    } else if (abasConteudo.length > 0) {
+        // Fallback: se nenhum estiver 'ativo', mostra o primeiro
+        abasConteudo[0].style.display = 'block';
+    }
+});
+
+    // --- Funções Auxiliares para Armazenamento Local ---
+function obterDados(key) {
+    try {
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : {};
+    } catch (e) {
+        console.error("Erro ao carregar dados do LocalStorage:", e);
+        return {};
+    }
+}
+
+function salvarDados(key, data) {
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+        console.log(`Dados salvos em ${key}`);
+        return true;
+    } catch (e) {
+        console.error("Erro ao salvar dados no LocalStorage:", e);
+        alert("Erro ao salvar. Verifique as configurações de armazenamento local do seu navegador.");
+        return false;
+    }
+}
+
+// --- Função Principal de Salvamento do Formulário ---
+function salvarFormulario(tipo) {
+    let formId;
+    let chaveLocalStorage = `cdfp_${tipo}`;
+    let mensagemSucesso = `Informações de ${tipo} salvas com sucesso!`;
+
+    // Mapeamento do target para o ID do formulário
+    switch (tipo) {
+        case 'professor':
+            formId = 'form-cadastro-professor';
+            break;
+        case 'horario':
+            formId = 'form-cadastro-horarios';
+            break;
+        case 'turma':
+            formId = 'form-cadastro-turmas';
+            break;
+        case 'disciplina':
+            formId = 'form-cadastro-disciplinas';
+            break;
+        case 'calendario_integrado':
+        case 'calendario_superior':
+            // Estas seções não têm um formulário simples. A lógica deve estar
+            // em funções dedicadas (e.g., manipular a grade de calendário).
+            // Aqui, apenas emitimos um alerta que o salvamento precisa de lógica dedicada.
+            alert(`Ação de SALVAR para ${tipo} requer uma função JavaScript dedicada para coletar os dados da grade visual.`);
+            return;
+        default:
+            console.error(`Tipo de salvamento desconhecido: ${tipo}`);
+            return;
+    }
+
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    const formData = new FormData(form);
+    let dadosSalvar = {};
+    for (const [name, value] of formData.entries()) {
+        dadosSalvar[name] = value;
+    }
     
+    // Lógica Específica para Cadastro de Professores:
+    if (tipo === 'professor' && dadosSalvar.siape) {
+        // Armazena Professores em um objeto usando SIAPE como chave para fácil consulta/atualização
+        let todosItens = obterDados(chaveLocalStorage);
+        todosItens[dadosSalvar.siape] = dadosSalvar; 
+        
+        if (salvarDados(chaveLocalStorage, todosItens)) {
+            alert(`Professor ${dadosSalvar.nome} (SIAPE: ${dadosSalvar.siape}) salvo com sucesso!`);
+        }
+    } 
+    // Lógica para Outros Formulários (salva o conteúdo do formulário atual)
+    else if (salvarDados(chaveLocalStorage, dadosSalvar)) {
+        alert(mensagemSucesso);
+    }
+}
+
+
+// --- Event Listener para os Botões de Salvar ---
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.botao-salvar').forEach(button => {
+        button.addEventListener('click', () => {
+            const target = button.getAttribute('data-save-target');
+            salvarFormulario(target);
+        });
+    });
+});
     // 6. Horário Base (Não renderiza automaticamente, aguarda o clique em "Gerar")
     // O algoritmo de geração é acionado pelo botão 'Gerar Horário Base'.
 }
