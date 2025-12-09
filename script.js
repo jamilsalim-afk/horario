@@ -969,18 +969,23 @@ function inicializarGradeVazia() {
  */
 function aplicarRestricoesIniciais(grade) {
     const professores = obterDados('professor');
+    const diaPRD = rest.prd_principal?.dia; // <-- 'rest.prd_principal' pode ser undefined
+    const periodoPRD = rest.prd_principal?.periodo; // <-- 'rest.prd_principal' pode ser undefined
     // TODO: Implementar a aplicação de restrições de Calendário (Feriados) aqui.
 
     professores.forEach(prof => {
-        const rest = prof.restricoes;
-        
+    const rest = prof.restricoes;
+    
         // 1. Aplica PRD/PGD (transforma slots em RESTRITO)
         // Lógica de PRD/PGD é complexa, mas o conceito é simples:
         // Se o professor tem PRD na SEGUNDA/INTEIRO, todos os slots da SEGUNDA ficam "RESTRITOS" para ele.
         
         // Exemplo Simplificado: PRD Principal (SEGUNDA/INTEIRO)
-        const diaPRD = rest.prd_principal?.dia;
-        const periodoPRD = rest.prd_principal?.periodo;
+           if (rest.prd_principal && rest.prd_principal.dia && rest.prd_principal.periodo) {
+        const diaPRD = rest.prd_principal.dia;
+        const periodoPRD = rest.prd_principal.periodo;
+        
+        if (diaPRD && DIAS_SEMANA.includes(diaPRD)) {
         
         if (diaPRD && DIAS_SEMANA.includes(diaPRD)) {
             // Marca o professor como restrito para todos os slots nesse dia/período
@@ -1055,8 +1060,11 @@ function professorRestrito(siape, dia, slotTempo, grade) {
  * @returns {Object|null} {dia: string, slots: Array<string>} ou null se não encontrar.
  */
 function encontrarBlocoAglutinado(grade, numAulas, turmaId, professorSiape) {
-    const horarios = obterDados('horario');
-    const slotTempos = Object.keys(grade[DIAS_SEMANA[0]]); // Todos os slots do dia
+    // CORREÇÃO: Pega os slots do primeiro dia da grade (SEGUNDA) de forma segura.
+    const slotTempos = Object.keys(grade.SEGUNDA || {}); 
+    
+    // Se não houver slots de horário definidos, não há como gerar
+    if (slotTempos.length === 0) return null;
     
     for (const dia of DIAS_SEMANA) {
         for (let i = 0; i <= slotTempos.length - numAulas; i++) {
