@@ -1003,8 +1003,6 @@ function aplicarRestricoesIniciais(grade) {
         // 2. Aplica Regra das 11 Horas de Descanso (Verifica Noturno -> Manhã seguinte)
         // Isso exigiria a ordem dos slots, mas o conceito é: 
         // Se um professor tem aula no último slot da Noite (dia N), ele deve ser RESTRITO nos primeiros slots da Manhã (dia N+1).
-    };
-
     return grade;
 }
 // ... (Mantenha as definições de DIAS_SEMANA e inicializarGradeVazia) ...
