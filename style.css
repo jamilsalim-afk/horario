@@ -505,3 +505,23 @@ body {
     background-color: #e6ffe6; 
     border: 1px solid var(--ifro-verde);
 }
+@media (max-width: 992px) {
+    /* 1. Mude o layout principal para coluna em telas menores */
+    .container-principal {
+        flex-direction: column;
+        padding: 0 10px; /* Mais preenchimento lateral em mobile */
+    }
+
+    /* 2. Remova o comportamento 'sticky' da barra lateral */
+    .barra-lateral {
+        width: 100%; /* Ocupa toda a largura */
+        height: auto; /* Altura automática (não mais 100vh) */
+        position: static; /* Não é mais fixa */
+        box-shadow: 0 4px 5px rgba(0, 0, 0, 0.05); /* Sombra para separar do conteúdo abaixo */
+    }
+
+    /* 3. Ajuste o conteúdo principal */
+    .conteudo-principal {
+        padding: 20px 10px;
+    }
+}
