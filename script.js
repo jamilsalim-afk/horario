@@ -167,7 +167,8 @@ function mostrarConteudoDaAba(targetId) {
 }
 
 function inicializarNavegacao() {
-    // ... (restante da função) ...
+    // CORREÇÃO CRÍTICA: Definir a variável 'links'
+    const links = document.querySelectorAll('.link-menu, .sub-link-menu');
 
     links.forEach(link => {
         link.addEventListener('click', function(e) {
@@ -183,18 +184,25 @@ function inicializarNavegacao() {
                 // Se clicar em Cadastro, vai para a primeira sub-aba (Professores)
                 targetId = 'cadastro-professores'; 
                 // Ativa o sub-link de professores
-                document.querySelector('a[href="#cadastro-professores"]').classList.add('ativo');
+                const profLink = document.querySelector('a[href="#cadastro-professores"]');
+                if (profLink) {
+                   profLink.classList.add('ativo');
+                }
             }
             
             mostrarConteudoDaAba(targetId);
         });
     });
 
-    // Configuração inicial ao carregar a página
-    mostrarConteudoDaAba('cadastro-professores');
-    document.querySelector('a[href="#cadastro-professores"]').classList.add('ativo');
+    // Garante que a primeira aba visível seja carregada ao iniciar
+    const abaInicial = document.querySelector('.aba-conteudo[style*="block"]');
+    if (abaInicial) {
+        mostrarConteudoDaAba(abaInicial.id);
+    } else {
+        // Se nenhuma estiver visível, força a abertura da primeira aba de cadastro
+        mostrarConteudoDaAba('cadastro-professores');
+    }
 }
-
 
 // ----------------------------------------------------------------------
 // --- 3. LÓGICA DE CADASTRO DE PROFESSOR (Com Restrições Expandidas) ---
