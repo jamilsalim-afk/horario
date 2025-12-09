@@ -969,40 +969,35 @@ function inicializarGradeVazia() {
  */
 function aplicarRestricoesIniciais(grade) {
     const professores = obterDados('professor');
-    const diaPRD = rest.prd_principal?.dia; // <-- 'rest.prd_principal' pode ser undefined
-    const periodoPRD = rest.prd_principal?.periodo; // <-- 'rest.prd_principal' pode ser undefined
-    // TODO: Implementar a aplicação de restrições de Calendário (Feriados) aqui.
 
     professores.forEach(prof => {
-    const rest = prof.restricoes;
-    
-        // 1. Aplica PRD/PGD (transforma slots em RESTRITO)
-        // Lógica de PRD/PGD é complexa, mas o conceito é simples:
-        // Se o professor tem PRD na SEGUNDA/INTEIRO, todos os slots da SEGUNDA ficam "RESTRITOS" para ele.
-        
-        // Exemplo Simplificado: PRD Principal (SEGUNDA/INTEIRO)
-           if (rest.prd_principal && rest.prd_principal.dia && rest.prd_principal.periodo) {
-        const diaPRD = rest.prd_principal.dia;
-        const periodoPRD = rest.prd_principal.periodo;
-        
-        if (diaPRD && DIAS_SEMANA.includes(diaPRD)) {
-        
-        if (diaPRD && DIAS_SEMANA.includes(diaPRD)) {
-            // Marca o professor como restrito para todos os slots nesse dia/período
-            Object.keys(grade[diaPRD]).forEach(slotTempo => {
-                const slotObj = grade[diaPRD][slotTempo];
-                // Se o período do slot bate com o período da restrição (ou se é INTEIRO)
-                if (periodoPRD === 'INTEIRO' || slotObj.periodo.toUpperCase().startsWith(periodoPRD)) {
-                    // Adiciona o SIAPE do professor à lista de restritos para este slot
-                    if (!slotObj.restritos) slotObj.restritos = [];
-                    slotObj.restritos.push(prof.siape);
-                }
-            });
+        const rest = prof.restricoes;
+
+        // 1. PRD / PGD
+        if (rest.prd_principal &&
+            rest.prd_principal.dia &&
+            rest.prd_principal.periodo) {
+            
+            const diaPRD = rest.prd_principal.dia;
+            const periodoPRD = rest.prd_principal.periodo;
+            
+            if (DIAS_SEMANA.includes(diaPRD)) {
+                Object.keys(grade[diaPRD]).forEach(slotTempo => {
+                    const slotObj = grade[diaPRD][slotTempo];
+
+                    if (periodoPRD === 'INTEIRO' ||
+                        slotObj.periodo.toUpperCase().startsWith(periodoPRD)) {
+
+                        if (!slotObj.restritos) slotObj.restritos = [];
+                        slotObj.restritos.push(prof.siape);
+                    }
+                });
+            }
         }
-        
-        // 2. Aplica Regra das 11 Horas de Descanso (Verifica Noturno -> Manhã seguinte)
-        // Isso exigiria a ordem dos slots, mas o conceito é: 
-        // Se um professor tem aula no último slot da Noite (dia N), ele deve ser RESTRITO nos primeiros slots da Manhã (dia N+1).
+
+        // 2. Regras de Descanso (11h) — ainda não implementado
+    });
+
     return grade;
 }
 // ... (Mantenha as definições de DIAS_SEMANA e inicializarGradeVazia) ...
