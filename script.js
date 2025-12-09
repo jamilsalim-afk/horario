@@ -55,7 +55,7 @@ function salvarDados(key, dados) {
 // --- 2. LÓGICA DE CADASTRO DE CALENDÁRIOS (INTERATIVO CÍCLICO) ---
 // ======================================================================
 
-const NOMES_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+const NOMES_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
                      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 // D, S, T, Q, Q, S, S (Domingo = 0)
 const DIAS_CURTOS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']; 
@@ -65,86 +65,130 @@ const DIAS_CURTOS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
  * LETV -> NAO_LETV -> FERIADO -> RECUPERACAO -> EXAME -> LETV
  */
 const CICLO_STATUS = [
-    'LETV',      // 0: Padrão (Dia Letivo Normal)
+    'LETV',      // 0: Dia Letivo Normal (Padrão)
     'NAO_LETV',  // 1: Não Letivo
     'FERIADO',   // 2: Feriado
     'RECUPERACAO', // 3: Recuperação
     'EXAME'      // 4: Exame
 ];
 
+// Mapeamento de classes/rótulos para melhor visualização (se necessário para o CSS/interface)
+const RÓTULOS_STATUS = {
+    'LETV': 'Letivo',
+    'NAO_LETV': 'Não Letivo',
+    'FERIADO': 'Feriado',
+    'RECUPERACAO': 'Recuperação',
+    'EXAME': 'Exame'
+};
+
 /**
- * Renderiza o calendário interativo para o tipo (Integrado ou Superior).
+ * Renderiza o calendário de 12 meses interativo para o tipo ('integrado' ou 'superior').
+ * Cada dia permite seleção cíclica dos tipos de dia.
  * @param {string} tipo 'integrado' ou 'superior'.
  */
 function renderizarCalendario(tipo) {
     const key = `calendario_${tipo}`;
-    const ano = document.getElementById(`cal_${tipo}_ano`).value;
+    // Assume que existe um campo de input com o ID `cal_${tipo}_ano`
+    const ano = document.getElementById(`cal_${tipo}_ano`).value; 
+    // Assume que existe um container com o ID `grade-calendario-${tipo}-visual`
     const containerVisual = document.getElementById(`grade-calendario-${tipo}-visual`);
-    const dadosCalendario = obterDados(key);
     
+    // Supondo que 'obterDados' seja uma função externa para carregar o estado salvo.
+    const dadosCalendario = obterDados(key) || {}; 
+    
+    // Limpa o conteúdo anterior
     containerVisual.innerHTML = '';
     
+    // Adiciona uma classe para garantir que os 12 meses sejam exibidos em um grid (necessita de CSS)
+    containerVisual.classList.add('calendario-anual-container'); 
+
     for (let mes = 0; mes < 12; mes++) {
         const primeiroDia = new Date(ano, mes, 1);
-        const ultimoDia = new Date(ano, mes + 1, 0).getDate();
-        let diaSemanaInicial = primeiroDia.getDay(); // 0 (Domingo) a 6 (Sábado)
+        // O dia 0 do mês seguinte é o último dia do mês atual
+        const ultimoDia = new Date(ano, mes + 1, 0).getDate(); 
+        // 0 (Domingo) a 6 (Sábado)
+        let diaSemanaInicial = primeiroDia.getDay(); 
 
         let htmlMes = `<div class="mes-calendario">
             <h5>${NOMES_MESES[mes]} ${ano}</h5>
             <div class="dias-semana">
-                ${DIAS_CURTOS.map(d => `<span>${d}</span>`).join('')}
+                ${DIAS_CURTOS.map(d => `<span class="dia-semana-titulo">${d}</span>`).join('')}
             </div>
-            <div class="grade-dias">`;
+            <div class="grade-dias-mes">`;
 
-        // Insere células vazias para alinhar o primeiro dia
+        // Insere células vazias para alinhar o primeiro dia (preenchimento inicial)
         for (let i = 0; i < diaSemanaInicial; i++) {
             htmlMes += `<div class="dia-vazio"></div>`;
         }
 
         // Itera sobre os dias do mês
         for (let dia = 1; dia <= ultimoDia; dia++) {
+            // Formato YYYY-MM-DD
             const dataKey = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-            const tipoDiaSalvo = dadosCalendario[dataKey] || 'LETV'; // Padrão: Dia Letivo
+            // Pega o status salvo ou usa 'LETV' como padrão
+            const tipoDiaSalvo = dadosCalendario[dataKey] || 'LETV'; 
             
-            // Adiciona a classe 'fim-semana' para melhor visualização (só estilo)
+            // Calcula o dia da semana para o dia atual (0=Dom, 6=Sáb)
             const diaSemana = (dia + diaSemanaInicial - 1) % 7; 
-            const isWeekend = diaSemana === 0 || diaSemana === 6; // 0=Dom, 6=Sáb
+            const isWeekend = diaSemana === 0 || diaSemana === 6; 
 
-            // Adiciona a classe data-tipo para refletir o status
+            // data-data: Chave para salvar/carregar.
+            // data-tipo: Tipo atual (usado para styling e lógica cíclica).
+            // onclick: Chama a função para mudar o status.
             htmlMes += `<div class="dia-calendario ${isWeekend ? 'fim-semana' : ''}" 
-                            data-data="${dataKey}" 
-                            data-tipo="${tipoDiaSalvo}"
-                            onclick="aplicarTipoDiaCiclico(this)">
-                            ${dia}
-                        </div>`;
+                                data-data="${dataKey}" 
+                                data-tipo="${tipoDiaSalvo}"
+                                title="${RÓTULOS_STATUS[tipoDiaSalvo]}"
+                                onclick="aplicarTipoDiaCiclico(this)">
+                                ${dia}
+                            </div>`;
+        }
+        
+        // Preenchimento final para completar a última semana (opcional, para estética)
+        let diasNoGrid = diaSemanaInicial + ultimoDia;
+        let diasRestantes = (7 - (diasNoGrid % 7)) % 7;
+        for (let i = 0; i < diasRestantes; i++) {
+            htmlMes += `<div class="dia-vazio"></div>`;
         }
 
-        htmlMes += `</div></div>`;
+
+        htmlMes += `</div></div>`; // Fecha .grade-dias-mes e .mes-calendario
         containerVisual.innerHTML += htmlMes;
     }
 }
 
 /**
  * Aplica o tipo de dia no clique, seguindo o ciclo.
+ * LETV -> NAO_LETV -> FERIADO -> RECUPERACAO -> EXAME -> LETV
  * @param {HTMLElement} element O elemento do dia clicado.
  */
 function aplicarTipoDiaCiclico(element) {
     const tipoAtual = element.getAttribute('data-tipo');
     
-    // Encontra o índice atual e calcula o próximo (cíclico)
+    // Encontra o índice atual
     let indexAtual = CICLO_STATUS.indexOf(tipoAtual);
     
-    // Se não encontrou (erro ou tipo não padrão), começa em LETV (0)
+    // Se não encontrou, começa em LETV (0)
     if (indexAtual === -1) {
         indexAtual = 0;
     }
     
+    // Calcula o próximo índice (cíclico)
     const proximoIndex = (indexAtual + 1) % CICLO_STATUS.length;
     const novoTipo = CICLO_STATUS[proximoIndex];
     
-    // Aplica o novo tipo ao DOM
+    // Aplica o novo tipo ao DOM (atualiza estilo e valor)
     element.setAttribute('data-tipo', novoTipo);
+    element.setAttribute('title', RÓTULOS_STATUS[novoTipo]); // Atualiza o Tooltip
+    
+    // Opcional: Adicionar feedback visual ou log
+    console.log(`Dia ${element.getAttribute('data-data')} alterado para: ${novoTipo}`);
 }
+
+// ----------------------------------------------------------------------
+// --- As funções 'selecionarDiaSemana', 'limparSelecao' e 'salvarCalendario'
+// --- NÃO NECESSITAM DE REFORMULAÇÃO E PODEM SER MANTIDAS IGUAIS.
+// ----------------------------------------------------------------------
 
 /**
  * Aplica o mesmo tipo de dia a todos os dias de uma determinada semana do ano.
@@ -153,10 +197,10 @@ function aplicarTipoDiaCiclico(element) {
  */
 function selecionarDiaSemana(tipo, diaSemana) {
     const selectTipo = document.getElementById(`cal_${tipo}_tipo`);
-    const novoTipo = selectTipo.value;
+    const novoTipo = selectTipo ? selectTipo.value : null;
     
-    if (!novoTipo) {
-        alert('Selecione um Tipo de Dia antes de usar as Ações Rápidas.');
+    if (!novoTipo || !CICLO_STATUS.includes(novoTipo)) {
+        alert('Selecione um Tipo de Dia válido antes de usar as Ações Rápidas.');
         return;
     }
 
@@ -170,11 +214,12 @@ function selecionarDiaSemana(tipo, diaSemana) {
         // Compara com o dia da semana do JS (0=Dom, 1=Seg, ..., 6=Sab)
         if (data.getDay() === diaSemana) {
             diaElement.setAttribute('data-tipo', novoTipo);
+            diaElement.setAttribute('title', RÓTULOS_STATUS[novoTipo]);
             diasAfetados++;
         }
     });
     
-    alert(`${diasAfetados} dias (todas as ${DIAS_CURTOS[diaSemana]}s) foram definidos como ${novoTipo}.`);
+    alert(`${diasAfetados} dias (todas as ${DIAS_CURTOS[diaSemana]}s) foram definidos como ${RÓTULOS_STATUS[novoTipo]}.`);
 }
 
 /**
@@ -184,12 +229,13 @@ function selecionarDiaSemana(tipo, diaSemana) {
 function limparSelecao(tipo) {
     document.querySelectorAll(`#grade-calendario-${tipo}-visual .dia-calendario`).forEach(diaElement => {
         diaElement.setAttribute('data-tipo', 'LETV');
+        diaElement.setAttribute('title', RÓTULOS_STATUS['LETV']);
     });
     alert(`Calendário ${tipo} zerado. Todos os dias estão como Letivo Normal (LETV).`);
 }
 
 /**
- * Salva o estado atual do calendário do DOM para o Local Storage.
+ * Salva o estado atual do calendário do DOM.
  * @param {string} tipo 'integrado' ou 'superior'.
  */
 function salvarCalendario(tipo) {
@@ -201,15 +247,20 @@ function salvarCalendario(tipo) {
         const dataKey = diaElement.getAttribute('data-data'); // YYYY-MM-DD
         const tipoDia = diaElement.getAttribute('data-tipo');
         
-        // Só salva dias que não são 'LETV' (Letivo Normal) para economizar espaço
+        // Só salva dias que não são 'LETV' para economizar espaço
         if (tipoDia !== 'LETV') {
             novosDados[dataKey] = tipoDia;
         }
     });
 
-    salvarDados(key, novosDados);
+    // Supondo que 'salvarDados' seja uma função externa (ex: para Local Storage)
+    salvarDados(key, novosDados); 
     alert(`Calendário Anual (${ano}) para Cursos ${tipo.toUpperCase()} salvo com sucesso!`);
 }
+
+// Suponha que estas funções existam globalmente no seu ambiente:
+// function obterDados(key) { return JSON.parse(localStorage.getItem(key)); }
+// function salvarDados(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
 // ======================================================================
 // --- 3. LÓGICA DE GERAÇÃO DE HORÁRIO BASE (Heurística de Priorização) ---
 // ======================================================================
