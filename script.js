@@ -1193,6 +1193,7 @@ function inicializarSistema() {
         renderizarCalendario('superior');
     }
 
+    
     // 6. Horário Base (Não renderiza automaticamente, aguarda o clique em "Gerar")
     // O algoritmo de geração é acionado pelo botão 'Gerar Horário Base'.
 }
