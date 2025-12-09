@@ -669,7 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ----------------------------------------------------------------------
-// --- 7. LÓGICA DE CADASTRO DE CALENDÁRIOS (INTERATIVO) ---
+// --- 7. LÓGICA DE CADASTRO DE CALENDÁRIOS (INTERATIVO CÍCLICO) ---
 // ----------------------------------------------------------------------
 
 const NOMES_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
@@ -677,19 +677,29 @@ const NOMES_MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
 const DIAS_CURTOS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
 /**
+ * Sequência de status ao clicar:
+ * LETV -> NAO_LETV -> FERIADO -> RECUPERACAO -> EXAME -> LETV
+ */
+const CICLO_STATUS = [
+    'LETV',          // Padrão (Dia Letivo Normal)
+    'NAO_LETV',      // 1 Clique
+    'FERIADO',       // 2 Cliques
+    'RECUPERACAO',   // 3 Cliques
+    'EXAME'          // 4 Cliques
+];
+
+/**
  * Renderiza o calendário interativo para o tipo (Integrado ou Superior).
  * @param {string} tipo 'integrado' ou 'superior'.
- * @param {number} ano Ano a ser renderizado.
  */
 function renderizarCalendario(tipo) {
     const key = `calendario_${tipo}`;
     const ano = document.getElementById(`cal_${tipo}_ano`).value;
     const containerVisual = document.getElementById(`grade-calendario-${tipo}-visual`);
-    const dadosCalendario = obterDados(key); // Obtém o estado salvo do calendário
+    const dadosCalendario = obterDados(key);
     
-    containerVisual.innerHTML = ''; // Limpa o container
+    containerVisual.innerHTML = '';
     
-    // Itera sobre todos os 12 meses
     for (let mes = 0; mes < 12; mes++) {
         const primeiroDia = new Date(ano, mes, 1);
         const ultimoDia = new Date(ano, mes + 1, 0).getDate();
@@ -709,14 +719,17 @@ function renderizarCalendario(tipo) {
 
         // Itera sobre os dias do mês
         for (let dia = 1; dia <= ultimoDia; dia++) {
-            const data = new Date(ano, mes, dia);
             const dataKey = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
             const tipoDiaSalvo = dadosCalendario[dataKey] || 'LETV'; // Padrão: Dia Letivo
             
-            htmlMes += `<div class="dia-calendario" 
+            // Adiciona a classe 'fim-semana' para melhor visualização (só estilo)
+            const diaSemana = (dia + diaSemanaInicial - 1) % 7; 
+            const isWeekend = diaSemana === 0 || diaSemana === 6; // 0=Dom, 6=Sáb
+
+            htmlMes += `<div class="dia-calendario ${isWeekend ? 'fim-semana' : ''}" 
                             data-data="${dataKey}" 
                             data-tipo="${tipoDiaSalvo}"
-                            onclick="aplicarTipoDia('${tipo}', this)">
+                            onclick="aplicarTipoDiaCiclico(this)">
                             ${dia}
                         </div>`;
         }
@@ -727,21 +740,103 @@ function renderizarCalendario(tipo) {
 }
 
 /**
- * Aplica o tipo de dia selecionado no dropdown ao dia clicado.
- * @param {string} tipo 'integrado' ou 'superior'.
+ * Aplica o tipo de dia no clique, seguindo o ciclo.
  * @param {HTMLElement} element O elemento do dia clicado.
  */
-function aplicarTipoDia(tipo, element) {
-    const selectTipo = document.getElementById(`cal_${tipo}_tipo`);
-    const novoTipo = selectTipo.value;
+function aplicarTipoDiaCiclico(element) {
+    const tipoAtual = element.getAttribute('data-tipo');
     
-    if (!novoTipo) {
-        alert('Por favor, selecione um Tipo de Dia na caixa acima para aplicar.');
-        return;
+    // Encontra o índice atual e calcula o próximo (cíclico)
+    let indexAtual = CICLO_STATUS.indexOf(tipoAtual);
+    
+    // Se não encontrou (erro ou tipo não padrão), começa em LETV
+    if (indexAtual === -1) {
+        indexAtual = 0;
     }
     
-    // Atualiza o atributo no DOM
+    const proximoIndex = (indexAtual + 1) % CICLO_STATUS.length;
+    const novoTipo = CICLO_STATUS[proximoIndex];
+    
+    // Aplica o novo tipo ao DOM
     element.setAttribute('data-tipo', novoTipo);
+}
+
+/**
+ * Aplica ações rápidas a vários dias (ex: todas as segundas, ou mês inteiro).
+ * @param {string} tipo 'integrado' ou 'superior'.
+ * @param {string} acao Tipo de ação ('diaSemana' ou 'mes').
+ * @param {number} valor Valor da ação (dia da semana JS: 0-6, ou mês JS: 0-11).
+ * @param {string} novoTipo O tipo de dia a ser aplicado.
+ */
+function aplicarAcaoRapida(tipo, acao, valor, novoTipo) {
+    const ano = document.getElementById(`cal_${tipo}_ano`).value;
+    const diasAfetados = [];
+
+    document.querySelectorAll(`#grade-calendario-${tipo}-visual .dia-calendario`).forEach(diaElement => {
+        const dataKey = diaElement.getAttribute('data-data');
+        const data = new Date(dataKey);
+        
+        let deveAplicar = false;
+
+        if (acao === 'diaSemana') {
+            // JS getDay(): 0 (Domingo) a 6 (Sábado).
+            // Nossos botões usam 1 (Segunda) a 6 (Sábado).
+            // Exemplo: valor 1 (Segunda), data.getDay() deve ser 1.
+            if (data.getDay() === valor) {
+                 deveAplicar = true;
+            }
+        }
+        // Se acao === 'mes', implementaremos mais tarde.
+
+        if (deveAplicar) {
+             diaElement.setAttribute('data-tipo', novoTipo);
+             diasAfetados.push(dataKey);
+        }
+    });
+
+    if (diasAfetados.length > 0) {
+        alert(`${diasAfetados.length} dias foram definidos como ${novoTipo}.`);
+    } else {
+        alert('Nenhum dia foi alterado. Verifique o ano selecionado.');
+    }
+}
+
+/**
+ * Limpa o tipo de dia de todos os dias selecionados (volta para LETV).
+ * @param {string} tipo 'integrado' ou 'superior'.
+ */
+function limparSelecao(tipo) {
+    document.querySelectorAll(`#grade-calendario-${tipo}-visual .dia-calendario`).forEach(diaElement => {
+        diaElement.setAttribute('data-tipo', 'LETV');
+    });
+    alert(`Calendário ${tipo} zerado. Todos os dias estão como Letivo Normal (LETV).`);
+}
+
+/**
+ * Salva o estado atual do calendário do DOM para o Local Storage.
+ * @param {string} tipo 'integrado' ou 'superior'.
+ */
+function salvarCalendario(tipo) {
+    const key = `calendario_${tipo}`;
+    const ano = document.getElementById(`cal_${tipo}_ano`).value;
+    const novosDados = {};
+    
+    document.querySelectorAll(`#grade-calendario-${tipo}-visual .dia-calendario`).forEach(diaElement => {
+        const dataKey = diaElement.getAttribute('data-data');
+        const tipoDia = diaElement.getAttribute('data-tipo');
+        
+        // Salva apenas dias que não são 'LETV' para economizar espaço
+        if (tipoDia !== 'LETV') {
+            novosDados[dataKey] = tipoDia;
+        }
+    });
+    
+    // Salvamos a grade completa do ano em uma única chave.
+    // Para salvar anos diferentes, a chave de LS deveria ser dinamica (ex: 'ifro_cal_int_2025')
+    // Por enquanto, manteremos a chave simples, focando no ano selecionado.
+    
+    salvarDados(key, novosDados);
+    alert(`Calendário Anual (${ano}) para Cursos ${tipo.toUpperCase()} salvo com sucesso!`);
 }
 
 /**
