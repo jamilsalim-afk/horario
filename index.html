@@ -400,28 +400,22 @@
                                     <option value="2026">2026</option>
                                 </select>
                             </div>
-                            <div class="grupo-campo">
-                                <label for="cal_int_tipo">Tipo de Dia para Seleção:</label>
-                                <select id="cal_int_tipo" name="tipo_dia" required>
-                                    <option value="">-- Clique para Aplicar --</option>
-                                    <option value="FERIADO">1. Feriado/Ponto Facultativo</option>
-                                    <option value="RECESSO">2. Recesso Escolar</option>
-                                    <option value="NAO_LETV">3. Dia Não Letivo</option>
-                                    <option value="SAB_LETV">4. Sábado Letivo</option>
-                                    <option value="LETV">5. Dia Letivo Normal (Limpar)</option>
-                                </select>
-                            </div>
+                        </div>
+                        
+                        <div class="legenda-calendario">
+                            <h5>Status do Dia (Clique Cíclico):</h5>
+                            <span class="dia-calendario" data-tipo="LETV">Letivo (Padrão)</span>
+                            <span class="dia-calendario" data-tipo="NAO_LETV">Não Letivo (1 Clique)</span>
+                            <span class="dia-calendario" data-tipo="FERIADO">Feriado/Recesso (2 Cliques)</span>
+                            <span class="dia-calendario" data-tipo="RECUPERACAO">Recuperação (3 Cliques)</span>
+                            <span class="dia-calendario" data-tipo="EXAME">Exame Final (4 Cliques)</span>
                         </div>
                         
                         <div class="botoes-acao-rapida">
                             <h5>Ações Rápidas de Seleção:</h5>
-                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('integrado', 1)">Todas as Segundas</button>
-                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('integrado', 2)">Todas as Terças</button>
-                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('integrado', 3)">Todas as Quartas</button>
-                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('integrado', 4)">Todas as Quintas</button>
-                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('integrado', 5)">Todas as Sextas</button>
-                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('integrado', 6)">Todos os Sábados</button>
-                            <button type="button" class="botao-acao botao-remover" onclick="limparSelecao('integrado')">Limpar Seleção Atual</button>
+                            <button type="button" class="botao-acao" onclick="aplicarAcaoRapida('integrado', 'diaSemana', 1, 'NAO_LETV')">Todas as Segundas (Não Letivo)</button>
+                            <button type="button" class="botao-acao" onclick="aplicarAcaoRapida('integrado', 'diaSemana', 6, 'SAB_LETV')">Todos os Sábados (Letivo)</button>
+                            <button type="button" class="botao-acao botao-remover" onclick="limparSelecao('integrado')">Zerar Calendário (Tudo LETIVO)</button>
                         </div>
                     </div>
                     
@@ -445,27 +439,22 @@
                                     <option value="2026">2026</option>
                                 </select>
                             </div>
-                            <div class="grupo-campo">
-                                <label for="cal_sup_tipo">Tipo de Dia para Seleção:</label>
-                                <select id="cal_sup_tipo" name="tipo_dia" required>
-                                    <option value="">-- Clique para Aplicar --</option>
-                                    <option value="FERIADO">1. Feriado/Ponto Facultativo</option>
-                                    <option value="RECESSO">2. Recesso Acadêmico</option>
-                                    <option value="NAO_LETV">3. Dia Não Letivo</option>
-                                    <option value="REPO_AULA">4. Dia de Reposição (Letivo)</option>
-                                    <option value="LETV">5. Dia Letivo Normal (Limpar)</option>
-                                </select>
-                            </div>
                         </div>
+                        
+                        <div class="legenda-calendario">
+                            <h5>Status do Dia (Clique Cíclico):</h5>
+                            <span class="dia-calendario" data-tipo="LETV">Letivo (Padrão)</span>
+                            <span class="dia-calendario" data-tipo="NAO_LETV">Não Letivo (1 Clique)</span>
+                            <span class="dia-calendario" data-tipo="FERIADO">Feriado/Recesso (2 Cliques)</span>
+                            <span class="dia-calendario" data-tipo="RECUPERACAO">Recuperação (3 Cliques)</span>
+                            <span class="dia-calendario" data-tipo="EXAME">Exame Final (4 Cliques)</span>
+                        </div>
+
                         <div class="botoes-acao-rapida">
                             <h5>Ações Rápidas de Seleção:</h5>
-                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('superior', 1)">Todas as Segundas</button>
-                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('superior', 2)">Todas as Terças</button>
-                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('superior', 3)">Todas as Quartas</button>
-                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('superior', 4)">Todas as Quintas</button>
-                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('superior', 5)">Todas as Sextas</button>
-                            <button type="button" class="botao-acao" onclick="selecionarDiaSemana('superior', 6)">Todos os Sábados</button>
-                            <button type="button" class="botao-acao botao-remover" onclick="limparSelecao('superior')">Limpar Seleção Atual</button>
+                            <button type="button" class="botao-acao" onclick="aplicarAcaoRapida('superior', 'diaSemana', 1, 'NAO_LETV')">Todas as Segundas (Não Letivo)</button>
+                            <button type="button" class="botao-acao" onclick="aplicarAcaoRapida('superior', 'diaSemana', 6, 'SAB_LETV')">Todos os Sábados (Letivo)</button>
+                            <button type="button" class="botao-acao botao-remover" onclick="limparSelecao('superior')">Zerar Calendário (Tudo LETIVO)</button>
                         </div>
                     </div>
                     <button class="botao-salvar" type="button" data-save-target="calendario_superior">💾 SALVAR CALENDÁRIO DO ANO</button>
