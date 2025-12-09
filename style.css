@@ -467,3 +467,42 @@ body {
 .dia-calendario[data-tipo="LETV"] {
     background-color: transparent; /* Dia Letivo Normal/Limpo */
 }
+/* --- Cores dos Tipos de Eventos (Atualizado) --- */
+
+.legenda-calendario span {
+    padding: 3px 8px;
+    margin-right: 5px;
+    display: inline-block;
+}
+
+.dia-calendario[data-tipo="LETV"] {
+    background-color: #f9f9f9; /* Letivo Padrão */
+    border: 1px solid #ccc;
+}
+.dia-calendario[data-tipo="NAO_LETV"] {
+    background-color: #e5f5fb; /* Azul claro (Não Letivo) */
+    border: 1px solid #8ecae6;
+}
+.dia-calendario[data-tipo="FERIADO"] {
+    background-color: #fbe5e5; /* Vermelho muito claro (Feriado/Recesso) */
+    border: 1px solid var(--ifro-vermelho);
+    color: var(--ifro-vermelho);
+    font-weight: bold;
+}
+.dia-calendario[data-tipo="RECUPERACAO"] {
+    background-color: #fffae6; /* Amarelo claro (Recuperação) */
+    border: 1px solid #e6b300;
+    color: #e6b300;
+    font-weight: bold;
+}
+.dia-calendario[data-tipo="EXAME"] {
+    background-color: #e6ffe6; /* Verde claro (Exame Final) */
+    border: 1px solid var(--ifro-verde);
+    color: var(--ifro-verde);
+    font-weight: bold;
+}
+/* Estilo para Sábado Letivo (Opcional, pode usar LETV se a aula for normal) */
+.dia-calendario[data-tipo="SAB_LETV"] {
+    background-color: #e6ffe6; 
+    border: 1px solid var(--ifro-verde);
+}
