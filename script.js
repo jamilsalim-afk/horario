@@ -650,17 +650,12 @@ function removerDados(key, id, nome) {
 
 document.addEventListener('DOMContentLoaded', () => {
     // Garante que os dados iniciais existam
-    Object.keys(LS_KEYS).forEach(obterDados); 
+    Object.keys(LS_KEYS).forEach(key => obterDados(key)); 
     
-    inicializarNavegacao();
-    carregarProfessores(); // Carrega a tabela inicial de Professores
-    carregarTurmas(); // Carrega a tabela inicial de Turmas
-    carregarDisciplinas(); // Carrega a tabela inicial de Disciplinas
+    // 1. Inicializa a navegação e listeners de clique
+    inicializarNavegacao(); 
     
-    // Garante que os selects de disciplina estejam prontos
-    preencherSelectsDisciplina(); 
-    
-    // Mapeamento dos botões Salvar genéricos (Mantenha este bloco como está)
+    // 2. Mapeamento dos botões Salvar genéricos
     document.querySelectorAll('.botao-salvar').forEach(button => {
         button.addEventListener('click', function() {
             const target = this.getAttribute('data-save-target');
@@ -669,11 +664,18 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (target === 'horario') salvarHorario();
             else if (target === 'turma') salvarTurma();
             else if (target === 'disciplina') salvarDisciplina();
-            // NOVOS SALVAMENTOS DE CALENDÁRIO
-            else if (target === 'calendario_integrado') salvarCalendario('integrado'); // CHAMADA CORRETA
-            else if (target === 'calendario_superior') salvarCalendario('superior');   // CHAMADA CORRETA
+            else if (target === 'calendario_integrado') salvarCalendario('integrado');
+            else if (target === 'calendario_superior') salvarCalendario('superior');
         });
     });
+
+    // 3. Garante que a primeira aba 'Professores' seja exibida ao carregar.
+    // Isso é essencial, pois o CSS inicial não define nenhuma aba como 'block'.
+    mostrarConteudoDaAba('cadastro-professores');
+    
+    // Otimização: Carregar os dados de tabela APENAS ao abrir a aba, 
+    // por isso as chamadas de carregarProfessores/carregarTurmas foram movidas 
+    // para dentro da função mostrarConteudoDaAba.
 });
 
 // ----------------------------------------------------------------------
