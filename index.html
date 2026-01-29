@@ -13,13 +13,34 @@
         .tab-btn.active { border-bottom: 4px solid #15803d; color: #15803d; font-weight: 800; }
         .tab-pane { display: none; }
         .tab-pane.active { display: block; }
-        .aula-card { padding: 4px; margin-bottom: 4px; border-radius: 4px; line-height: 1.1; border-left: 4px solid #15803d; font-size: 9px; text-align: center; }
+        
+        /* Ajustes Grade Semanal */
+        #tableGS { table-layout: fixed; width: 100%; border-collapse: collapse; }
+        #tableGS td, #tableGS th { 
+            width: 140px; 
+            word-wrap: break-word; 
+            vertical-align: middle; 
+            text-align: center; 
+            font-size: 11px; /* Fonte maior conforme pedido */
+            padding: 8px;
+        }
+        
+        .aula-card { 
+            padding: 6px; 
+            margin-bottom: 4px; 
+            border-radius: 4px; 
+            line-height: 1.2; 
+            border-left: 4px solid #15803d; 
+            text-align: center;
+            font-weight: 500;
+        }
+
         .status-normal { background-color: #f0fdf4; border-color: #15803d; }
         .status-extra { background-color: #ecfdf5; border-color: #059669; color: #065f46; }
         .status-reposicao { background-color: #eff6ff; border-color: #2563eb; color: #1e40af; }
         .status-rec { background-color: #fdf2f8; border-color: #db2777; color: #9d174d; }
         .status-exame { background-color: #f5f5f5; border-color: #4b5563; color: #1f2937; }
-        .intervalo-row { background-color: #f3f4f6; color: #9ca3af; font-weight: bold; font-size: 10px; text-transform: uppercase; }
+        .intervalo-row { background-color: #f3f4f6; color: #6b7280; font-weight: bold; font-size: 10px; text-transform: uppercase; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -30,7 +51,16 @@
                 <h1 class="text-2xl font-black italic uppercase tracking-tighter">IFRO - CAMPUS CACOAL</h1>
                 <p class="text-xs font-bold opacity-80 uppercase">Sistema de Gestão Pedagógica</p>
             </div>
-            <div id="dataRelatorio" class="bg-white/10 px-4 py-2 rounded-lg font-mono text-sm border border-white/20 mt-4 md:mt-0">--/--/----</div>
+            <div class="flex items-center gap-4 mt-4 md:mt-0">
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold opacity-70">ANO LETIVO</label>
+                    <select id="yearSelect" class="bg-white/20 border border-white/30 p-1 rounded text-white font-bold outline-none cursor-pointer">
+                        <option value="2025" class="text-black">2025</option>
+                        <option value="2026" class="text-black" selected>2026</option>
+                    </select>
+                </div>
+                <div id="dataRelatorio" class="bg-white/10 px-4 py-2 rounded-lg font-mono text-sm border border-white/20">--/--/----</div>
+            </div>
         </div>
     </header>
 
@@ -43,25 +73,25 @@
     </nav>
 
     <main class="container mx-auto p-4 md:p-6">
-        <div id="loading" class="text-center py-10 font-bold text-green-700 italic animate-pulse">SINCRONIZANDO COM O GIST...</div>
+        <div id="loading" class="text-center py-10 font-bold text-green-700 italic animate-pulse">CARREGANDO DADOS DO GIST...</div>
 
         <section id="tab-disciplina" class="tab-pane active">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <select id="turmaSelect" class="p-3 border rounded-lg font-bold bg-gray-50"><option value="">Carregando turmas...</option></select>
+                    <select id="turmaSelect" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
                     <select id="disciplinaSelect" class="p-3 border rounded-lg bg-gray-50" disabled><option>Selecione a Turma</option></select>
                 </div>
                 <div id="resultadoBusca" class="hidden">
-                    <div class="flex flex-wrap gap-4 mb-4">
+                    <div class="flex flex-wrap gap-4 mb-4 items-center">
                         <div class="bg-green-100 p-4 rounded-lg border border-green-200 text-center flex-1">
-                            <p class="text-[10px] font-bold">AULAS REGULARES</p>
-                            <span id="cont-regular" class="text-2xl font-black">0</span>
+                            <p class="text-[10px] font-bold text-green-800">AULAS REGULARES</p>
+                            <span id="cont-regular" class="text-2xl font-black text-green-900">0</span>
                         </div>
                         <div class="bg-pink-100 p-4 rounded-lg border border-pink-200 text-center flex-1">
-                            <p class="text-[10px] font-bold">RECUPERAÇÃO/EXAME</p>
-                            <span id="cont-extra" class="text-2xl font-black">0</span>
+                            <p class="text-[10px] font-bold text-pink-800">RECUPERAÇÃO/EXAME</p>
+                            <span id="cont-extra" class="text-2xl font-black text-pink-900">0</span>
                         </div>
-                        <button onclick="exportarDisciplinaPDF()" class="bg-gray-800 text-white px-8 py-4 rounded-lg font-bold hover:bg-black transition">GERAR PDF</button>
+                        <button onclick="exportarDisciplinaPDF()" class="bg-[#15803d] text-white px-8 py-4 rounded-lg font-bold hover:bg-green-800 transition shadow-md">EXPORTAR PDF</button>
                     </div>
                     <table id="tableD" class="min-w-full bg-white border text-center text-xs">
                         <thead class="bg-gray-50 uppercase text-[9px] font-black">
@@ -77,18 +107,18 @@
             <div class="bg-white p-6 rounded-xl shadow-sm border">
                 <div class="flex gap-4 mb-6">
                     <select id="turmaSelectPivo" class="p-3 border rounded-lg font-bold flex-1 bg-gray-50"></select>
-                    <button onclick="exportarPivoPDF()" class="bg-green-700 text-white px-8 rounded-lg font-bold">EXPORTAR PIVÔ</button>
+                    <button onclick="exportarPivoPDF()" class="bg-[#15803d] text-white px-8 rounded-lg font-bold hover:bg-green-800 transition shadow-md">EXPORTAR PDF TURMA</button>
                 </div>
                 <div class="overflow-x-auto">
-                    <table id="tablePivo" class="min-w-full border text-[10px] text-center">
-                        <thead class="bg-[#15803d] text-white">
+                    <table id="tablePivo" class="min-w-full border text-center">
+                        <thead class="bg-[#15803d] text-white text-[10px]">
                             <tr>
-                                <th class="p-2 text-left">DISCIPLINA</th>
+                                <th class="p-2 text-left w-64">DISCIPLINA</th>
                                 <th>JAN</th><th>FEV</th><th>MAR</th><th>ABR</th><th>MAI</th><th>JUN</th><th>JUL</th><th>AGO</th><th>SET</th><th>OUT</th><th>NOV</th><th>DEZ</th>
                                 <th class="bg-green-600">TOTAL</th>
                             </tr>
                         </thead>
-                        <tbody id="bodyPivo" class="bg-white"></tbody>
+                        <tbody id="bodyPivo" class="bg-white text-[12px] font-bold"></tbody>
                     </table>
                 </div>
             </div>
@@ -99,9 +129,12 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <select id="profSelect" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
                     <input type="week" id="weekInput" class="p-3 border rounded-lg">
-                    <button onclick="gerarGrade()" class="bg-blue-600 text-white font-bold rounded-lg px-4">VER GRADE</button>
+                    <div class="flex gap-2">
+                        <button onclick="gerarGrade()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition">VER GRADE</button>
+                        <button onclick="exportarGradePDF()" class="bg-[#15803d] text-white font-bold rounded-lg flex-1 hover:bg-green-800 transition shadow-md">EXPORTAR PDF</button>
+                    </div>
                 </div>
-                <div id="gradeRender" class="overflow-x-auto"></div>
+                <div id="gradeRender" class="overflow-x-auto border rounded-lg"></div>
             </div>
         </section>
     </main>
@@ -135,19 +168,19 @@
             document.getElementById('dataRelatorio').textContent = new Date().toLocaleDateString('pt-BR');
             carregarDados();
             initTabs();
+            document.getElementById('yearSelect').onchange = carregarDados;
         };
 
         async function carregarDados() {
             try {
-                const res = await fetch(GIST_URL + "?nocache=" + new Date().getTime());
+                const yearSelected = document.getElementById('yearSelect').value;
+                document.getElementById('loading').classList.remove('hidden');
+                
+                const res = await fetch(GIST_URL + "?t=" + new Date().getTime());
                 let csv = await res.text();
-                
-                // Limpeza pesada para evitar erros de formatação
                 csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
-                const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
                 
-                if (lines.length < 2) throw "CSV Vazio";
-
+                const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
                 const headers = lines[0].split(';').map(h => h.trim());
                 const turmas = headers.slice(2);
                 
@@ -159,9 +192,12 @@
                     if (cols[0] && cols[0].includes('.')) lastDate = cols[0].replace(/\./g, '/');
                     if (!cols[1]) return;
 
+                    // Filtro de Ano
+                    if (!lastDate.endsWith(yearSelected)) return;
+
                     turmas.forEach((tNome, idx) => {
                         const cell = cols[idx + 2];
-                        if (!cell || cell === "" || cell === "0" || cell.length < 3 || cell.includes("PPS/")) return;
+                        if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
 
                         const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
                         if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
@@ -193,12 +229,16 @@
                         });
                     });
                 });
-
                 document.getElementById('loading').classList.add('hidden');
                 popularSelects();
-            } catch (e) {
-                document.getElementById('loading').innerHTML = "ERRO: O Gist não respondeu. Tente atualizar a página (F5).";
-            }
+                limparResultados();
+            } catch (e) { document.getElementById('loading').innerHTML = "Erro ao sincronizar dados."; }
+        }
+
+        function limparResultados() {
+            document.getElementById('resultadoBusca').classList.add('hidden');
+            document.getElementById('bodyPivo').innerHTML = '';
+            document.getElementById('gradeRender').innerHTML = '';
         }
 
         function popularSelects() {
@@ -207,32 +247,32 @@
             const ps = document.getElementById('profSelect');
             const profs = new Set();
 
-            const options = '<option value="">-- SELECIONE A TURMA --</option>' + 
+            const optionsHtml = '<option value="">-- SELECIONE A TURMA --</option>' + 
                 Object.keys(dataStore).sort().map(id => `<option value="${id}">${dataStore[id].name}</option>`).join('');
             
-            t1.innerHTML = options;
-            t2.innerHTML = options;
+            t1.innerHTML = optionsHtml;
+            t2.innerHTML = optionsHtml;
 
             for(let t in dataStore) for(let d in dataStore[t].discs) dataStore[t].discs[d].sch.forEach(x => {
                 if(x.prof && x.prof !== "N/I") profs.add(x.prof);
             });
-            ps.innerHTML = '<option value="">-- SELECIONE O PROFESSOR --</option>' + 
+            ps.innerHTML = '<option value="">-- PROFESSOR --</option>' + 
                 Array.from(profs).sort().map(p => `<option value="${p}">${p}</option>`).join('');
         }
 
         document.getElementById('turmaSelect').onchange = (e) => {
             const dS = document.getElementById('disciplinaSelect');
-            const tId = e.target.value;
             dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
-            if(dataStore[tId]) {
-                Object.keys(dataStore[tId].discs).sort().forEach(id => {
-                    dS.innerHTML += `<option value="${id}">${dataStore[tId].discs[id].name}</option>`;
+            if(dataStore[e.target.value]) {
+                Object.keys(dataStore[e.target.value].discs).sort().forEach(id => {
+                    dS.innerHTML += `<option value="${id}">${dataStore[e.target.value].discs[id].name}</option>`;
                 });
                 dS.disabled = false;
-            } else { dS.disabled = true; }
+            }
         };
 
-        document.getElementById('disciplinaSelect').onchange = () => {
+        document.getElementById('disciplinaSelect').onchange = renderD;
+        function renderD() {
             const tId = document.getElementById('turmaSelect').value;
             const dId = document.getElementById('disciplinaSelect').value;
             const b = document.getElementById('bodyD');
@@ -247,7 +287,7 @@
             document.getElementById('cont-regular').textContent = sR;
             document.getElementById('cont-extra').textContent = sE;
             document.getElementById('resultadoBusca').classList.remove('hidden');
-        };
+        }
 
         document.getElementById('turmaSelectPivo').onchange = () => {
             const tId = document.getElementById('turmaSelectPivo').value;
@@ -257,9 +297,9 @@
             for(let dId in dataStore[tId].discs) {
                 let mCount = Array(12).fill(0);
                 dataStore[tId].discs[dId].sch.forEach(s => mCount[s.dtObj.getMonth()]++);
-                let row = `<tr class="border-b"><td class="p-2 text-left font-bold border-r bg-gray-50">${dataStore[tId].discs[dId].name}</td>`;
+                let row = `<tr class="border-b"><td class="p-3 text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
                 mCount.forEach(c => row += `<td class="border-r">${c||'-'}</td>`);
-                row += `<td class="bg-green-50 font-black">${mCount.reduce((a,b)=>a+b)}</td></tr>`;
+                row += `<td class="bg-green-100 text-green-900 font-black">${mCount.reduce((a,b)=>a+b)}</td></tr>`;
                 b.innerHTML += row;
             }
         };
@@ -271,25 +311,27 @@
             const [y, w] = week.split('-W').map(Number);
             const start = getStartOfWeek(w, y);
             const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-            let h = `<table id="tableGS" class="min-w-full border bg-white text-center text-[9px]"><thead><tr class="bg-[#15803d] text-white"><th>HORA</th>`;
+            
+            let h = `<table id="tableGS" class="bg-white"><thead><tr class="bg-[#15803d] text-white"><th>HORÁRIO</th>`;
             dias.forEach((d, i) => {
                 const dt = new Date(start); dt.setDate(dt.getDate() + i);
-                h += `<th>${d}<br>${dt.toLocaleDateString('pt-BR').slice(0,5)}</th>`;
+                h += `<th>${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
             });
             h += `</tr></thead><tbody>`;
+            
             GABARITO.forEach(s => {
                 if(s.t === "intervalo") h += `<tr class="intervalo-row"><td>${s.h}</td><td colspan="6">${s.l}</td></tr>`;
                 else {
-                    h += `<tr><td class="bg-gray-50 font-bold border">${s.h}</td>`;
+                    h += `<tr><td class="bg-gray-100 font-bold border">${s.h}</td>`;
                     for(let i=0; i<6; i++) {
                         const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
                         let cell = "";
                         for(let t in dataStore) for(let d in dataStore[t].discs) dataStore[t].discs[d].sch.forEach(x => {
                             if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.includes(s.h.split('-')[0].trim())) {
-                                cell += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><b>${dataStore[t].name}</b><br>${dataStore[t].discs[d].name}</div>`;
+                                cell += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><b>${dataStore[t].name}</b><br><span class="text-[10px]">${dataStore[t].discs[d].name}</span></div>`;
                             }
                         });
-                        h += `<td class="border p-1">${cell}</td>`;
+                        h += `<td class="border">${cell}</td>`;
                     }
                     h += `</tr>`;
                 }
@@ -304,17 +346,26 @@
             return s;
         }
 
+        // FUNÇÕES DE PDF
         function exportarDisciplinaPDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF();
-            doc.text("RELATORIO DISCIPLINAR - IFRO", 14, 15);
-            doc.autoTable({ html: '#tableD', startY: 20, theme: 'grid', styles: { fontSize: 8 } });
-            doc.save("Relatorio_IFRO.pdf");
+            doc.setFontSize(16); doc.setTextColor(21, 128, 61); doc.text("IFRO - RELATÓRIO DISCIPLINAR", 14, 15);
+            doc.autoTable({ html: '#tableD', startY: 22, theme: 'grid', styles: { fontSize: 8, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            doc.save("Relatorio_Disciplina.pdf");
         }
 
         function exportarPivoPDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF('l');
-            doc.autoTable({ html: '#tablePivo', startY: 20, theme: 'grid', styles: { fontSize: 7 } });
-            doc.save("Pivo_Anual.pdf");
+            doc.setFontSize(16); doc.setTextColor(21, 128, 61); doc.text("IFRO - MAPA ANUAL POR TURMA", 14, 15);
+            doc.autoTable({ html: '#tablePivo', startY: 22, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            doc.save("Pivo_Anual_Turma.pdf");
+        }
+
+        function exportarGradePDF() {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF('l');
+            doc.setFontSize(16); doc.setTextColor(21, 128, 61); doc.text("IFRO - GRADE SEMANAL DOCENTE", 14, 15);
+            doc.autoTable({ html: '#tableGS', startY: 22, theme: 'grid', styles: { fontSize: 7, halign: 'center', cellPadding: 2 }, headStyles: { fillColor: [21, 128, 61] } });
+            doc.save("Grade_Semanal.pdf");
         }
 
         function initTabs() {
