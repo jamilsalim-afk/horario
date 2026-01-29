@@ -10,12 +10,15 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        .tab-btn { transition: all 0.2s; border-bottom: 4px solid transparent; }
-        .tab-btn.active { border-bottom: 4px solid #15803d; color: #15803d; font-weight: 800; }
+        
+        /* Ajuste de Fonte das Abas (Aumentado conforme solicitado) */
+        .tab-btn { transition: all 0.2s; border-bottom: 4px solid transparent; font-size: 14px !important; }
+        .tab-btn.active { border-bottom: 4px solid #15803d; color: #15803d; font-weight: 900; }
+        
         .tab-pane { display: none; }
         .tab-pane.active { display: block; }
         
-        /* Tabela Grade Semanal */
+        /* Tabela Grade Semanal - Padrão Imagem */
         #tableGS { table-layout: fixed; width: 100%; border-collapse: collapse; }
         #tableGS th, #tableGS td { 
             border: 1px solid #e5e7eb; 
@@ -47,8 +50,8 @@
             <div class="mt-6 md:mt-0 bg-white/10 p-4 rounded-xl border border-white/20 backdrop-blur-md">
                 <label class="text-[10px] font-bold block opacity-70 mb-1 uppercase">ANO LETIVO</label>
                 <select id="yearSelect" class="bg-transparent font-black text-2xl outline-none cursor-pointer">
-                    <option value="2025" class="text-black">2025</option>
-                    <option value="2026" selected class="text-black">2026</option>
+                    <option value="2025" selected class="text-black">2025</option>
+                    <option value="2026" class="text-black">2026</option>
                     <option value="2027" class="text-black">2027</option>
                 </select>
             </div>
@@ -57,10 +60,10 @@
 
     <nav class="bg-white border-b sticky top-0 z-50 shadow-md">
         <div class="container mx-auto flex overflow-x-auto">
-            <button class="tab-btn px-6 py-5 text-xs font-bold uppercase whitespace-nowrap active" data-tab="tab-semanal">RELATÓRIO POR PROFESSOR/SEMANAL</button>
-            <button class="tab-btn px-6 py-5 text-xs font-bold uppercase whitespace-nowrap" data-tab="tab-disciplina">RELATÓRIO POR DISCIPLINA</button>
-            <button class="tab-btn px-6 py-5 text-xs font-bold uppercase whitespace-nowrap" data-tab="tab-turma">RELATÓRIO POR TURMA</button>
-            <button class="tab-btn px-6 py-5 text-xs font-bold uppercase whitespace-nowrap" data-tab="tab-info">INFO - SISTEMA</button>
+            <button class="tab-btn px-6 py-5 font-bold uppercase whitespace-nowrap active" data-tab="tab-semanal">RELATÓRIO POR PROFESSOR/SEMANAL</button>
+            <button class="tab-btn px-6 py-5 font-bold uppercase whitespace-nowrap" data-tab="tab-disciplina">RELATÓRIO POR DISCIPLINA</button>
+            <button class="tab-btn px-6 py-5 font-bold uppercase whitespace-nowrap" data-tab="tab-turma">RELATÓRIO POR TURMA</button>
+            <button class="tab-btn px-6 py-5 font-bold uppercase whitespace-nowrap" data-tab="tab-info">INFO - SISTEMA</button>
         </div>
     </nav>
 
@@ -128,7 +131,7 @@
 
         <section id="tab-info" class="tab-pane">
             <div class="bg-white p-10 rounded-2xl border shadow-sm max-w-4xl mx-auto space-y-6">
-                <h3 class="font-black text-2xl text-green-800 border-b-4 border-green-100 pb-2">DADOS DO SISTEMA</h3>
+                <h3 class="font-black text-2xl text-green-800 border-b-4 border-green-100 pb-2 uppercase">Informações do Sistema</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
                     <div class="space-y-4">
                         <p><b>INSTITUIÇÃO:</b> INSTITUTO FEDERAL DE RONDÔNIA - IFRO</p>
@@ -140,7 +143,6 @@
                         <h4 class="font-black text-green-800 mb-4 uppercase">Calendário Acadêmico <span id="infoAno">2026</span></h4>
                         <p class="mb-2"><b>1º SEMESTRE:</b> <span id="infoS1" class="font-mono font-bold">--</span></p>
                         <p><b>2º SEMESTRE:</b> <span id="infoS2" class="font-mono font-bold">--</span></p>
-                        <p class="text-[10px] text-gray-500 mt-4 uppercase">* Dados extraídos automaticamente do sistema de cadastro.</p>
                     </div>
                 </div>
             </div>
@@ -149,13 +151,14 @@
 
     <script>
         const GIST_MAP = {
-            "2025": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/DADOS_2025",
-            "2026": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/7f6247c6e9b67c2e2bd78b0518d7e5f224ccffdc/DADOS_2026_MESTRE",
-            "2027": "LINK_AQUI", "2028": "LINK_AQUI", "2029": "LINK_AQUI", "2030": "LINK_AQUI"
+            "2025": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/7f6247c6e9b67c2e2bd78b0518d7e5f224ccffdc/DADOS_2026_MESTRE",
+            "2026": "https://gist.githubusercontent.com/jamilsalim-afk",
+            "2027": "https://gist.githubusercontent.com/jamilsalim-afk"
         };
         const CALENDARIO = {
             "2025": { s1: "01/01/2025 a 30/06/2025", s2: "01/07/2025 a 31/12/2025" },
             "2026": { s1: "05/02/2026 a 20/06/2026", s2: "15/07/2026 a 22/12/2026" }
+            "2027": { s1: "05/02/2027 a 20/06/2027", s2: "15/07/2027 a 22/12/2027" }
         };
         const GABARITO = [{h:"07:30 - 08:20", t:"aula"}, {h:"08:20 - 09:10", t:"aula"}, {h:"09:10 - 09:30", t:"intervalo", l:"INTERVALO MATUTINO"}, {h:"09:30 - 10:20", t:"aula"}, {h:"10:20 - 11:10", t:"aula"}, {h:"11:10 - 12:00", t:"aula"}, {h:"12:00 - 13:30", t:"intervalo", l:"ALMOÇO"}, {h:"13:30 - 14:20", t:"aula"}, {h:"14:20 - 15:10", t:"aula"}, {h:"15:10 - 15:30", t:"intervalo", l:"INTERVALO VESPERTINO"}, {h:"15:30 - 16:20", t:"aula"}, {h:"16:20 - 17:10", t:"aula"}, {h:"17:10 - 18:00", t:"aula"}, {h:"18:00 - 19:00", t:"intervalo", l:"JANTAR"}, {h:"19:00 - 19:50", t:"aula"}, {h:"19:50 - 20:40", t:"aula"}, {h:"20:40 - 20:50", t:"intervalo", l:"INTERVALO NOTURNO"}, {h:"20:50 - 21:40", t:"aula"}, {h:"21:40 - 22:30", t:"aula"}];
         
@@ -168,14 +171,13 @@
             document.getElementById('infoAno').innerText = ano;
             document.getElementById('infoS1').innerText = CALENDARIO[ano]?.s1 || "--";
             document.getElementById('infoS2').innerText = CALENDARIO[ano]?.s2 || "--";
-            
             try {
                 document.getElementById('loading').classList.remove('hidden');
                 const res = await fetch(GIST_MAP[ano] + "?t=" + Date.now());
                 const csv = await res.text();
                 processarCSV(csv, ano);
                 document.getElementById('loading').classList.add('hidden');
-            } catch (e) { document.getElementById('loading').innerHTML = `<span class="text-red-600">Erro ao carregar dados.</span>`; }
+            } catch (e) { document.getElementById('loading').innerText = "Erro ao carregar dados."; }
         }
 
         function processarCSV(csv, ano) {
@@ -189,7 +191,6 @@
                 const cols = line.split(';').map(c => c?.trim());
                 if (cols[0] && cols[0].includes('.')) lastDate = cols[0].replace(/\./g, '/');
                 if (!cols[1] || !lastDate.endsWith(ano)) return;
-                
                 const [d, m, a] = lastDate.split('/');
                 const dtObj = new Date(a, m-1, d);
                 const sem = m <= 6 ? "1" : "2";
@@ -197,16 +198,11 @@
                 turmas.forEach((tNome, idx) => {
                     const cell = cols[idx + 2];
                     if (!cell || cell === "0" || cell.length < 3) return;
-                    
                     const tagM = cell.match(/\[(.*?)\]/);
                     const tag = tagM ? tagM[1].toUpperCase() : null;
                     const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
-                    
                     let disc = cleanT, prof = "N/I";
-                    if (cleanT.includes(' - ')) {
-                        const p = cleanT.split(' - ');
-                        prof = p.pop(); disc = p.join(' - ');
-                    }
+                    if (cleanT.includes(' - ')) { const p = cleanT.split(' - '); prof = p.pop(); disc = p.join(' - '); }
 
                     if (!dataStore[tNome]) dataStore[tNome] = { discs: {} };
                     if (!dataStore[tNome].discs[disc]) dataStore[tNome].discs[disc] = [];
@@ -227,25 +223,21 @@
             ts.innerHTML = tOpts; tsp.innerHTML = tOpts;
         }
 
-        // --- ABA SEMANAL ---
         function gerarGrade() {
             const prof = document.getElementById('profSelect').value;
             const week = document.getElementById('weekInput').value;
-            if(!prof || !week) return alert("Selecione Professor e Semana");
+            if(!prof || !week) return alert("Selecione filtros");
             const [y, w] = week.split('-W').map(Number);
             const start = getStartOfWeek(w, y);
-            
             let html = `<table id="tableGS"><thead><tr><th>HORÁRIO</th>`;
             for(let i=0; i<6; i++){
                 const d = new Date(start); d.setDate(d.getDate()+i);
                 html += `<th>${["SEGUNDA","TERÇA","QUARTA","QUINTA","SEXTA","SÁBADO"][i]}<br><span class="text-[10px] font-normal opacity-80">${d.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
             }
             html += `</tr></thead><tbody>`;
-
             GABARITO.forEach(s => {
-                if(s.t === "intervalo") {
-                    html += `<tr class="intervalo-row"><td>${s.h}</td><td colspan="6">${s.l}</td></tr>`;
-                } else {
+                if(s.t === "intervalo") html += `<tr class="intervalo-row"><td>${s.h}</td><td colspan="6">${s.l}</td></tr>`;
+                else {
                     html += `<tr><td>${s.h}</td>`;
                     for(let i=0; i<6; i++){
                         const d = new Date(start); d.setDate(d.getDate()+i);
@@ -267,15 +259,11 @@
             document.getElementById('gradeRender').innerHTML = html + "</tbody></table>";
         }
 
-        // --- ABA DISCIPLINA ---
         function atualizarDisciplinas() {
             const t = document.getElementById('turmaSelect').value;
             const dSelect = document.getElementById('disciplinaSelect');
             dSelect.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
-            if(dataStore[t]) {
-                Object.keys(dataStore[t].discs).sort().forEach(d => dSelect.innerHTML += `<option>${d}</option>`);
-                dSelect.disabled = false;
-            }
+            if(dataStore[t]) { Object.keys(dataStore[t].discs).sort().forEach(d => dSelect.innerHTML += `<option>${d}</option>`); dSelect.disabled = false; }
         }
 
         function gerarRelatorioDisciplina() {
@@ -283,30 +271,24 @@
             const d = document.getElementById('disciplinaSelect').value;
             const s = document.getElementById('semestreSelectD').value;
             if(!t || !d) return;
-            const body = document.getElementById('bodyD');
-            body.innerHTML = "";
+            const body = document.getElementById('bodyD'); body.innerHTML = "";
             let n = 0, e = 0;
-
             dataStore[t].discs[d].filter(x => x.sem === s).forEach(x => {
                 const isExtra = x.tag && ["REC","EX","R","+"].includes(x.tag);
                 if(isExtra) e++; else n++;
                 body.innerHTML += `<tr><td class="p-3 border font-bold">${x.date}</td><td class="p-3 border uppercase">${x.dtObj.toLocaleDateString('pt-BR',{weekday:'long'})}</td><td class="p-3 border">${x.time}</td><td class="p-3 border font-black">${x.tag || 'NORMAL'}</td></tr>`;
             });
-
             document.getElementById('countAulas').innerText = n;
             document.getElementById('countExtras').innerText = e;
             document.getElementById('statsDisciplina').classList.remove('hidden');
             document.getElementById('resultadoBusca').classList.remove('hidden');
         }
 
-        // --- ABA TURMA (PIVÔ) ---
         function gerarPivo() {
             const t = document.getElementById('turmaSelectPivo').value;
             const s = document.getElementById('semestreSelectP').value;
-            const body = document.getElementById('bodyPivo');
-            body.innerHTML = "";
+            const body = document.getElementById('bodyPivo'); body.innerHTML = "";
             if(!dataStore[t]) return;
-
             Object.keys(dataStore[t].discs).sort().forEach(d => {
                 let row = `<td class="p-3 border text-left bg-gray-50">${d}</td>`, total = 0;
                 for(let m=1; m<=12; m++) {
@@ -318,51 +300,33 @@
             });
         }
 
-        // --- PDF ENGINE (CABEÇALHO E RODAPÉ PADRÃO) ---
+        // --- PDF ENGINE ---
         function layoutPDF(doc, titulo) {
-            // Cabeçalho
-            doc.setFillColor(21, 128, 61); doc.rect(0, 0, doc.internal.pageSize.width, 40, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(14); doc.setFont("helvetica", "bold");
-            doc.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", doc.internal.pageSize.width/2, 15, { align: "center" });
-            doc.setFontSize(12); doc.text("CAMPUS CACOAL", doc.internal.pageSize.width/2, 22, { align: "center" });
-            doc.setFontSize(8); doc.text("DEPARTAMENTO DE APOIO AO ENSINO / COORDENAÇÃO DE FERRAMENTAS PEDAGÓGICAS", doc.internal.pageSize.width/2, 28, { align: "center" });
-            doc.setFontSize(10); doc.text(titulo, doc.internal.pageSize.width/2, 36, { align: "center" });
-            
-            // Rodapé Institucional
-            const pHeight = doc.internal.pageSize.height;
-            const pWidth = doc.internal.pageSize.width;
-            doc.setTextColor(0,0,0);
-            doc.setFontSize(8);
-            doc.setDrawColor(200);
-            doc.line(20, pHeight - 25, 80, pHeight - 25);
-            doc.line(pWidth - 80, pHeight - 25, pWidth - 20, pHeight - 25);
-            doc.text("ASSINATURA DO SERVIDOR", 50, pHeight - 20, {align:"center"});
-            doc.text("ASSINATURA DA COORDENAÇÃO", pWidth - 50, pHeight - 20, {align:"center"});
-            doc.setFontSize(6);
-            doc.text("Gerado automaticamente via Sistema de Gestão Pedagógica - SGP", pWidth/2, pHeight - 10, {align:"center"});
+            const pW = doc.internal.pageSize.width; const pH = doc.internal.pageSize.height;
+            doc.setFillColor(21, 128, 61); doc.rect(0, 0, pW, 40, 'F');
+            doc.setTextColor(255); doc.setFontSize(14); doc.setFont("helvetica", "bold");
+            doc.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", pW/2, 15, { align: "center" });
+            doc.setFontSize(12); doc.text("CAMPUS CACOAL", pW/2, 22, { align: "center" });
+            doc.setFontSize(8); doc.text("DEPARTAMENTO DE APOIO AO ENSINO / COORDENAÇÃO DE FERRAMENTAS PEDAGÓGICAS", pW/2, 28, { align: "center" });
+            doc.setFontSize(10); doc.text(titulo, pW/2, 36, { align: "center" });
+            doc.setTextColor(0); doc.setFontSize(8);
+            doc.line(20, pH - 25, 80, pH - 25); doc.line(pW - 80, pH - 25, pW - 20, pH - 25);
+            doc.text("ASSINATURA DO SERVIDOR", 50, pH - 20, {align:"center"});
+            doc.text("ASSINATURA DA COORDENAÇÃO", pW - 50, pH - 20, {align:"center"});
         }
 
         function exportarGradePDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
             layoutPDF(doc, "RELATÓRIO SEMANAL: " + document.getElementById('profSelect').value);
-            doc.autoTable({ 
-                html: '#tableGS', startY: 45, theme: 'grid', 
-                styles: { fontSize: 7, halign: 'center', valign: 'middle', fontStyle: 'bold' },
-                headStyles: { fillColor: [21, 128, 61], textColor: 255 }
-            });
+            doc.autoTable({ html: '#tableGS', startY: 45, theme: 'grid', styles: { fontSize: 7, halign: 'center', fontStyle: 'bold' }, headStyles: { fillColor: [21, 128, 61] } });
             doc.save("Grade_Semanal.pdf");
         }
 
         function exportarDisciplinaPDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
-            const t = document.getElementById('turmaSelect').value;
-            const d = document.getElementById('disciplinaSelect').value;
-            layoutPDF(doc, `RELATÓRIO POR DISCIPLINA: ${t} - ${d}`);
-            doc.setFontSize(9); doc.setTextColor(0);
-            doc.text(`Total de Aulas: ${document.getElementById('countAulas').innerText} | Reposições/Exames: ${document.getElementById('countExtras').innerText}`, 15, 48);
-            doc.autoTable({ html: '#tableD', startY: 52, theme: 'striped', styles: {fontSize: 8}, headStyles: {fillColor:[21,128,61]} });
-            doc.save(`Relatorio_Disciplina.pdf`);
+            layoutPDF(doc, `DISCIPLINA: ${document.getElementById('turmaSelect').value} - ${document.getElementById('disciplinaSelect').value}`);
+            doc.autoTable({ html: '#tableD', startY: 45, theme: 'striped', styles: {fontSize: 8}, headStyles: {fillColor:[21,128,61]} });
+            doc.save("Relatorio_Disciplina.pdf");
         }
 
         function exportarPivoPDF() {
