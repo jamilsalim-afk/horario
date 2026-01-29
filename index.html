@@ -14,20 +14,19 @@
         .tab-pane { display: none; }
         .tab-pane.active { display: block; }
         
-        /* Ajustes Grade Semanal */
         #tableGS { table-layout: fixed; width: 100%; border-collapse: collapse; }
         #tableGS td, #tableGS th { 
-            width: 140px; 
             word-wrap: break-word; 
             vertical-align: middle; 
             text-align: center; 
             font-size: 11px;
             padding: 8px;
+            border: 1px solid #e5e7eb;
         }
         
         .aula-card { 
             padding: 6px; 
-            margin-bottom: 4px; 
+            margin: 2px;
             border-radius: 4px; 
             line-height: 1.2; 
             border-left: 4px solid #15803d; 
@@ -40,7 +39,7 @@
         .status-reposicao { background-color: #eff6ff; border-color: #2563eb; color: #1e40af; }
         .status-rec { background-color: #fdf2f8; border-color: #db2777; color: #9d174d; }
         .status-exame { background-color: #f5f5f5; border-color: #4b5563; color: #1f2937; }
-        .intervalo-row { background-color: #f3f4f6; color: #6b7280; font-weight: bold; font-size: 10px; text-transform: uppercase; }
+        .intervalo-row { background-color: #f3f4f6 !important; color: #6b7280; font-weight: bold; font-size: 10px; text-transform: uppercase; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -175,15 +174,12 @@
             try {
                 const yearSelected = document.getElementById('yearSelect').value;
                 document.getElementById('loading').classList.remove('hidden');
-                
                 const res = await fetch(GIST_URL + "?t=" + new Date().getTime());
                 let csv = await res.text();
                 csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
-                
                 const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
                 const headers = lines[0].split(';').map(h => h.trim());
                 const turmas = headers.slice(2);
-                
                 dataStore = {};
                 let lastDate = "";
 
@@ -191,41 +187,29 @@
                     const cols = line.split(';').map(c => c?.trim());
                     if (cols[0] && cols[0].includes('.')) lastDate = cols[0].replace(/\./g, '/');
                     if (!cols[1]) return;
-
                     if (!lastDate.endsWith(yearSelected)) return;
 
                     turmas.forEach((tNome, idx) => {
                         const cell = cols[idx + 2];
                         if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
-
                         const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
-
                         const tagM = cell.match(/\[(.*?)\]/);
                         const tag = tagM ? tagM[1].toUpperCase() : null;
                         const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
-                        
                         let disc, prof;
                         if (cleanT.includes(' - ')) {
                             const partes = cleanT.split(' - ');
                             prof = partes.pop().trim();
                             disc = partes.join(' - ').trim();
-                        } else {
-                            disc = cleanT;
-                            prof = "N/I";
-                        }
+                        } else { disc = cleanT; prof = "N/I"; }
                         if (!isNaN(disc)) return;
 
-                        // CORREÇÃO CIRÚRGICA: Vincula a disciplina estritamente à turma da coluna atual
                         if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
-                        
                         const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        if (!dataStore[tId].discs[dId]) {
-                            dataStore[tId].discs[dId] = { name: disc, sch: [] };
-                        }
+                        if (!dataStore[tId].discs[dId]) dataStore[tId].discs[dId] = { name: disc, sch: [] };
 
                         const [d, m, a] = lastDate.split('/');
                         const dt = new Date(a, m-1, d);
-
                         dataStore[tId].discs[dId].sch.push({
                             date: lastDate, dtObj: dt, wd: dt.toLocaleDateString('pt-BR',{weekday:'long'}),
                             time: cols[1], prof: prof, tag: tag
@@ -235,7 +219,7 @@
                 document.getElementById('loading').classList.add('hidden');
                 popularSelects();
                 limparResultados();
-            } catch (e) { document.getElementById('loading').innerHTML = "Erro ao sincronizar dados."; }
+            } catch (e) { document.getElementById('loading').innerHTML = "Erro ao sincronizar."; }
         }
 
         function limparResultados() {
@@ -251,13 +235,9 @@
             const t2 = document.getElementById('turmaSelectPivo');
             const ps = document.getElementById('profSelect');
             const profs = new Set();
-
             const optionsHtml = '<option value="">-- SELECIONE A TURMA --</option>' + 
                 Object.keys(dataStore).sort().map(id => `<option value="${id}">${dataStore[id].name}</option>`).join('');
-            
-            t1.innerHTML = optionsHtml;
-            t2.innerHTML = optionsHtml;
-
+            t1.innerHTML = optionsHtml; t2.innerHTML = optionsHtml;
             for(let t in dataStore) for(let d in dataStore[t].discs) dataStore[t].discs[d].sch.forEach(x => {
                 if(x.prof && x.prof !== "N/I") profs.add(x.prof);
             });
@@ -282,8 +262,7 @@
             const dId = document.getElementById('disciplinaSelect').value;
             const b = document.getElementById('bodyD');
             if(!tId || !dId) return;
-            b.innerHTML = '';
-            let sR = 0, sE = 0;
+            b.innerHTML = ''; let sR = 0, sE = 0;
             dataStore[tId].discs[dId].sch.forEach(a => {
                 const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
                 if(info.soma) sR++; else sE++;
@@ -317,10 +296,10 @@
             const start = getStartOfWeek(w, y);
             const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
             
-            let h = `<table id="tableGS" class="bg-white"><thead><tr class="bg-[#15803d] text-white"><th>HORÁRIO</th>`;
+            let h = `<table id="tableGS" class="bg-white"><thead><tr class="bg-[#15803d] text-white"><th style="width: 100px;">HORÁRIO</th>`;
             dias.forEach((d, i) => {
                 const dt = new Date(start); dt.setDate(dt.getDate() + i);
-                h += `<th>${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
+                h += `<th style="width: 150px;">${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
             });
             h += `</tr></thead><tbody>`;
             
@@ -330,13 +309,20 @@
                     h += `<tr><td class="bg-gray-100 font-bold border">${s.h}</td>`;
                     for(let i=0; i<6; i++) {
                         const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
-                        let cell = "";
-                        for(let t in dataStore) for(let d in dataStore[t].discs) dataStore[t].discs[d].sch.forEach(x => {
-                            if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.includes(s.h.split('-')[0].trim())) {
-                                cell += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><b>${dataStore[t].name}</b><br><span class="text-[10px]">${dataStore[t].discs[d].name}</span></div>`;
+                        let cellContent = "";
+                        for(let t in dataStore) {
+                            for(let d in dataStore[t].discs) {
+                                dataStore[t].discs[d].sch.forEach(x => {
+                                    if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
+                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}">
+                                            <div class="font-black text-[10px]">${dataStore[t].name}</div>
+                                            <div class="text-[9px] leading-tight">${dataStore[t].discs[d].name}</div>
+                                        </div>`;
+                                    }
+                                });
                             }
-                        });
-                        h += `<td class="border">${cell}</td>`;
+                        }
+                        h += `<td class="border p-1" style="height: 60px;">${cellContent}</td>`;
                     }
                     h += `</tr>`;
                 }
@@ -366,18 +352,26 @@
         }
 
         function exportarGradePDF() {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF('l');
-            doc.setFontSize(16); doc.setTextColor(21, 128, 61); doc.text("IFRO - GRADE SEMANAL DOCENTE", 14, 15);
-            doc.autoTable({ html: '#tableGS', startY: 22, theme: 'grid', styles: { fontSize: 7, halign: 'center', cellPadding: 2 }, headStyles: { fillColor: [21, 128, 61] } });
-            doc.save("Grade_Semanal.pdf");
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+            const profNome = document.getElementById('profSelect').value;
+            doc.setFontSize(14); doc.setTextColor(21, 128, 61);
+            doc.text(`GRADE SEMANAL - PROF(A): ${profNome}`, 14, 15);
+            doc.autoTable({
+                html: '#tableGS', startY: 22, theme: 'grid',
+                styles: { fontSize: 7, cellPadding: 2, halign: 'center', valign: 'middle', overflow: 'linebreak' },
+                headStyles: { fillColor: [21, 128, 61], textColor: 255 },
+                columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 40 }, 2: { cellWidth: 40 }, 3: { cellWidth: 40 }, 4: { cellWidth: 40 }, 5: { cellWidth: 40 }, 6: { cellWidth: 40 } },
+                didParseCell: function(data) { if (data.row.section === 'body' && data.cell.text[0] === 'INTERVALO') { data.cell.styles.fillColor = [243, 244, 246]; } }
+            });
+            doc.save(`Grade_${profNome}.pdf`);
         }
 
         function initTabs() {
             document.querySelectorAll('.tab-btn').forEach(b => {
                 b.onclick = () => {
                     document.querySelectorAll('.tab-btn, .tab-pane').forEach(e => e.classList.remove('active'));
-                    b.classList.add('active');
-                    document.getElementById(b.dataset.tab).classList.add('active');
+                    b.classList.add('active'); document.getElementById(b.dataset.tab).classList.add('active');
                 };
             });
         }
