@@ -134,7 +134,7 @@
         ];
 
         let dataStore = {};
-        const GIST_URL = "COLE_AQUI_SEU_LINK_RAW";
+        const GIST_URL = "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/292ce2bacff996ab2e8f5fe0b4608488048b8616/DADOS_2026_MESTRE";
 
         window.onload = () => {
             document.getElementById('dataRelatorio').textContent = new Date().toLocaleDateString('pt-BR');
