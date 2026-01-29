@@ -137,7 +137,8 @@
             "2026": { s1: { inicio: "2026/02/05", fim: "2026/06/20" }, s2: { inicio: "2026/07/15", fim: "2026/12/22" } }
         };
 
-        const CURSOS_SUPERIOR = ["geografia", "matemática", "agronegócio", "zootecnia", "agronomia"];
+        // Lista de palavras-chave para cursos superiores (Normalizada)
+        const CURSOS_SUPERIOR = ["geografia", "matematica", "agronegocio", "zootecnia", "agronomia"];
         const TRADUCAO = { "+": { texto: "EXTRA", class: "status-extra", soma: true }, "R": { texto: "REPOSIÇÃO", class: "status-reposicao", soma: true }, "REC": { texto: "RECUPERAÇÃO", class: "status-rec", soma: false }, "EX": { texto: "EXAME", class: "status-exame", soma: false } };
         const GABARITO = [{h:"07:30 - 08:20", t:"aula"}, {h:"08:20 - 09:10", t:"aula"}, {h:"09:10 - 09:30", t:"intervalo", l:"INTERVALO MATUTINO"}, {h:"09:30 - 10:20", t:"aula"}, {h:"10:20 - 11:10", t:"aula"}, {h:"11:10 - 12:00", t:"aula"}, {h:"12:00 - 13:30", t:"intervalo", l:"ALMOÇO"}, {h:"13:30 - 14:20", t:"aula"}, {h:"14:20 - 15:10", t:"aula"}, {h:"15:10 - 15:30", t:"intervalo", l:"INTERVALO VESPERTINO"}, {h:"15:30 - 16:20", t:"aula"}, {h:"16:20 - 17:10", t:"aula"}, {h:"17:10 - 18:00", t:"aula"}, {h:"18:00 - 19:00", t:"intervalo", l:"JANTAR"}, {h:"19:00 - 19:50", t:"aula"}, {h:"19:50 - 20:40", t:"aula"}, {h:"20:40 - 20:50", t:"intervalo", l:"INTERVALO NOTURNO"}, {h:"20:50 - 21:40", t:"aula"}, {h:"21:40 - 22:30", t:"aula"}];
 
@@ -152,6 +153,11 @@
             document.getElementById('semestreSelect').onchange = renderD;
             document.getElementById('semestreSelectPivo').onchange = renderPivo;
         };
+
+        // Função para remover acentos e facilitar comparação
+        function normalizarTexto(txt) {
+            return txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        }
 
         function identificarSemestre(dtObj, ano) {
             const config = CALENDARIO_ACADEMICO[ano];
@@ -188,8 +194,12 @@
                     turmas.forEach((tNome, idx) => {
                         const cell = cols[idx + 2];
                         if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
+                        
                         const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        const isSuperior = CURSOS_SUPERIOR.some(c => tId.includes(c));
+                        // Normalização robusta para identificar cursos superiores
+                        const tNomeNormalizado = normalizarTexto(tNome);
+                        const isSuperior = CURSOS_SUPERIOR.some(c => tNomeNormalizado.includes(c));
+                        
                         const tagM = cell.match(/\[(.*?)\]/);
                         const tag = tagM ? tagM[1].toUpperCase() : null;
                         const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
@@ -230,7 +240,10 @@
             const tId = e.target.value;
             const semSel = document.getElementById('semestreSelect');
             const dS = document.getElementById('disciplinaSelect');
+            
+            // Ativa o semestre se a turma for superior
             if(dataStore[tId]?.isSuperior) semSel.classList.remove('hidden'); else semSel.classList.add('hidden');
+            
             dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
             if(dataStore[tId]) {
                 Object.keys(dataStore[tId].discs).sort().forEach(id => { dS.innerHTML += `<option value="${id}">${dataStore[tId].discs[id].name}</option>`; });
