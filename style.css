@@ -13,7 +13,6 @@
         .tab-btn.active { border-bottom: 4px solid #15803d; color: #15803d; font-weight: 800; }
         .tab-pane { display: none; }
         .tab-pane.active { display: block; }
-        
         table { width: 100%; border-collapse: collapse; }
         th { font-size: 14px !important; font-weight: 700 !important; text-transform: uppercase; padding: 12px 8px !important; }
         td { font-size: 12px !important; padding: 8px !important; }
@@ -40,8 +39,8 @@
                 <div class="flex flex-col">
                     <label class="text-[10px] font-bold opacity-70">ANO LETIVO</label>
                     <select id="yearSelect" class="bg-white/20 border border-white/30 p-1 rounded text-white font-bold outline-none cursor-pointer">
-                        <option value="2025" class="text-black">2025</option>
-                        <option value="2026" class="text-black" selected>2026</option>
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
                     </select>
                 </div>
                 <div id="dataRelatorio" class="bg-white/10 px-4 py-2 rounded-lg font-mono text-sm border border-white/20">--/--/----</div>
@@ -58,7 +57,7 @@
     </nav>
 
     <main class="container mx-auto p-4 md:p-6">
-        <div id="loading" class="text-center py-10 font-bold text-green-700 italic animate-pulse">CARREGANDO DADOS...</div>
+        <div id="loading" class="text-center py-10 font-bold text-green-700 italic animate-pulse">SINCRONIZANDO CALENDÁRIO...</div>
 
         <section id="tab-disciplina" class="tab-pane active">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
@@ -69,11 +68,11 @@
                 <div id="resultadoBusca" class="hidden">
                     <div class="flex flex-wrap gap-4 mb-4 items-center">
                         <div class="bg-green-100 p-4 rounded-lg border border-green-200 text-center flex-1">
-                            <p class="text-[10px] font-bold text-green-800">AULAS REGULARES</p>
+                            <p class="text-[10px] font-bold text-green-800 uppercase">Aulas Regulares</p>
                             <span id="cont-regular" class="text-2xl font-black text-green-900">0</span>
                         </div>
                         <div class="bg-pink-100 p-4 rounded-lg border border-pink-200 text-center flex-1">
-                            <p class="text-[10px] font-bold text-pink-800">RECUPERAÇÃO/EXAME</p>
+                            <p class="text-[10px] font-bold text-pink-800 uppercase">Recuperação/Exame</p>
                             <span id="cont-extra" class="text-2xl font-black text-pink-900">0</span>
                         </div>
                         <button onclick="exportarDisciplinaPDF()" class="bg-[#15803d] text-white px-8 py-4 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF Disciplina</button>
@@ -125,6 +124,20 @@
     </main>
 
     <script>
+        // CONFIGURAÇÃO DE CALENDÁRIO ACADÊMICO (Modifique as datas conforme o ano)
+        const CALENDARIO_ACADEMICO = {
+            "2025": {
+                s1: { inicio: "2025/01/01", fim: "2025/06/30" },
+                s2: { inicio: "2025/07/01", fim: "2025/12/31" }
+            },
+            "2026": {
+                s1: { inicio: "2026/02/05", fim: "2026/06/20" }, // Exemplo: Começa em Fev e termina em Junho
+                s2: { inicio: "2026/07/15", fim: "2026/12/22" }  // Exemplo: Começa em Julho e termina Dez
+            }
+        };
+
+        const CURSOS_SUPERIOR = ["geografia", "matematica", "agronegocio", "zootecnia", "agronomia"];
+
         const TRADUCAO = { 
             "+": { texto: "EXTRA", class: "status-extra", soma: true },
             "R": { texto: "REPOSIÇÃO", class: "status-reposicao", soma: true },
@@ -156,6 +169,20 @@
             document.getElementById('yearSelect').onchange = carregarDados;
         };
 
+        function identificarSemestre(dtObj, ano) {
+            const config = CALENDARIO_ACADEMICO[ano];
+            if(!config) return dtObj.getMonth() + 1 <= 6 ? 1 : 2; // Fallback se o ano não estiver mapeado
+
+            const s1_i = new Date(config.s1.inicio);
+            const s1_f = new Date(config.s1.fim);
+            const s2_i = new Date(config.s2.inicio);
+            const s2_f = new Date(config.s2.fim);
+
+            if (dtObj >= s1_i && dtObj <= s1_f) return 1;
+            if (dtObj >= s2_i && dtObj <= s2_f) return 2;
+            return dtObj.getMonth() + 1 <= 6 ? 1 : 2; // Fallback
+        }
+
         async function carregarDados() {
             try {
                 const yearSelected = document.getElementById('yearSelect').value;
@@ -168,38 +195,63 @@
                 const turmas = headers.slice(2);
                 dataStore = {};
                 let lastDate = "";
+
                 lines.slice(1).forEach(line => {
                     const cols = line.split(';').map(c => c?.trim());
                     if (cols[0] && cols[0].includes('.')) lastDate = cols[0].replace(/\./g, '/');
                     if (!cols[1] || !lastDate.endsWith(yearSelected)) return;
+
+                    const [d, m, a] = lastDate.split('/');
+                    const dt = new Date(a, m-1, d);
+                    const sem = identificarSemestre(dt, yearSelected);
+
                     turmas.forEach((tNome, idx) => {
                         const cell = cols[idx + 2];
                         if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
+                        
                         const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        const isSuperior = CURSOS_SUPERIOR.some(c => tId.includes(c));
+
                         const tagM = cell.match(/\[(.*?)\]/);
                         const tag = tagM ? tagM[1].toUpperCase() : null;
                         const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
+                        
                         let disc, prof;
                         if (cleanT.includes(' - ')) {
                             const partes = cleanT.split(' - ');
                             prof = partes.pop().trim();
                             disc = partes.join(' - ').trim();
                         } else { disc = cleanT; prof = "N/I"; }
-                        if (!isNaN(disc)) return;
-                        if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
-                        const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        if (!dataStore[tId].discs[dId]) dataStore[tId].discs[dId] = { name: disc, sch: [] };
-                        const [d, m, a] = lastDate.split('/');
-                        const dt = new Date(a, m-1, d);
-                        dataStore[tId].discs[dId].sch.push({ date: lastDate, dtObj: dt, wd: dt.toLocaleDateString('pt-BR',{weekday:'long'}), time: cols[1], prof: prof, tag: tag });
+
+                        if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {}, isSuperior: isSuperior };
+                        
+                        const dBaseId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        // Se for superior, cria ID único por semestre
+                        const dId = isSuperior ? `${dBaseId}_s${sem}` : dBaseId;
+                        const dNomeExibicao = isSuperior ? `${disc} (${sem}º SEM)` : disc;
+
+                        if (!dataStore[tId].discs[dId]) {
+                            dataStore[tId].discs[dId] = { 
+                                name: dNomeExibicao, 
+                                realName: disc, 
+                                semestre: sem,
+                                sch: [] 
+                            };
+                        }
+
+                        dataStore[tId].discs[dId].sch.push({ 
+                            date: lastDate, dtObj: dt, wd: dt.toLocaleDateString('pt-BR',{weekday:'long'}), 
+                            time: cols[1], prof: prof, tag: tag, semestre: sem 
+                        });
                     });
                 });
                 document.getElementById('loading').classList.add('hidden');
                 popularSelects();
                 limparResultados();
-            } catch (e) { document.getElementById('loading').innerHTML = "Erro ao sincronizar."; }
+            } catch (e) { document.getElementById('loading').innerHTML = "Erro ao carregar dados."; }
         }
 
+        // --- FUNÇÕES DE INTERFACE (MANUTENÇÃO) ---
         function limparResultados() {
             document.getElementById('resultadoBusca').classList.add('hidden');
             document.getElementById('bodyPivo').innerHTML = '';
@@ -304,8 +356,8 @@
             return s;
         }
 
-        // LÓGICA DE PDF PADRONIZADA
-        function gerarCabecalhoPadrao(doc, titulo) {
+        // --- PDF ENGINE ---
+        function gerarCabecalhoPadrao(doc) {
             doc.setFont("helvetica", "bold");
             doc.setFontSize(14);
             doc.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", 105, 15, { align: "center" });
@@ -315,18 +367,14 @@
             doc.setFont("helvetica", "normal");
             doc.text("DEPARTAMENTO DE APOIO AO ENSINO", 105, 30, { align: "center" });
             doc.text("COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS", 105, 35, { align: "center" });
-            doc.setDrawColor(21, 128, 61);
-            doc.setLineWidth(0.5);
-            doc.line(14, 38, 196, 38);
+            doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 38, 196, 38);
         }
 
         function gerarRodapePadrao(doc) {
             const pageCount = doc.internal.getNumberOfPages();
             for (let i = 1; i <= pageCount; i++) {
                 doc.setPage(i);
-                doc.setFontSize(8);
-                doc.setTextColor(100);
-                doc.line(14, 285, 196, 285);
+                doc.setFontSize(8); doc.setTextColor(100); doc.line(14, 285, 196, 285);
                 doc.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 3443-9501", 105, 289, { align: "center" });
                 doc.text("E-mail: dape.cacoal@ifro.edu.br | Página " + i + " de " + pageCount, 105, 293, { align: "center" });
             }
@@ -338,13 +386,11 @@
             const tId = document.getElementById('turmaSelect').value;
             const dId = document.getElementById('disciplinaSelect').value;
             const data = dataStore[tId].discs[dId];
-            
             const profs = [...new Set(data.sch.map(s => s.prof))].join(", ");
             const somaAulas = data.sch.filter(s => !s.tag || TRADUCAO[s.tag].soma).length;
 
             gerarCabecalhoPadrao(doc);
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
             doc.text(`DISCIPLINA: ${data.name}`, 14, 45);
             doc.text(`PROFESSORES: ${profs}`, 14, 51);
             doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
@@ -359,12 +405,9 @@
             const doc = new jsPDF('p', 'mm', 'a4');
             const tId = document.getElementById('turmaSelectPivo').value;
             const turmaNome = dataStore[tId].name;
-
             gerarCabecalhoPadrao(doc);
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(12);
             doc.text(`RELATÓRIO ANUAL DA TURMA: ${turmaNome}`, 14, 45);
-
             doc.autoTable({ html: '#tablePivo', startY: 50, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
             gerarRodapePadrao(doc);
             doc.save(`Relatorio_Turma_${turmaNome}.pdf`);
@@ -381,8 +424,7 @@
             const periodo = `${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`;
 
             gerarCabecalhoPadrao(doc);
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
             doc.text(`PROFESSOR(A): ${prof}`, 14, 45);
             doc.text(`PERÍODO: ${periodo} (Semana ${w})`, 14, 51);
 
@@ -394,7 +436,6 @@
                     const text = data.cell.text[0] || "";
                     if (text.includes("INTERVALO") || text.includes("ALMOÇO") || text.includes("JANTAR")) {
                         data.cell.styles.fillColor = [230, 230, 230];
-                        data.cell.styles.fontStyle = 'bold';
                     }
                 }
             });
