@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGP - IFRO Cacoal</title>
+    <title>SGP - IFRO Campus Cacoal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -15,10 +15,10 @@
         .tab-pane.active { display: block; }
         .aula-card { padding: 4px; margin-bottom: 4px; border-radius: 4px; line-height: 1.1; border-left: 4px solid #15803d; font-size: 9px; text-align: center; }
         .status-normal { background-color: #f0fdf4; border-color: #15803d; }
-        .status-extra { background-color: #ecfdf5; border-color: #059669; color: #065f46; } /* [+] */
-        .status-reposicao { background-color: #eff6ff; border-color: #2563eb; color: #1e40af; } /* [R] */
-        .status-rec { background-color: #fdf2f8; border-color: #db2777; color: #9d174d; } /* [REC] */
-        .status-exame { background-color: #f5f5f5; border-color: #4b5563; color: #1f2937; } /* [EX] */
+        .status-extra { background-color: #ecfdf5; border-color: #059669; color: #065f46; }
+        .status-reposicao { background-color: #eff6ff; border-color: #2563eb; color: #1e40af; }
+        .status-rec { background-color: #fdf2f8; border-color: #db2777; color: #9d174d; }
+        .status-exame { background-color: #f5f5f5; border-color: #4b5563; color: #1f2937; }
         .intervalo-row { background-color: #f3f4f6; color: #9ca3af; font-weight: bold; font-size: 10px; text-transform: uppercase; }
     </style>
 </head>
@@ -49,6 +49,8 @@
     </nav>
 
     <main class="container mx-auto p-4 md:p-6">
+        <div id="loading" class="text-center py-10 font-bold text-green-700 italic animate-pulse">CARREGANDO DADOS...</div>
+
         <section id="tab-disciplina" class="tab-pane active">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -60,10 +62,16 @@
                     </select>
                 </div>
                 <div id="resultadoBusca" class="hidden">
-                    <div class="flex flex-wrap gap-4 mb-4">
-                        <div class="bg-green-100 p-4 rounded-lg border border-green-200 text-center"><p class="text-[10px] font-bold">AULAS REGULARES</p><span id="cont-regular" class="text-2xl font-black">0</span></div>
-                        <div class="bg-pink-100 p-4 rounded-lg border border-pink-200 text-center"><p class="text-[10px] font-bold">RECUPERAÇÃO/EXAME</p><span id="cont-extra" class="text-2xl font-black">0</span></div>
-                        <button onclick="exportarDisciplinaPDF()" class="bg-gray-800 text-white px-6 rounded-lg font-bold ml-auto hover:bg-black transition">EXPORTAR PDF</button>
+                    <div class="flex flex-wrap gap-4 mb-4 items-center">
+                        <div class="bg-green-100 p-4 rounded-lg border border-green-200 text-center flex-1">
+                            <p class="text-[10px] font-bold">AULAS REGULARES</p>
+                            <span id="cont-regular" class="text-2xl font-black">0</span>
+                        </div>
+                        <div class="bg-pink-100 p-4 rounded-lg border border-pink-200 text-center flex-1">
+                            <p class="text-[10px] font-bold">RECUPERAÇÃO/EXAME</p>
+                            <span id="cont-extra" class="text-2xl font-black">0</span>
+                        </div>
+                        <button onclick="exportarDisciplinaPDF()" class="bg-gray-800 text-white px-8 py-4 rounded-lg font-bold hover:bg-black transition">PDF RELATÓRIO</button>
                     </div>
                     <table id="tableD" class="min-w-full bg-white border text-center text-xs">
                         <thead class="bg-gray-50 uppercase text-[9px] font-black">
@@ -77,9 +85,9 @@
 
         <section id="tab-turma" class="tab-pane">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <div class="flex flex-col md:flex-row gap-4 mb-6">
-                    <select id="turmaSelectPivo" class="p-3 border rounded-lg font-bold w-full md:w-64 bg-gray-50"></select>
-                    <button onclick="exportarPivoPDF()" class="bg-green-700 text-white px-8 py-3 rounded-lg font-bold">EXPORTAR PIVÔ PDF</button>
+                <div class="flex gap-4 mb-6">
+                    <select id="turmaSelectPivo" class="p-3 border rounded-lg font-bold flex-1 bg-gray-50"></select>
+                    <button onclick="exportarPivoPDF()" class="bg-green-700 text-white px-8 rounded-lg font-bold">PDF PIVÔ</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table id="tablePivo" class="min-w-full border text-[10px] text-center">
@@ -102,11 +110,11 @@
                     <select id="profSelect" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
                     <input type="week" id="weekInput" class="p-3 border rounded-lg">
                     <div class="flex gap-2">
-                        <button onclick="gerarGrade()" class="bg-blue-600 text-white font-bold rounded-lg flex-1">VISUALIZAR</button>
-                        <button onclick="exportarGradePDF()" class="bg-green-700 text-white font-bold rounded-lg flex-1">PDF GRADE</button>
+                        <button onclick="gerarGrade()" class="bg-blue-600 text-white font-bold rounded-lg flex-1">VER</button>
+                        <button onclick="exportarGradePDF()" class="bg-green-700 text-white font-bold rounded-lg flex-1">PDF</button>
                     </div>
                 </div>
-                <div id="gradeRender"></div>
+                <div id="gradeRender" class="overflow-x-auto"></div>
             </div>
         </section>
     </main>
@@ -134,7 +142,7 @@
         ];
 
         let dataStore = {};
-        const GIST_URL = "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/292ce2bacff996ab2e8f5fe0b4608488048b8616/DADOS_2026_MESTRE";
+        const GIST_URL = "https://gist.githubusercontent.com/jamilsalim-afk/f31c1836a94833a69642e1284d7202da/raw/";
 
         window.onload = () => {
             document.getElementById('dataRelatorio').textContent = new Date().toLocaleDateString('pt-BR');
@@ -144,11 +152,11 @@
 
         async function carregarDados() {
             try {
-                const res = await fetch(GIST_URL);
-                const csv = await res.text();
-                const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
+                const res = await fetch(GIST_URL + "?t=" + new Date().getTime());
+                let csv = await res.text();
+                csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
                 
-                // Pegamos a primeira linha de cabeçalho
+                const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
                 const headers = lines[0].split(';').map(h => h.trim());
                 const turmas = headers.slice(2);
                 
@@ -157,25 +165,20 @@
 
                 lines.slice(1).forEach(line => {
                     const cols = line.split(';').map(c => c?.trim());
-                    // Se a linha começa com data, atualizamos a data atual
                     if (cols[0] && cols[0].includes('.')) lastDate = cols[0].replace(/\./g, '/');
-                    
-                    const horario = cols[1];
-                    if (!horario) return;
+                    if (!cols[1]) return;
 
                     turmas.forEach((tNome, idx) => {
                         const cell = cols[idx + 2];
-                        if (!cell || cell === "" || cell === "PPS/Atendimento") return;
+                        if (!cell || cell === "" || cell === "0" || cell.length < 3 || cell.includes("PPS/")) return;
 
                         const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
                         if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
 
-                        // Lógica Robusta de Extração: "Disciplina - Professor [TAG]"
                         const tagM = cell.match(/\[(.*?)\]/);
                         const tag = tagM ? tagM[1].toUpperCase() : null;
                         const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
                         
-                        // Divide pelo último hífen para evitar problemas com nomes de disciplinas que levam hífen
                         let disc, prof;
                         if (cleanT.includes(' - ')) {
                             const partes = cleanT.split(' - ');
@@ -185,6 +188,7 @@
                             disc = cleanT;
                             prof = "N/I";
                         }
+                        if (!isNaN(disc)) return;
 
                         const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
                         if (!dataStore[tId].discs[dId]) dataStore[tId].discs[dId] = { name: disc, sch: [] };
@@ -194,12 +198,13 @@
 
                         dataStore[tId].discs[dId].sch.push({
                             date: lastDate, dtObj: dt, wd: dt.toLocaleDateString('pt-BR',{weekday:'long'}),
-                            time: horario, prof: prof, tag: tag
+                            time: cols[1], prof: prof, tag: tag
                         });
                     });
                 });
+                document.getElementById('loading').classList.add('hidden');
                 popularSelects();
-            } catch (e) { alert("Erro ao ler dados. Verifique o link do Gist."); }
+            } catch (e) { document.getElementById('loading').innerHTML = "Erro ao carregar dados."; }
         }
 
         function popularSelects() {
@@ -208,25 +213,26 @@
             const ps = document.getElementById('profSelect');
             const profs = new Set();
 
-            [t1, t2].forEach(s => {
-                const prev = s.value;
-                s.innerHTML = '<option value="">-- SELECIONE A TURMA --</option>';
-                Object.keys(dataStore).sort().forEach(id => s.innerHTML += `<option value="${id}">${dataStore[id].name}</option>`);
-                s.value = prev;
-            });
+            const optionsHtml = '<option value="">-- SELECIONE A TURMA --</option>' + 
+                Object.keys(dataStore).sort().map(id => `<option value="${id}">${dataStore[id].name}</option>`).join('');
+            
+            t1.innerHTML = optionsHtml;
+            t2.innerHTML = optionsHtml;
 
-            for(let t in dataStore) for(let d in dataStore[t].discs) dataStore[t].discs[d].sch.forEach(x => profs.add(x.prof));
-            ps.innerHTML = '<option value="">-- PROFESSOR --</option>';
-            Array.from(profs).sort().forEach(p => ps.innerHTML += `<option value="${p}">${p}</option>`);
+            for(let t in dataStore) for(let d in dataStore[t].discs) dataStore[t].discs[d].sch.forEach(x => {
+                if(x.prof && x.prof !== "N/I") profs.add(x.prof);
+            });
+            ps.innerHTML = '<option value="">-- PROFESSOR --</option>' + 
+                Array.from(profs).sort().map(p => `<option value="${p}">${p}</option>`).join('');
         }
 
-        // RELATÓRIO POR DISCIPLINA
         document.getElementById('turmaSelect').onchange = (e) => {
             const dS = document.getElementById('disciplinaSelect');
-            const tId = e.target.value;
-            dS.innerHTML = '<option value="">-- DISCIPLINA --</option>';
-            if(dataStore[tId]) {
-                Object.keys(dataStore[tId].discs).sort().forEach(id => dS.innerHTML += `<option value="${id}">${dataStore[tId].discs[id].name}</option>`);
+            dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
+            if(dataStore[e.target.value]) {
+                Object.keys(dataStore[e.target.value].discs).sort().forEach(id => {
+                    dS.innerHTML += `<option value="${id}">${dataStore[e.target.value].discs[id].name}</option>`;
+                });
                 dS.disabled = false;
             }
         };
@@ -249,9 +255,7 @@
             document.getElementById('resultadoBusca').classList.remove('hidden');
         }
 
-        // ABA PIVÔ
-        document.getElementById('turmaSelectPivo').onchange = renderPivo;
-        function renderPivo() {
+        document.getElementById('turmaSelectPivo').onchange = () => {
             const tId = document.getElementById('turmaSelectPivo').value;
             const b = document.getElementById('bodyPivo');
             if(!tId) return;
@@ -259,14 +263,13 @@
             for(let dId in dataStore[tId].discs) {
                 let mCount = Array(12).fill(0);
                 dataStore[tId].discs[dId].sch.forEach(s => mCount[s.dtObj.getMonth()]++);
-                let row = `<tr class="border-b hover:bg-gray-50"><td class="p-2 text-left font-bold border-r bg-gray-50">${dataStore[tId].discs[dId].name}</td>`;
+                let row = `<tr class="border-b"><td class="p-2 text-left font-bold border-r bg-gray-50">${dataStore[tId].discs[dId].name}</td>`;
                 mCount.forEach(c => row += `<td class="border-r">${c||'-'}</td>`);
                 row += `<td class="bg-green-50 font-black">${mCount.reduce((a,b)=>a+b)}</td></tr>`;
                 b.innerHTML += row;
             }
-        }
+        };
 
-        // GRADE SEMANAL
         function gerarGrade() {
             const prof = document.getElementById('profSelect').value;
             const week = document.getElementById('weekInput').value;
@@ -274,26 +277,22 @@
             const [y, w] = week.split('-W').map(Number);
             const start = getStartOfWeek(w, y);
             const dias = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
-            
             let html = `<table id="tableGS" class="min-w-full border bg-white text-center text-[9px]"><thead><tr class="bg-[#15803d] text-white"><th class="p-2 border">HORÁRIO</th>`;
             dias.forEach((d, i) => {
                 const dt = new Date(start); dt.setDate(dt.getDate() + i);
                 html += `<th class="p-2 border">${d.toUpperCase()}<br>${dt.toLocaleDateString('pt-BR')}</th>`;
             });
             html += `</tr></thead><tbody>`;
-
             GABARITO.forEach(s => {
-                if(s.t === "intervalo") {
-                    html += `<tr class="intervalo-row"><td class="p-1 border">${s.h}</td><td colspan="6" class="p-1 border">${s.l}</td></tr>`;
-                } else {
+                if(s.t === "intervalo") html += `<tr class="intervalo-row"><td class="p-1 border">${s.h}</td><td colspan="6" class="p-1 border">${s.l}</td></tr>`;
+                else {
                     html += `<tr><td class="bg-gray-50 font-bold p-2 border">${s.h}</td>`;
                     dias.forEach((dNome, i) => {
                         const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
                         let cell = "";
                         for(let t in dataStore) for(let d in dataStore[t].discs) dataStore[t].discs[d].sch.forEach(x => {
                             if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.includes(s.h.split('-')[0].trim())) {
-                                const st = TRADUCAO[x.tag] || {class:"status-normal"};
-                                cell += `<div class="aula-card ${st.class}"><b>${dataStore[t].name}</b><br>${dataStore[t].discs[d].name}</div>`;
+                                cell += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><b>${dataStore[t].name}</b><br>${dataStore[t].discs[d].name}</div>`;
                             }
                         });
                         html += `<td class="p-1 border align-middle">${cell}</td>`;
@@ -304,37 +303,32 @@
             document.getElementById('gradeRender').innerHTML = html + "</tbody></table>";
         }
 
-        // EXPORTAÇÃO PDF COM REPARO
+        function getStartOfWeek(w, y) {
+            const s = new Date(y, 0, 1 + (w - 1) * 7);
+            const d = s.getDay();
+            if (d <= 4) s.setDate(s.getDate() - s.getDay() + 1); else s.setDate(s.getDate() + 8 - s.getDay());
+            return s;
+        }
+
         function exportarDisciplinaPDF() {
-            const { jsPDF } = window.jspdf; 
-            const doc = new jsPDF();
-            doc.setFontSize(14); doc.text("IFRO - RELATÓRIO POR DISCIPLINA", 14, 15);
-            doc.autoTable({ html: '#tableD', startY: 25, theme: 'grid', styles: { fontSize: 8 } });
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            doc.text("IFRO - RELATÓRIO POR DISCIPLINA", 14, 15);
+            doc.autoTable({ html: '#tableD', startY: 20, theme: 'grid', styles: { fontSize: 8 } });
             doc.save("Relatorio_Disciplina.pdf");
         }
 
         function exportarPivoPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l');
+            const { jsPDF } = window.jspdf; const doc = new jsPDF('l');
             doc.text("IFRO - MAPA ANUAL POR TURMA", 14, 15);
-            doc.autoTable({ html: '#tablePivo', startY: 25, theme: 'grid', styles: { fontSize: 7 } });
+            doc.autoTable({ html: '#tablePivo', startY: 20, theme: 'grid', styles: { fontSize: 7 } });
             doc.save("Mapa_Anual_Turma.pdf");
         }
 
         function exportarGradePDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l');
-            doc.text("IFRO - GRADE SEMANAL DO PROFESSOR", 14, 15);
-            doc.autoTable({ html: '#tableGS', startY: 25, theme: 'grid', styles: { fontSize: 6 } });
+            const { jsPDF } = window.jspdf; const doc = new jsPDF('l');
+            doc.text("IFRO - GRADE SEMANAL", 14, 15);
+            doc.autoTable({ html: '#tableGS', startY: 20, theme: 'grid', styles: { fontSize: 6 } });
             doc.save("Grade_Semanal.pdf");
-        }
-
-        function getStartOfWeek(w, y) {
-            const s = new Date(y, 0, 1 + (w - 1) * 7);
-            const d = s.getDay();
-            if (d <= 4) s.setDate(s.getDate() - s.getDay() + 1);
-            else s.setDate(s.getDate() + 8 - s.getDay());
-            return s;
         }
 
         function initTabs() {
