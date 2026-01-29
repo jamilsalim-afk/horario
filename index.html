@@ -14,32 +14,18 @@
         .tab-pane { display: none; }
         .tab-pane.active { display: block; }
         
-        #tableGS { table-layout: fixed; width: 100%; border-collapse: collapse; }
-        #tableGS td, #tableGS th { 
-            word-wrap: break-word; 
-            vertical-align: middle; 
-            text-align: center; 
-            font-size: 11px;
-            padding: 8px;
-            border: 1px solid #e5e7eb;
-        }
-        
-        .aula-card { 
-            padding: 6px; 
-            margin: 2px;
-            border-radius: 4px; 
-            line-height: 1.2; 
-            border-left: 4px solid #15803d; 
-            text-align: center;
-            font-weight: 500;
-        }
-
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 14px !important; font-weight: 700 !important; text-transform: uppercase; padding: 12px 8px !important; }
+        td { font-size: 12px !important; padding: 8px !important; }
+        #tableGS { table-layout: fixed; }
+        #tableGS td, #tableGS th { word-wrap: break-word; vertical-align: middle; text-align: center; border: 1px solid #e5e7eb; }
+        .aula-card { padding: 6px; margin: 2px; border-radius: 4px; line-height: 1.2; border-left: 4px solid #15803d; text-align: center; }
         .status-normal { background-color: #f0fdf4; border-color: #15803d; }
         .status-extra { background-color: #ecfdf5; border-color: #059669; color: #065f46; }
         .status-reposicao { background-color: #eff6ff; border-color: #2563eb; color: #1e40af; }
         .status-rec { background-color: #fdf2f8; border-color: #db2777; color: #9d174d; }
         .status-exame { background-color: #f5f5f5; border-color: #4b5563; color: #1f2937; }
-        .intervalo-row { background-color: #f3f4f6 !important; color: #6b7280; font-weight: bold; font-size: 10px; text-transform: uppercase; }
+        .intervalo-row { background-color: #f3f4f6 !important; color: #6b7280; font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -72,7 +58,7 @@
     </nav>
 
     <main class="container mx-auto p-4 md:p-6">
-        <div id="loading" class="text-center py-10 font-bold text-green-700 italic animate-pulse">CARREGANDO DADOS DO GIST...</div>
+        <div id="loading" class="text-center py-10 font-bold text-green-700 italic animate-pulse">CARREGANDO DADOS...</div>
 
         <section id="tab-disciplina" class="tab-pane active">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
@@ -90,11 +76,11 @@
                             <p class="text-[10px] font-bold text-pink-800">RECUPERAÇÃO/EXAME</p>
                             <span id="cont-extra" class="text-2xl font-black text-pink-900">0</span>
                         </div>
-                        <button onclick="exportarDisciplinaPDF()" class="bg-[#15803d] text-white px-8 py-4 rounded-lg font-bold hover:bg-green-800 transition shadow-md">EXPORTAR PDF</button>
+                        <button onclick="exportarDisciplinaPDF()" class="bg-[#15803d] text-white px-8 py-4 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF Disciplina</button>
                     </div>
-                    <table id="tableD" class="min-w-full bg-white border text-center text-xs">
-                        <thead class="bg-gray-50 uppercase text-[9px] font-black">
-                            <tr><th class="p-3 border">DATA</th><th class="p-3 border">DIA</th><th class="p-3 border">HORÁRIO</th><th class="p-3 border">PROFESSOR</th><th class="p-3 border">STATUS</th></tr>
+                    <table id="tableD" class="min-w-full bg-white border text-center">
+                        <thead class="bg-gray-50">
+                            <tr><th class="border">DATA</th><th class="border">DIA</th><th class="border">HORÁRIO</th><th class="border">PROFESSOR</th><th class="border">STATUS</th></tr>
                         </thead>
                         <tbody id="bodyD"></tbody>
                     </table>
@@ -106,18 +92,18 @@
             <div class="bg-white p-6 rounded-xl shadow-sm border">
                 <div class="flex gap-4 mb-6">
                     <select id="turmaSelectPivo" class="p-3 border rounded-lg font-bold flex-1 bg-gray-50"></select>
-                    <button onclick="exportarPivoPDF()" class="bg-[#15803d] text-white px-8 rounded-lg font-bold hover:bg-green-800 transition shadow-md">EXPORTAR PDF TURMA</button>
+                    <button onclick="exportarPivoPDF()" class="bg-[#15803d] text-white px-8 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF Turma</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table id="tablePivo" class="min-w-full border text-center">
-                        <thead class="bg-[#15803d] text-white text-[10px]">
+                        <thead class="bg-[#15803d] text-white">
                             <tr>
-                                <th class="p-2 text-left w-64">DISCIPLINA</th>
+                                <th class="text-left w-64">DISCIPLINA</th>
                                 <th>JAN</th><th>FEV</th><th>MAR</th><th>ABR</th><th>MAI</th><th>JUN</th><th>JUL</th><th>AGO</th><th>SET</th><th>OUT</th><th>NOV</th><th>DEZ</th>
                                 <th class="bg-green-600">TOTAL</th>
                             </tr>
                         </thead>
-                        <tbody id="bodyPivo" class="bg-white text-[12px] font-bold"></tbody>
+                        <tbody id="bodyPivo" class="bg-white font-bold"></tbody>
                     </table>
                 </div>
             </div>
@@ -129,8 +115,8 @@
                     <select id="profSelect" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
                     <input type="week" id="weekInput" class="p-3 border rounded-lg">
                     <div class="flex gap-2">
-                        <button onclick="gerarGrade()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition">VER GRADE</button>
-                        <button onclick="exportarGradePDF()" class="bg-[#15803d] text-white font-bold rounded-lg flex-1 hover:bg-green-800 transition shadow-md">EXPORTAR PDF</button>
+                        <button onclick="gerarGrade()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition uppercase">Ver Grade</button>
+                        <button onclick="exportarGradePDF()" class="bg-[#15803d] text-white font-bold rounded-lg flex-1 hover:bg-green-800 transition shadow-md uppercase">Exportar PDF Grade</button>
                     </div>
                 </div>
                 <div id="gradeRender" class="overflow-x-auto border rounded-lg"></div>
@@ -148,15 +134,15 @@
 
         const GABARITO = [
             {h:"07:30 - 08:20", t:"aula"}, {h:"08:20 - 09:10", t:"aula"}, 
-            {h:"09:10 - 09:30", t:"intervalo", l:"INTERVALO"},
+            {h:"09:10 - 09:30", t:"intervalo", l:"INTERVALO MATUTINO"},
             {h:"09:30 - 10:20", t:"aula"}, {h:"10:20 - 11:10", t:"aula"}, {h:"11:10 - 12:00", t:"aula"},
             {h:"12:00 - 13:30", t:"intervalo", l:"ALMOÇO"},
             {h:"13:30 - 14:20", t:"aula"}, {h:"14:20 - 15:10", t:"aula"},
-            {h:"15:10 - 15:30", t:"intervalo", l:"INTERVALO"},
+            {h:"15:10 - 15:30", t:"intervalo", l:"INTERVALO VESPERTINO"},
             {h:"15:30 - 16:20", t:"aula"}, {h:"16:20 - 17:10", t:"aula"}, {h:"17:10 - 18:00", t:"aula"},
             {h:"18:00 - 19:00", t:"intervalo", l:"JANTAR"},
             {h:"19:00 - 19:50", t:"aula"}, {h:"19:50 - 20:40", t:"aula"},
-            {h:"20:40 - 20:50", t:"intervalo", l:"INTERVALO"},
+            {h:"20:40 - 20:50", t:"intervalo", l:"INTERVALO NOTURNO"},
             {h:"20:50 - 21:40", t:"aula"}, {h:"21:40 - 22:30", t:"aula"}
         ];
 
@@ -182,13 +168,10 @@
                 const turmas = headers.slice(2);
                 dataStore = {};
                 let lastDate = "";
-
                 lines.slice(1).forEach(line => {
                     const cols = line.split(';').map(c => c?.trim());
                     if (cols[0] && cols[0].includes('.')) lastDate = cols[0].replace(/\./g, '/');
-                    if (!cols[1]) return;
-                    if (!lastDate.endsWith(yearSelected)) return;
-
+                    if (!cols[1] || !lastDate.endsWith(yearSelected)) return;
                     turmas.forEach((tNome, idx) => {
                         const cell = cols[idx + 2];
                         if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
@@ -203,17 +186,12 @@
                             disc = partes.join(' - ').trim();
                         } else { disc = cleanT; prof = "N/I"; }
                         if (!isNaN(disc)) return;
-
                         if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
                         const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
                         if (!dataStore[tId].discs[dId]) dataStore[tId].discs[dId] = { name: disc, sch: [] };
-
                         const [d, m, a] = lastDate.split('/');
                         const dt = new Date(a, m-1, d);
-                        dataStore[tId].discs[dId].sch.push({
-                            date: lastDate, dtObj: dt, wd: dt.toLocaleDateString('pt-BR',{weekday:'long'}),
-                            time: cols[1], prof: prof, tag: tag
-                        });
+                        dataStore[tId].discs[dId].sch.push({ date: lastDate, dtObj: dt, wd: dt.toLocaleDateString('pt-BR',{weekday:'long'}), time: cols[1], prof: prof, tag: tag });
                     });
                 });
                 document.getElementById('loading').classList.add('hidden');
@@ -235,23 +213,17 @@
             const t2 = document.getElementById('turmaSelectPivo');
             const ps = document.getElementById('profSelect');
             const profs = new Set();
-            const optionsHtml = '<option value="">-- SELECIONE A TURMA --</option>' + 
-                Object.keys(dataStore).sort().map(id => `<option value="${id}">${dataStore[id].name}</option>`).join('');
+            const optionsHtml = '<option value="">-- SELECIONE A TURMA --</option>' + Object.keys(dataStore).sort().map(id => `<option value="${id}">${dataStore[id].name}</option>`).join('');
             t1.innerHTML = optionsHtml; t2.innerHTML = optionsHtml;
-            for(let t in dataStore) for(let d in dataStore[t].discs) dataStore[t].discs[d].sch.forEach(x => {
-                if(x.prof && x.prof !== "N/I") profs.add(x.prof);
-            });
-            ps.innerHTML = '<option value="">-- PROFESSOR --</option>' + 
-                Array.from(profs).sort().map(p => `<option value="${p}">${p}</option>`).join('');
+            for(let t in dataStore) for(let d in dataStore[t].discs) dataStore[t].discs[d].sch.forEach(x => { if(x.prof && x.prof !== "N/I") profs.add(x.prof); });
+            ps.innerHTML = '<option value="">-- PROFESSOR --</option>' + Array.from(profs).sort().map(p => `<option value="${p}">${p}</option>`).join('');
         }
 
         document.getElementById('turmaSelect').onchange = (e) => {
             const dS = document.getElementById('disciplinaSelect');
             dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
             if(dataStore[e.target.value]) {
-                Object.keys(dataStore[e.target.value].discs).sort().forEach(id => {
-                    dS.innerHTML += `<option value="${id}">${dataStore[e.target.value].discs[id].name}</option>`;
-                });
+                Object.keys(dataStore[e.target.value].discs).sort().forEach(id => { dS.innerHTML += `<option value="${id}">${dataStore[e.target.value].discs[id].name}</option>`; });
                 dS.disabled = false;
             }
         };
@@ -266,7 +238,7 @@
             dataStore[tId].discs[dId].sch.forEach(a => {
                 const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
                 if(info.soma) sR++; else sE++;
-                b.innerHTML += `<tr class="${info.class}"><td class="p-2 border">${a.date}</td><td class="p-2 border uppercase text-[8px]">${a.wd}</td><td class="p-2 border">${a.time}</td><td class="p-2 border font-bold">${a.prof}</td><td class="p-2 border font-black">${info.texto}</td></tr>`;
+                b.innerHTML += `<tr class="${info.class}"><td class="border">${a.date}</td><td class="border uppercase">${a.wd}</td><td class="border">${a.time}</td><td class="border font-bold">${a.prof}</td><td class="border font-black">${info.texto}</td></tr>`;
             });
             document.getElementById('cont-regular').textContent = sR;
             document.getElementById('cont-extra').textContent = sE;
@@ -281,7 +253,7 @@
             for(let dId in dataStore[tId].discs) {
                 let mCount = Array(12).fill(0);
                 dataStore[tId].discs[dId].sch.forEach(s => mCount[s.dtObj.getMonth()]++);
-                let row = `<tr class="border-b"><td class="p-3 text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
+                let row = `<tr class="border-b"><td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
                 mCount.forEach(c => row += `<td class="border-r">${c||'-'}</td>`);
                 row += `<td class="bg-green-100 text-green-900 font-black">${mCount.reduce((a,b)=>a+b)}</td></tr>`;
                 b.innerHTML += row;
@@ -295,14 +267,12 @@
             const [y, w] = week.split('-W').map(Number);
             const start = getStartOfWeek(w, y);
             const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-            
             let h = `<table id="tableGS" class="bg-white"><thead><tr class="bg-[#15803d] text-white"><th style="width: 100px;">HORÁRIO</th>`;
             dias.forEach((d, i) => {
                 const dt = new Date(start); dt.setDate(dt.getDate() + i);
                 h += `<th style="width: 150px;">${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
             });
             h += `</tr></thead><tbody>`;
-            
             GABARITO.forEach(s => {
                 if(s.t === "intervalo") h += `<tr class="intervalo-row"><td>${s.h}</td><td colspan="6">${s.l}</td></tr>`;
                 else {
@@ -314,15 +284,12 @@
                             for(let d in dataStore[t].discs) {
                                 dataStore[t].discs[d].sch.forEach(x => {
                                     if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
-                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}">
-                                            <div class="font-black text-[10px]">${dataStore[t].name}</div>
-                                            <div class="text-[9px] leading-tight">${dataStore[t].discs[d].name}</div>
-                                        </div>`;
+                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black">${dataStore[t].name}</div><div class="leading-tight">${dataStore[t].discs[d].name}</div></div>`;
                                     }
                                 });
                             }
                         }
-                        h += `<td class="border p-1" style="height: 60px;">${cellContent}</td>`;
+                        h += `<td class="border" style="height: 60px;">${cellContent}</td>`;
                     }
                     h += `</tr>`;
                 }
@@ -337,34 +304,102 @@
             return s;
         }
 
+        // LÓGICA DE PDF PADRONIZADA
+        function gerarCabecalhoPadrao(doc, titulo) {
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", 105, 15, { align: "center" });
+            doc.setFontSize(12);
+            doc.text("CAMPUS CACOAL", 105, 22, { align: "center" });
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text("DEPARTAMENTO DE APOIO AO ENSINO", 105, 30, { align: "center" });
+            doc.text("COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS", 105, 35, { align: "center" });
+            doc.setDrawColor(21, 128, 61);
+            doc.setLineWidth(0.5);
+            doc.line(14, 38, 196, 38);
+        }
+
+        function gerarRodapePadrao(doc) {
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(100);
+                doc.line(14, 285, 196, 285);
+                doc.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 3443-9501", 105, 289, { align: "center" });
+                doc.text("E-mail: dape.cacoal@ifro.edu.br | Página " + i + " de " + pageCount, 105, 293, { align: "center" });
+            }
+        }
+
         function exportarDisciplinaPDF() {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF();
-            doc.setFontSize(16); doc.setTextColor(21, 128, 61); doc.text("IFRO - RELATÓRIO DISCIPLINAR", 14, 15);
-            doc.autoTable({ html: '#tableD', startY: 22, theme: 'grid', styles: { fontSize: 8, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
-            doc.save("Relatorio_Disciplina.pdf");
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const tId = document.getElementById('turmaSelect').value;
+            const dId = document.getElementById('disciplinaSelect').value;
+            const data = dataStore[tId].discs[dId];
+            
+            const profs = [...new Set(data.sch.map(s => s.prof))].join(", ");
+            const somaAulas = data.sch.filter(s => !s.tag || TRADUCAO[s.tag].soma).length;
+
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(11);
+            doc.text(`DISCIPLINA: ${data.name}`, 14, 45);
+            doc.text(`PROFESSORES: ${profs}`, 14, 51);
+            doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
+
+            doc.autoTable({ html: '#tableD', startY: 62, theme: 'grid', styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            gerarRodapePadrao(doc);
+            doc.save(`Relatorio_Disciplina_${data.name}.pdf`);
         }
 
         function exportarPivoPDF() {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF('l');
-            doc.setFontSize(16); doc.setTextColor(21, 128, 61); doc.text("IFRO - MAPA ANUAL POR TURMA", 14, 15);
-            doc.autoTable({ html: '#tablePivo', startY: 22, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
-            doc.save("Pivo_Anual_Turma.pdf");
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const tId = document.getElementById('turmaSelectPivo').value;
+            const turmaNome = dataStore[tId].name;
+
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.text(`RELATÓRIO ANUAL DA TURMA: ${turmaNome}`, 14, 45);
+
+            doc.autoTable({ html: '#tablePivo', startY: 50, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            gerarRodapePadrao(doc);
+            doc.save(`Relatorio_Turma_${turmaNome}.pdf`);
         }
 
         function exportarGradePDF() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4');
-            const profNome = document.getElementById('profSelect').value;
-            doc.setFontSize(14); doc.setTextColor(21, 128, 61);
-            doc.text(`GRADE SEMANAL - PROF(A): ${profNome}`, 14, 15);
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const prof = document.getElementById('profSelect').value;
+            const week = document.getElementById('weekInput').value;
+            const [y, w] = week.split('-W').map(Number);
+            const start = getStartOfWeek(w, y);
+            const end = new Date(start); end.setDate(end.getDate() + 5);
+            const periodo = `${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`;
+
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(11);
+            doc.text(`PROFESSOR(A): ${prof}`, 14, 45);
+            doc.text(`PERÍODO: ${periodo} (Semana ${w})`, 14, 51);
+
             doc.autoTable({
-                html: '#tableGS', startY: 22, theme: 'grid',
-                styles: { fontSize: 7, cellPadding: 2, halign: 'center', valign: 'middle', overflow: 'linebreak' },
-                headStyles: { fillColor: [21, 128, 61], textColor: 255 },
-                columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 40 }, 2: { cellWidth: 40 }, 3: { cellWidth: 40 }, 4: { cellWidth: 40 }, 5: { cellWidth: 40 }, 6: { cellWidth: 40 } },
-                didParseCell: function(data) { if (data.row.section === 'body' && data.cell.text[0] === 'INTERVALO') { data.cell.styles.fillColor = [243, 244, 246]; } }
+                html: '#tableGS', startY: 56, theme: 'grid',
+                styles: { fontSize: 7, cellPadding: 1, halign: 'center', valign: 'middle', overflow: 'linebreak' },
+                headStyles: { fillColor: [21, 128, 61] },
+                didParseCell: function(data) {
+                    const text = data.cell.text[0] || "";
+                    if (text.includes("INTERVALO") || text.includes("ALMOÇO") || text.includes("JANTAR")) {
+                        data.cell.styles.fillColor = [230, 230, 230];
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                }
             });
-            doc.save(`Grade_${profNome}.pdf`);
+            gerarRodapePadrao(doc);
+            doc.save(`Grade_Semanal_${prof}.pdf`);
         }
 
         function initTabs() {
