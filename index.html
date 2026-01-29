@@ -13,12 +13,14 @@
         .tab-btn.active { border-bottom: 4px solid #15803d; color: #15803d; font-weight: 800; }
         .tab-pane { display: none; }
         .tab-pane.active { display: block; }
+        
         table { width: 100%; border-collapse: collapse; }
         th { font-size: 14px !important; font-weight: 700 !important; text-transform: uppercase; padding: 12px 8px !important; }
         td { font-size: 12px !important; padding: 8px !important; }
-        #tableGS { table-layout: fixed; }
-        #tableGS td, #tableGS th { word-wrap: break-word; vertical-align: middle; text-align: center; border: 1px solid #e5e7eb; }
-        .aula-card { padding: 6px; margin: 2px; border-radius: 4px; line-height: 1.2; border-left: 4px solid #15803d; text-align: center; }
+        #tableGS { table-layout: fixed; width: 100%; }
+        #tableGS td, #tableGS th { border: 1px solid #e5e7eb; overflow: hidden; }
+        
+        .aula-card { padding: 6px; margin: 2px; border-radius: 4px; line-height: 1.2; border-left: 4px solid #15803d; text-align: center; font-size: 11px; }
         .status-normal { background-color: #f0fdf4; border-color: #15803d; }
         .status-extra { background-color: #ecfdf5; border-color: #059669; color: #065f46; }
         .status-reposicao { background-color: #eff6ff; border-color: #2563eb; color: #1e40af; }
@@ -29,21 +31,25 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-    <header class="bg-[#15803d] text-white p-6 shadow-lg">
-        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-black italic uppercase tracking-tighter">IFRO - CAMPUS CACOAL</h1>
-                <p class="text-xs font-bold opacity-80 uppercase">Sistema de Gestão Pedagógica</p>
+    <header class="bg-[#15803d] text-white p-8 shadow-lg">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center text-center md:text-left">
+            <div class="mb-4 md:mb-0">
+                <h1 class="text-2xl md:text-3xl font-black tracking-tighter leading-none">INSTITUTO FEDERAL DE RONDÔNIA - IFRO</h1>
+                <h2 class="text-xl md:text-2xl font-bold opacity-90 mt-1">CAMPUS CACOAL</h2>
+                <p class="text-[10px] md:text-xs font-bold opacity-70 uppercase tracking-widest mt-2">Sistema de Gestão Pedagógica</p>
             </div>
-            <div class="flex items-center gap-4 mt-4 md:mt-0">
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold opacity-70">ANO LETIVO</label>
-                    <select id="yearSelect" class="bg-white/20 border border-white/30 p-1 rounded text-white font-bold outline-none cursor-pointer">
-                        <option value="2025">2025</option>
-                        <option value="2026" selected>2026</option>
+            <div class="flex items-center gap-6">
+                <div class="flex flex-col items-center">
+                    <label class="text-[10px] font-bold opacity-70 uppercase">Ano Letivo</label>
+                    <select id="yearSelect" class="bg-white/20 border border-white/30 p-2 rounded text-lg font-black outline-none cursor-pointer hover:bg-white/30 transition">
+                        <option value="2025" selected>2025</option>
+                        <option value="2026">2026</option>
                     </select>
                 </div>
-                <div id="dataRelatorio" class="bg-white/10 px-4 py-2 rounded-lg font-mono text-sm border border-white/20">--/--/----</div>
+                <div class="bg-white/10 px-6 py-3 rounded-xl border border-white/20 text-center">
+                    <p class="text-[10px] font-bold opacity-70 uppercase mb-1">Data Atual</p>
+                    <div id="dataRelatorio" class="font-mono text-lg font-bold">--/--/----</div>
+                </div>
             </div>
         </div>
     </header>
@@ -137,7 +143,6 @@
             "2026": { s1: { inicio: "2026/02/05", fim: "2026/06/20" }, s2: { inicio: "2026/07/15", fim: "2026/12/22" } }
         };
 
-        // Lista de palavras-chave para cursos superiores (Normalizada)
         const CURSOS_SUPERIOR = ["geografia", "matematica", "agronegocio", "zootecnia", "agronomia"];
         const TRADUCAO = { "+": { texto: "EXTRA", class: "status-extra", soma: true }, "R": { texto: "REPOSIÇÃO", class: "status-reposicao", soma: true }, "REC": { texto: "RECUPERAÇÃO", class: "status-rec", soma: false }, "EX": { texto: "EXAME", class: "status-exame", soma: false } };
         const GABARITO = [{h:"07:30 - 08:20", t:"aula"}, {h:"08:20 - 09:10", t:"aula"}, {h:"09:10 - 09:30", t:"intervalo", l:"INTERVALO MATUTINO"}, {h:"09:30 - 10:20", t:"aula"}, {h:"10:20 - 11:10", t:"aula"}, {h:"11:10 - 12:00", t:"aula"}, {h:"12:00 - 13:30", t:"intervalo", l:"ALMOÇO"}, {h:"13:30 - 14:20", t:"aula"}, {h:"14:20 - 15:10", t:"aula"}, {h:"15:10 - 15:30", t:"intervalo", l:"INTERVALO VESPERTINO"}, {h:"15:30 - 16:20", t:"aula"}, {h:"16:20 - 17:10", t:"aula"}, {h:"17:10 - 18:00", t:"aula"}, {h:"18:00 - 19:00", t:"intervalo", l:"JANTAR"}, {h:"19:00 - 19:50", t:"aula"}, {h:"19:50 - 20:40", t:"aula"}, {h:"20:40 - 20:50", t:"intervalo", l:"INTERVALO NOTURNO"}, {h:"20:50 - 21:40", t:"aula"}, {h:"21:40 - 22:30", t:"aula"}];
@@ -154,7 +159,6 @@
             document.getElementById('semestreSelectPivo').onchange = renderPivo;
         };
 
-        // Função para remover acentos e facilitar comparação
         function normalizarTexto(txt) {
             return txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
         }
@@ -196,7 +200,6 @@
                         if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
                         
                         const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        // Normalização robusta para identificar cursos superiores
                         const tNomeNormalizado = normalizarTexto(tNome);
                         const isSuperior = CURSOS_SUPERIOR.some(c => tNomeNormalizado.includes(c));
                         
@@ -240,10 +243,7 @@
             const tId = e.target.value;
             const semSel = document.getElementById('semestreSelect');
             const dS = document.getElementById('disciplinaSelect');
-            
-            // Ativa o semestre se a turma for superior
             if(dataStore[tId]?.isSuperior) semSel.classList.remove('hidden'); else semSel.classList.add('hidden');
-            
             dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
             if(dataStore[tId]) {
                 Object.keys(dataStore[tId].discs).sort().forEach(id => { dS.innerHTML += `<option value="${id}">${dataStore[tId].discs[id].name}</option>`; });
@@ -264,7 +264,7 @@
                 if(isSup && a.semestre != semFiltro) return;
                 const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
                 if(info.soma) sR++; else sE++;
-                b.innerHTML += `<tr class="${info.class}"><td class="border">${a.date}</td><td class="border uppercase">${a.wd}</td><td class="border">${a.time}</td><td class="border font-bold">${a.prof}</td><td class="border font-black">${info.texto}</td></tr>`;
+                b.innerHTML += `<tr class="${info.class}"><td class="border">${a.date}</td><td class="border uppercase">${a.wd}</td><td class="border font-bold">${a.time}</td><td class="border">${a.prof}</td><td class="border font-black">${info.texto}</td></tr>`;
             });
             document.getElementById('cont-regular').textContent = sR;
             document.getElementById('cont-extra').textContent = sE;
@@ -308,11 +308,11 @@
             const [y, w] = week.split('-W').map(Number);
             const start = getStartOfWeek(w, y);
             const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-            let h = `<table id="tableGS" class="bg-white"><thead><tr class="bg-[#15803d] text-white"><th style="width: 100px;">HORÁRIO</th>`;
-            dias.forEach((d, i) => { const dt = new Date(start); dt.setDate(dt.getDate() + i); h += `<th style="width: 150px;">${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`; });
+            let h = `<table id="tableGS" class="bg-white"><thead><tr class="bg-[#15803d] text-white"><th style="width: 15%;">HORÁRIO</th>`;
+            dias.forEach((d, i) => { const dt = new Date(start); dt.setDate(dt.getDate() + i); h += `<th>${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`; });
             h += `</tr></thead><tbody>`;
             GABARITO.forEach(s => {
-                if(s.t === "intervalo") h += `<tr class="intervalo-row"><td>${s.h}</td><td colspan="6">${s.l}</td></tr>`;
+                if(s.t === "intervalo") h += `<tr class="intervalo-row"><td class="font-bold">${s.h}</td><td colspan="6">${s.l}</td></tr>`;
                 else {
                     h += `<tr><td class="bg-gray-100 font-bold border">${s.h}</td>`;
                     for(let i=0; i<6; i++) {
@@ -322,12 +322,12 @@
                             for(let d in dataStore[t].discs) {
                                 dataStore[t].discs[d].sch.forEach(x => {
                                     if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
-                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black">${dataStore[t].name}</div><div class="leading-tight">${dataStore[t].discs[d].name}</div></div>`;
+                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black">${dataStore[t].name}</div><div class="leading-tight"> - ${dataStore[t].discs[d].name}</div></div>`;
                                     }
                                 });
                             }
                         }
-                        h += `<td class="border" style="height: 60px;">${cellContent}</td>`;
+                        h += `<td class="border">${cellContent}</td>`;
                     }
                     h += `</tr>`;
                 }
@@ -379,7 +379,15 @@
             doc.text(`DISCIPLINA: ${data.name}${isSup ? ' ('+semF+'º SEMESTRE)' : ''}`, 14, 51);
             doc.text(`PROFESSORES: ${profs}`, 14, 57);
             doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 63);
-            doc.autoTable({ html: '#tableD', startY: 68, theme: 'grid', styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            
+            doc.autoTable({ 
+                html: '#tableD', 
+                startY: 68, 
+                theme: 'grid', 
+                styles: { fontSize: 9, halign: 'center' }, 
+                headStyles: { fillColor: [21, 128, 61], textColor: [255,255,255], lineWidth: 0.1, strokeColor: [255,255,255] },
+                alternateRowStyles: { fillColor: [245, 245, 245] }
+            });
             gerarRodapePadrao(doc);
             doc.save(`Relatorio_${data.name}_${ano}.pdf`);
         }
@@ -394,7 +402,15 @@
             doc.setFont("helvetica", "bold"); doc.setFontSize(12);
             doc.text(`ANO LETIVO: ${ano}`, 14, 45);
             doc.text(`RELATÓRIO DA TURMA: ${dataStore[tId].name}${isSup ? ' - '+semF+'º SEMESTRE' : ''}`, 14, 51);
-            doc.autoTable({ html: '#tablePivo', startY: 56, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            
+            doc.autoTable({ 
+                html: '#tablePivo', 
+                startY: 56, 
+                theme: 'grid', 
+                styles: { fontSize: 7, halign: 'center' }, 
+                headStyles: { fillColor: [21, 128, 61], textColor: [255,255,255], lineWidth: 0.1, strokeColor: [255,255,255] },
+                alternateRowStyles: { fillColor: [245, 245, 245] }
+            });
             gerarRodapePadrao(doc);
             doc.save(`Relatorio_Turma_${dataStore[tId].name}_${ano}.pdf`);
         }
@@ -405,11 +421,42 @@
             const week = document.getElementById('weekInput').value;
             const [y, w] = week.split('-W').map(Number);
             const start = getStartOfWeek(w, y); const end = new Date(start); end.setDate(end.getDate() + 5);
+            
             gerarCabecalhoPadrao(doc);
             doc.setFont("helvetica", "bold"); doc.setFontSize(11);
             doc.text(`PROFESSOR(A): ${prof}`, 14, 45);
             doc.text(`PERÍODO: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`, 14, 51);
-            doc.autoTable({ html: '#tableGS', startY: 56, theme: 'grid', styles: { fontSize: 7, cellPadding: 1, halign: 'center', valign: 'middle', overflow: 'linebreak' }, headStyles: { fillColor: [21, 128, 61] }, didParseCell: function(data) { if (data.cell.text[0].includes("INTERVALO") || data.cell.text[0].includes("ALMOÇO") || data.cell.text[0].includes("JANTAR")) data.cell.styles.fillColor = [230, 230, 230]; } });
+            
+            doc.autoTable({ 
+                html: '#tableGS', 
+                startY: 56, 
+                theme: 'grid', 
+                columnStyles: {
+                    0: { cellWidth: 25, fontStyle: 'bold' },
+                    1: { cellWidth: 28 }, 2: { cellWidth: 28 }, 3: { cellWidth: 28 }, 
+                    4: { cellWidth: 28 }, 5: { cellWidth: 28 }, 6: { cellWidth: 28 }
+                },
+                styles: { 
+                    fontSize: 7, 
+                    cellPadding: 2, 
+                    halign: 'center', 
+                    valign: 'middle', 
+                    overflow: 'linebreak',
+                    lineWidth: 0.1
+                }, 
+                headStyles: { 
+                    fillColor: [21, 128, 61], 
+                    textColor: [255,255,255],
+                    lineWidth: 0.2,
+                    strokeColor: [255,255,255]
+                }, 
+                didParseCell: function(data) { 
+                    if (data.cell.text[0] && (data.cell.text[0].includes("INTERVALO") || data.cell.text[0].includes("ALMOÇO") || data.cell.text[0].includes("JANTAR"))) {
+                        data.cell.styles.fillColor = [230, 230, 230]; 
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                } 
+            });
             gerarRodapePadrao(doc);
             doc.save(`Grade_Semanal_${prof}_Semana_${w}.pdf`);
         }
