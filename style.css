@@ -21,7 +21,7 @@
             word-wrap: break-word; 
             vertical-align: middle; 
             text-align: center; 
-            font-size: 11px; /* Fonte maior conforme pedido */
+            font-size: 11px;
             padding: 8px;
         }
         
@@ -192,7 +192,6 @@
                     if (cols[0] && cols[0].includes('.')) lastDate = cols[0].replace(/\./g, '/');
                     if (!cols[1]) return;
 
-                    // Filtro de Ano
                     if (!lastDate.endsWith(yearSelected)) return;
 
                     turmas.forEach((tNome, idx) => {
@@ -200,7 +199,6 @@
                         if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
 
                         const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
 
                         const tagM = cell.match(/\[(.*?)\]/);
                         const tag = tagM ? tagM[1].toUpperCase() : null;
@@ -217,8 +215,13 @@
                         }
                         if (!isNaN(disc)) return;
 
+                        // CORREÇÃO CIRÚRGICA: Vincula a disciplina estritamente à turma da coluna atual
+                        if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
+                        
                         const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        if (!dataStore[tId].discs[dId]) dataStore[tId].discs[dId] = { name: disc, sch: [] };
+                        if (!dataStore[tId].discs[dId]) {
+                            dataStore[tId].discs[dId] = { name: disc, sch: [] };
+                        }
 
                         const [d, m, a] = lastDate.split('/');
                         const dt = new Date(a, m-1, d);
@@ -239,6 +242,8 @@
             document.getElementById('resultadoBusca').classList.add('hidden');
             document.getElementById('bodyPivo').innerHTML = '';
             document.getElementById('gradeRender').innerHTML = '';
+            document.getElementById('disciplinaSelect').disabled = true;
+            document.getElementById('disciplinaSelect').innerHTML = '<option>Selecione a Turma</option>';
         }
 
         function popularSelects() {
@@ -346,7 +351,6 @@
             return s;
         }
 
-        // FUNÇÕES DE PDF
         function exportarDisciplinaPDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF();
             doc.setFontSize(16); doc.setTextColor(21, 128, 61); doc.text("IFRO - RELATÓRIO DISCIPLINAR", 14, 15);
