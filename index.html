@@ -403,7 +403,10 @@
                             for(let d in dataStore[t].discs) {
                                 dataStore[t].discs[d].sch.forEach(x => {
                                     if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
-                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black">${dataStore[t].name}</div><div>${dataStore[t].discs[d].name}</div></div>`;
+                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}">
+    <div class="font-black uppercase" style="margin-bottom: 2px;">${dataStore[t].name}</div>
+    <div class="border-t border-gray-200 pt-1">${dataStore[t].discs[d].name}</div>
+</div>`;
                                     }
                                 });
                             }
@@ -441,7 +444,10 @@
                             for(let d in dataStore[tId].discs) {
                                 dataStore[tId].discs[d].sch.forEach(x => {
                                     if(x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
-                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black uppercase">${dataStore[tId].discs[d].name}</div><div class="italic text-[8px]">${x.prof}</div></div>`;
+                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}">
+    <div class="font-black uppercase" style="margin-bottom: 2px;">${dataStore[tId].discs[d].name}</div>
+    <div class="border-t border-gray-200 pt-1 italic text-[8px]">${x.prof}</div>
+</div>`;
                                     }
                                 });
                             }
