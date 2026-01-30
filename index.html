@@ -56,6 +56,7 @@
             <button class="tab-btn px-6 py-4 active" data-tab="tab-disciplina">RELATÓRIO POR DISCIPLINA</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-turma">RELATÓRIO POR TURMA</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-semanal">RELATÓRIO SEMANAL POR PROFESSOR</button>
+            <button class="tab-btn px-6 py-4" data-tab="tab-info">INFORMAÇÕES DO SISTEMA</button>
         </div>
     </nav>
 
@@ -124,6 +125,41 @@
                 <div id="gradeRender" class="overflow-x-auto border rounded-lg"></div>
             </div>
         </section>
+
+        <section id="tab-info" class="tab-pane">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <h3 class="text-[#15803d] font-black border-b-2 border-green-700 pb-2 uppercase text-sm">Estrutura Organizacional</h3>
+                        <div class="space-y-2">
+                            <p class="text-xs"><strong>INSTITUIÇÃO:</strong> Instituto Federal de Rondônia - IFRO</p>
+                            <p class="text-xs"><strong>CAMPUS:</strong> Cacoal</p>
+                            <p class="text-xs"><strong>DEPARTAMENTO:</strong> Departamento de Apoio ao Ensino (DAPE)</p>
+                            <p class="text-xs"><strong>COORDENAÇÃO:</strong> Coordenação de Desenvolvimento de Ferramentas Pedagógicas</p>
+                        </div>
+                        <h3 class="text-[#15803d] font-black border-b-2 border-green-700 pb-2 pt-4 uppercase text-sm">Contato e Localização</h3>
+                        <div class="space-y-2">
+                            <p class="text-xs"><strong>ENDEREÇO:</strong> BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO</p>
+                            <p class="text-xs"><strong>TELEFONE:</strong> (69) 3443-9501</p>
+                            <p class="text-xs"><strong>E-MAIL:</strong> dape.cacoal@ifro.edu.br</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg border border-dashed border-gray-300 text-center flex flex-col justify-center">
+                        <h3 class="text-gray-700 font-black mb-4 uppercase text-sm">Calendário Acadêmico - <span id="infoYear">2026</span></h3>
+                        <div class="space-y-4 text-left">
+                            <div class="bg-white p-4 rounded shadow-sm border-l-4 border-blue-500">
+                                <p class="text-[10px] font-bold text-gray-500 uppercase">1º Semestre</p>
+                                <p id="semestre1" class="text-base font-black text-gray-800">01/01/2026 a 30/06/2026</p>
+                            </div>
+                            <div class="bg-white p-4 rounded shadow-sm border-l-4 border-green-500">
+                                <p class="text-[10px] font-bold text-gray-500 uppercase">2º Semestre</p>
+                                <p id="semestre2" class="text-base font-black text-gray-800">01/07/2026 a 31/12/2026</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script>
@@ -161,6 +197,11 @@
         async function carregarDados() {
             try {
                 const yearSelected = document.getElementById('yearSelect').value;
+                // Atualização do Calendário Acadêmico na Aba de Informações
+                document.getElementById('infoYear').textContent = yearSelected;
+                document.getElementById('semestre1').textContent = `01/01/${yearSelected} a 30/06/${yearSelected}`;
+                document.getElementById('semestre2').textContent = `01/07/${yearSelected} a 31/12/${yearSelected}`;
+
                 document.getElementById('loading').classList.remove('hidden');
                 const res = await fetch(GIST_URL + "?t=" + new Date().getTime());
                 let csv = await res.text();
@@ -306,7 +347,6 @@
             return s;
         }
 
-        // LÓGICA DE PDF PADRONIZADA
         function gerarCabecalhoPadrao(doc, titulo) {
             doc.setFont("helvetica", "bold");
             doc.setFontSize(14);
@@ -340,17 +380,14 @@
             const tId = document.getElementById('turmaSelect').value;
             const dId = document.getElementById('disciplinaSelect').value;
             const data = dataStore[tId].discs[dId];
-            
             const profs = [...new Set(data.sch.map(s => s.prof))].join(", ");
             const somaAulas = data.sch.filter(s => !s.tag || TRADUCAO[s.tag].soma).length;
-
             gerarCabecalhoPadrao(doc);
             doc.setFont("helvetica", "bold");
             doc.setFontSize(11);
             doc.text(`DISCIPLINA: ${data.name}`, 14, 45);
             doc.text(`PROFESSORES: ${profs}`, 14, 51);
             doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
-
             doc.autoTable({ html: '#tableD', startY: 62, theme: 'grid', styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
             gerarRodapePadrao(doc);
             doc.save(`Relatorio_Disciplina_${data.name}.pdf`);
@@ -361,12 +398,10 @@
             const doc = new jsPDF('p', 'mm', 'a4');
             const tId = document.getElementById('turmaSelectPivo').value;
             const turmaNome = dataStore[tId].name;
-
             gerarCabecalhoPadrao(doc);
             doc.setFont("helvetica", "bold");
             doc.setFontSize(12);
             doc.text(`RELATÓRIO ANUAL DA TURMA: ${turmaNome}`, 14, 45);
-
             doc.autoTable({ html: '#tablePivo', startY: 50, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
             gerarRodapePadrao(doc);
             doc.save(`Relatorio_Turma_${turmaNome}.pdf`);
@@ -381,13 +416,11 @@
             const start = getStartOfWeek(w, y);
             const end = new Date(start); end.setDate(end.getDate() + 5);
             const periodo = `${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`;
-
             gerarCabecalhoPadrao(doc);
             doc.setFont("helvetica", "bold");
             doc.setFontSize(11);
             doc.text(`PROFESSOR(A): ${prof}`, 14, 45);
             doc.text(`PERÍODO: ${periodo} (Semana ${w})`, 14, 51);
-
             doc.autoTable({
                 html: '#tableGS', startY: 56, theme: 'grid',
                 styles: { fontSize: 7, cellPadding: 1, halign: 'center', valign: 'middle', overflow: 'linebreak' },
