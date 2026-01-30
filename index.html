@@ -160,12 +160,6 @@
                             <p><strong>DEPARTAMENTO:</strong> Departamento de Apoio ao Ensino (DAPE)</p>
                             <p><strong>COORDENAÇÃO:</strong> Coordenação de Desenvolvimento de Ferramentas Pedagógicas</p>
                         </div>
-                        <h3 class="text-[#15803d] font-black border-b-2 border-green-700 pb-2 pt-4 uppercase text-sm">Contato e Localização</h3>
-                        <div class="space-y-2 text-xs">
-                            <p><strong>ENDEREÇO:</strong> BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO</p>
-                            <p><strong>TELEFONE:</strong> (69) 3443-9501</p>
-                            <p><strong>E-MAIL:</strong> dape.cacoal@ifro.edu.br</p>
-                        </div>
                     </div>
                     <div class="bg-gray-50 p-6 rounded-lg border border-dashed border-gray-300 text-center">
                         <h3 class="text-gray-700 font-black mb-4 uppercase text-sm">Calendário Acadêmico - <span id="infoYear">2026</span></h3>
@@ -273,10 +267,11 @@
         }
 
         function limparResultados() {
-            document.getElementById('resultadoBusca').classList.add('hidden');
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                const render = pane.querySelector('[id$="Render"]');
+                if(render) render.innerHTML = '';
+            });
             document.getElementById('bodyPivo').innerHTML = '';
-            document.getElementById('gradeRender').innerHTML = '';
-            document.getElementById('gradeTurmaRender').innerHTML = '';
             document.getElementById('disciplinaSelect').disabled = true;
             document.getElementById('disciplinaSelect').innerHTML = '<option>Selecione a Turma</option>';
             document.getElementById('semestreSelect').classList.add('hidden');
@@ -284,21 +279,21 @@
         }
 
         function popularSelects() {
-            const t1 = document.getElementById('turmaSelect');
-            const t2 = document.getElementById('turmaSelectPivo');
-            const t3 = document.getElementById('turmaSelectSemanal');
-            const ps = document.getElementById('profSelect');
+            const turmasOptions = '<option value="">-- SELECIONE A TURMA --</option>' + Object.keys(dataStore).sort().map(id => `<option value="${id}">${dataStore[id].name}</option>`).join('');
+            document.getElementById('turmaSelect').innerHTML = turmasOptions;
+            document.getElementById('turmaSelectPivo').innerHTML = turmasOptions;
+            document.getElementById('turmaSelectSemanal').innerHTML = turmasOptions;
+
             const profs = new Set();
-            const optionsHtml = '<option value="">-- SELECIONE A TURMA --</option>' + Object.keys(dataStore).sort().map(id => `<option value="${id}">${dataStore[id].name}</option>`).join('');
-            t1.innerHTML = optionsHtml; t2.innerHTML = optionsHtml; t3.innerHTML = optionsHtml;
             for(let t in dataStore) for(let d in dataStore[t].discs) dataStore[t].discs[d].sch.forEach(x => { if(x.prof && x.prof !== "N/I") profs.add(x.prof); });
-            ps.innerHTML = '<option value="">-- PROFESSOR --</option>' + Array.from(profs).sort().map(p => `<option value="${p}">${p}</option>`).join('');
+            document.getElementById('profSelect').innerHTML = '<option value="">-- PROFESSOR --</option>' + Array.from(profs).sort().map(p => `<option value="${p}">${p}</option>`).join('');
         }
 
+        // --- LÓGICA DE FILTRO SEMESTRAL ---
         document.getElementById('turmaSelect').onchange = (e) => {
             const tId = e.target.value;
             const semS = document.getElementById('semestreSelect');
-            if(ehSemestral(tId)) semS.classList.remove('hidden'); else semS.classList.add('hidden');
+            ehSemestral(tId) ? semS.classList.remove('hidden') : semS.classList.add('hidden');
             atualizarListaDisciplinas();
         };
 
@@ -312,11 +307,11 @@
             if(dataStore[tId]) {
                 Object.keys(dataStore[tId].discs).sort().forEach(id => {
                     const aulas = dataStore[tId].discs[id].sch;
-                    const temAulaNoSem = aulas.some(a => {
+                    const temNoSem = aulas.some(a => {
                         const m = a.dtObj.getMonth() + 1;
                         return ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
                     });
-                    if(temAulaNoSem) dS.innerHTML += `<option value="${id}">${dataStore[tId].discs[id].name}</option>`;
+                    if(temNoSem) dS.innerHTML += `<option value="${id}">${dataStore[tId].discs[id].name}</option>`;
                 });
                 dS.disabled = false;
             }
@@ -334,10 +329,9 @@
             b.innerHTML = ''; let sR = 0, sE = 0;
             dataStore[tId].discs[dId].sch.forEach(a => {
                 const m = a.dtObj.getMonth() + 1;
-                const filtrar = ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
-                if(filtrar) {
+                if(ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true) {
                     const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
-                    if(info.soma) sR++; else sE++;
+                    info.soma ? sR++ : sE++;
                     b.innerHTML += `<tr class="${info.class}"><td class="border">${a.date}</td><td class="border uppercase">${a.wd}</td><td class="border">${a.time}</td><td class="border font-bold">${a.prof}</td><td class="border font-black">${info.texto}</td></tr>`;
                 }
             });
@@ -346,10 +340,10 @@
             document.getElementById('resultadoBusca').classList.remove('hidden');
         }
 
+        // --- LÓGICA PIVÔ TURMA ---
         document.getElementById('turmaSelectPivo').onchange = (e) => {
             const tId = e.target.value;
-            const semS = document.getElementById('semestreSelectPivo');
-            if(ehSemestral(tId)) semS.classList.remove('hidden'); else semS.classList.add('hidden');
+            ehSemestral(tId) ? document.getElementById('semestreSelectPivo').classList.remove('hidden') : document.getElementById('semestreSelectPivo').classList.add('hidden');
             renderPivo();
         };
 
@@ -362,12 +356,10 @@
             if(!tId) return;
             b.innerHTML = '';
             for(let dId in dataStore[tId].discs) {
-                let mCount = Array(12).fill(0);
-                let temNoSem = false;
+                let mCount = Array(12).fill(0); let temNoSem = false;
                 dataStore[tId].discs[dId].sch.forEach(s => {
                     const m = s.dtObj.getMonth();
-                    const filtrar = ehSemestral(tId) ? (sem === "1" ? m < 6 : m >= 6) : true;
-                    if(filtrar) { mCount[m]++; temNoSem = true; }
+                    if(ehSemestral(tId) ? (sem === "1" ? m < 6 : m >= 6) : true) { mCount[m]++; temNoSem = true; }
                 });
                 if(temNoSem) {
                     let row = `<tr class="border-b"><td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
@@ -378,7 +370,7 @@
             }
         }
 
-        // LÓGICA DE GRADE SEMANAL (PROFESSOR)
+        // --- LÓGICA GRADES SEMANAIS CORRIGIDAS ---
         function gerarGrade() {
             const prof = document.getElementById('profSelect').value;
             const week = document.getElementById('weekInput').value;
@@ -386,27 +378,28 @@
             const [y, w] = week.split('-W').map(Number);
             const start = getStartOfWeek(w, y);
             const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+            
             let h = `<table class="tableGS bg-white" id="tableGS"><thead><tr class="bg-[#15803d] text-white"><th style="width: 80px;">HORÁRIO</th>`;
             dias.forEach((d, i) => {
                 const dt = new Date(start); dt.setDate(dt.getDate() + i);
                 h += `<th>${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
             });
             h += `</tr></thead><tbody>`;
+
             GABARITO.forEach(s => {
                 if(s.t === "intervalo") h += `<tr class="intervalo-row"><td>${s.h}</td><td colspan="6">${s.l}</td></tr>`;
                 else {
                     h += `<tr><td class="bg-gray-100 font-bold border text-[10px]">${s.h}</td>`;
+                    const hG = s.h.split(' - ')[0].trim();
                     for(let i=0; i<6; i++) {
                         const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
                         let cellContent = "";
-                        for(let t in dataStore) {
-                            for(let d in dataStore[t].discs) {
-                                dataStore[t].discs[d].sch.forEach(x => {
-                                    if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
-                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black">${dataStore[t].name}</div><div>${dataStore[t].discs[d].name}</div></div>`;
-                                    }
-                                });
-                            }
+                        for(let t in dataStore) for(let d in dataStore[t].discs) {
+                            dataStore[t].discs[d].sch.forEach(x => {
+                                if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.split(' - ')[0].trim() === hG) {
+                                    cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black">${dataStore[t].name}</div><div>${dataStore[t].discs[d].name}</div></div>`;
+                                }
+                            });
                         }
                         h += `<td class="border">${cellContent}</td>`;
                     }
@@ -416,7 +409,6 @@
             document.getElementById('gradeRender').innerHTML = h + "</tbody></table>";
         }
 
-        // LÓGICA DE GRADE SEMANAL (TURMA) - NOVA FUNÇÃO
         function gerarGradeTurma() {
             const tId = document.getElementById('turmaSelectSemanal').value;
             const week = document.getElementById('weekInputTurma').value;
@@ -424,27 +416,28 @@
             const [y, w] = week.split('-W').map(Number);
             const start = getStartOfWeek(w, y);
             const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+            
             let h = `<table class="tableGS bg-white" id="tableGSTurma"><thead><tr class="bg-[#15803d] text-white"><th style="width: 80px;">HORÁRIO</th>`;
             dias.forEach((d, i) => {
                 const dt = new Date(start); dt.setDate(dt.getDate() + i);
                 h += `<th>${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
             });
             h += `</tr></thead><tbody>`;
+
             GABARITO.forEach(s => {
                 if(s.t === "intervalo") h += `<tr class="intervalo-row"><td>${s.h}</td><td colspan="6">${s.l}</td></tr>`;
                 else {
                     h += `<tr><td class="bg-gray-100 font-bold border text-[10px]">${s.h}</td>`;
+                    const hG = s.h.split(' - ')[0].trim();
                     for(let i=0; i<6; i++) {
                         const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
                         let cellContent = "";
-                        if(dataStore[tId]) {
-                            for(let d in dataStore[tId].discs) {
-                                dataStore[tId].discs[d].sch.forEach(x => {
-                                    if(x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
-                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black uppercase">${dataStore[tId].discs[d].name}</div><div class="italic text-[8px]">${x.prof}</div></div>`;
-                                    }
-                                });
-                            }
+                        if(dataStore[tId]) for(let d in dataStore[tId].discs) {
+                            dataStore[tId].discs[d].sch.forEach(x => {
+                                if(x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.split(' - ')[0].trim() === hG) {
+                                    cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black uppercase">${dataStore[tId].discs[d].name}</div><div class="italic text-[8px]">${x.prof}</div></div>`;
+                                }
+                            });
                         }
                         h += `<td class="border">${cellContent}</td>`;
                     }
@@ -454,10 +447,11 @@
             document.getElementById('gradeTurmaRender').innerHTML = h + "</tbody></table>";
         }
 
+        // --- FUNÇÕES AUXILIARES E PDF ---
         function getStartOfWeek(w, y) {
             const s = new Date(y, 0, 1 + (w - 1) * 7);
             const d = s.getDay();
-            if (d <= 4) s.setDate(s.getDate() - s.getDay() + 1); else s.setDate(s.getDate() + 8 - s.getDay());
+            d <= 4 ? s.setDate(s.getDate() - s.getDay() + 1) : s.setDate(s.getDate() + 8 - s.getDay());
             return s;
         }
 
@@ -486,18 +480,14 @@
             const dId = document.getElementById('disciplinaSelect').value;
             const sem = document.getElementById('semestreSelect').value;
             const data = dataStore[tId].discs[dId];
-            const aulasFiltradas = data.sch.filter(a => {
+            const filtradas = data.sch.filter(a => {
                 const m = a.dtObj.getMonth() + 1;
                 return ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
             });
-            const profs = [...new Set(aulasFiltradas.map(s => s.prof))].join(", ");
-            const somaAulas = aulasFiltradas.filter(s => !s.tag || TRADUCAO[s.tag].soma).length;
             gerarCabecalhoPadrao(doc);
             doc.setFont("helvetica", "bold"); doc.setFontSize(11);
             doc.text(`DISCIPLINA: ${data.name} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
-            doc.text(`PROFESSORES: ${profs}`, 14, 51);
-            doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
-            doc.autoTable({ html: '#tableD', startY: 62, theme: 'grid', styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            doc.autoTable({ html: '#tableD', startY: 62, theme: 'grid', styles: { fontSize: 8, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
             gerarRodapePadrao(doc);
             doc.save(`Relatorio_Disciplina_${data.name}.pdf`);
         }
@@ -506,60 +496,31 @@
             const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
             const tId = document.getElementById('turmaSelectPivo').value;
             const sem = document.getElementById('semestreSelectPivo').value;
-            const turmaNome = dataStore[tId].name;
             gerarCabecalhoPadrao(doc);
-            doc.setFont("helvetica", "bold"); doc.setFontSize(12);
-            doc.text(`RELATÓRIO ANUAL DA TURMA: ${turmaNome} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
-            doc.autoTable({ html: '#tablePivo', startY: 50, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            doc.setFont("helvetica", "bold"); doc.text(`TURMA: ${dataStore[tId].name} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
+            doc.autoTable({ html: '#tablePivo', startY: 50, theme: 'grid', styles: { fontSize: 6.5, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
             gerarRodapePadrao(doc);
-            doc.save(`Relatorio_Turma_${turmaNome}.pdf`);
+            doc.save(`Relatorio_Turma_${dataStore[tId].name}.pdf`);
         }
 
         function exportarGradePDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
             const prof = document.getElementById('profSelect').value;
-            const week = document.getElementById('weekInput').value;
-            const [y, w] = week.split('-W').map(Number);
-            const start = getStartOfWeek(w, y);
-            const end = new Date(start); end.setDate(end.getDate() + 5);
             gerarCabecalhoPadrao(doc);
-            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-            doc.text(`PROFESSOR(A): ${prof}`, 14, 45);
-            doc.text(`PERÍODO: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')} (Semana ${w})`, 14, 51);
-            doc.autoTable({ html: '#tableGS', startY: 56, theme: 'grid', styles: { fontSize: 6, cellPadding: 1, halign: 'center', valign: 'middle' }, headStyles: { fillColor: [21, 128, 61] },
-                didParseCell: function(data) {
-                    if (data.cell.text[0]?.includes("INTERVALO") || data.cell.text[0]?.includes("ALMOÇO")) {
-                        data.cell.styles.fillColor = [230, 230, 230];
-                    }
-                }
-            });
+            doc.setFont("helvetica", "bold"); doc.text(`PROFESSOR(A): ${prof}`, 14, 45);
+            doc.autoTable({ html: '#tableGS', startY: 52, theme: 'grid', styles: { fontSize: 5.5, cellPadding: 1, halign: 'center', valign: 'middle' }, headStyles: { fillColor: [21, 128, 61] } });
             gerarRodapePadrao(doc);
-            doc.save(`Grade_Semanal_Professor_${prof}.pdf`);
+            doc.save(`Grade_Professor_${prof}.pdf`);
         }
 
-        // NOVA FUNÇÃO DE EXPORTAÇÃO: GRADE SEMANAL TURMA
         function exportarGradeTurmaPDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
             const tId = document.getElementById('turmaSelectSemanal').value;
-            const week = document.getElementById('weekInputTurma').value;
-            if(!tId || !week) return alert("Selecione Turma e Semana");
-            const turmaNome = dataStore[tId].name;
-            const [y, w] = week.split('-W').map(Number);
-            const start = getStartOfWeek(w, y);
-            const end = new Date(start); end.setDate(end.getDate() + 5);
             gerarCabecalhoPadrao(doc);
-            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-            doc.text(`TURMA: ${turmaNome}`, 14, 45);
-            doc.text(`PERÍODO: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')} (Semana ${w})`, 14, 51);
-            doc.autoTable({ html: '#tableGSTurma', startY: 56, theme: 'grid', styles: { fontSize: 6, cellPadding: 1, halign: 'center', valign: 'middle' }, headStyles: { fillColor: [21, 128, 61] },
-                didParseCell: function(data) {
-                    if (data.cell.text[0]?.includes("INTERVALO") || data.cell.text[0]?.includes("ALMOÇO")) {
-                        data.cell.styles.fillColor = [230, 230, 230];
-                    }
-                }
-            });
+            doc.setFont("helvetica", "bold"); doc.text(`TURMA: ${dataStore[tId].name}`, 14, 45);
+            doc.autoTable({ html: '#tableGSTurma', startY: 52, theme: 'grid', styles: { fontSize: 5.5, cellPadding: 1, halign: 'center', valign: 'middle' }, headStyles: { fillColor: [21, 128, 61] } });
             gerarRodapePadrao(doc);
-            doc.save(`Grade_Semanal_Turma_${turmaNome}.pdf`);
+            doc.save(`Grade_Turma_${dataStore[tId].name}.pdf`);
         }
 
         function initTabs() {
