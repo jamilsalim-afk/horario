@@ -228,8 +228,8 @@
             try {
                 const yearSelected = document.getElementById('yearSelect').value;
                 document.getElementById('infoYear').textContent = yearSelected;
-                document.getElementById('semestre1').textContent = `01/01/${yearSelected} a 30/06/${yearSelected}`;
-                document.getElementById('semestre2').textContent = `01/07/${yearSelected} a 31/12/${yearSelected}`;
+                document.getElementById('semestre1').textContent = `01/01/${yearSelected} a 12/07/${yearSelected}`;
+                document.getElementById('semestre2').textContent = `27/07/${yearSelected} a 31/12/${yearSelected}`;
 
                 document.getElementById('loading').classList.remove('hidden');
                 const res = await fetch(GIST_URL + "?t=" + new Date().getTime());
