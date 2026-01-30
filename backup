@@ -1,976 +1,415 @@
-<!doctype html>
-<html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-br">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>IFRO - Campus Cacoal — Sistema de Horários</title>
-<style>
-  :root{
-    --if-green:#1f7a4c; --if-red:#b71c1c; --bg:#f6f8fa; --card:#fff; --muted:#586069;
-    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  }
-  html,body{height:100%;margin:0;background:var(--bg);color:#0b0b0b}
-  .app{display:flex;min-height:100vh}
-  /* Sidebar */
-  .sidebar{
-    width:280px;background:linear-gradient(180deg,var(--if-green),#0f5e3f);color:#fff;padding:18px 14px;box-sizing:border-box;
-    display:flex;flex-direction:column;gap:12px;
-  }
-  .logoRow{display:flex;gap:12px;align-items:center}
-  .logo{width:48px;height:48px;border-radius:8px;background:#fff;color:var(--if-green);display:flex;align-items:center;justify-content:center;font-weight:800}
-  .brand{font-weight:700;font-size:14px}
-  .dept{background:rgba(255,255,255,0.06);padding:10px;border-radius:8px;font-size:12px}
-  .nav{display:flex;flex-direction:column;gap:6px;margin-top:6px}
-  .nav > a{color:#fff;text-decoration:none;padding:10px;border-radius:8px;display:flex;align-items:center;justify-content:space-between;font-weight:700}
-  .nav > a:hover{background:rgba(255,255,255,0.06)}
-  .submenu{background:rgba(255,255,255,0.03);padding:8px;border-radius:8px;margin-top:6px;display:none;flex-direction:column;gap:6px}
-  .submenu button{background:transparent;border:none;color:#fff;text-align:left;padding:8px;border-radius:6px;cursor:pointer;font-weight:600}
-  .submenu button:hover{background:rgba(255,255,255,0.06)}
-  /* Main */
-  .main{flex:1;display:flex;flex-direction:column}
-  header.mainHeader{display:flex;align-items:center;gap:12px;background:var(--card);padding:14px;border-radius:0 0 10px 10px;box-shadow:0 6px 18px rgba(20,20,40,0.05)}
-  .titleGroup{display:flex;flex-direction:column}
-  .title{font-weight:800}
-  .subtitle{font-size:13px;color:var(--muted)}
-  .topbarActions{margin-left:auto;display:flex;gap:8px;align-items:center}
-  .btn{padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
-  .btn.primary{background:var(--if-green);color:white}
-  .btn.warn{background:var(--if-red);color:white}
-  .container{padding:18px;flex:1;overflow:auto}
-  .card{background:var(--card);padding:14px;border-radius:10px;box-shadow:0 6px 18px rgba(20,20,40,0.04);margin-bottom:14px}
-  label{display:block;font-weight:700;margin-top:8px}
-  input[type=text],input[type=email],input[type=number],select,textarea{width:100%;padding:8px;border-radius:6px;border:1px solid #ddd;margin-top:6px;box-sizing:border-box}
-  table{width:100%;border-collapse:collapse;margin-top:8px}
-  th,td{border:1px solid #eee;padding:8px;text-align:left;font-size:14px}
-  .row{display:flex;gap:12px}
-  .col{flex:1}
-  .muted{color:var(--muted);font-size:13px}
-  .small{width:140px}
-  .list{max-height:260px;overflow:auto;border-radius:8px;padding:8px;border:1px solid #eee;margin-top:8px;background:#fafafa}
-  .item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:6px;background:#fff;margin-bottom:6px}
-  .hidden{display:none}
-  .flex{display:flex;align-items:center;gap:8px}
-  @media (max-width:900px){.sidebar{display:none}.row{flex-direction:column}}
-  .modal{position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:9999}
-  .modalCard{background:#fff;padding:20px;border-radius:12px;width:640px;box-shadow:0 10px 30px rgba(10,10,10,0.2)}
-  .smallBtn{padding:6px 8px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer}
-  .danger{color:var(--if-red)}
-  .toolbar-inline{display:flex;gap:8px;align-items:center}
-  .fileinput{display:inline-block;padding:6px 8px;border-radius:6px;border:1px dashed #ccc;background:#fff;cursor:pointer}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGP - IFRO Campus Cacoal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .tab-btn.active { border-bottom: 4px solid #15803d; color: #15803d; font-weight: 800; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 14px !important; font-weight: 700 !important; text-transform: uppercase; padding: 12px 8px !important; }
+        td { font-size: 12px !important; padding: 8px !important; }
+        #tableGS { table-layout: fixed; }
+        #tableGS td, #tableGS th { word-wrap: break-word; vertical-align: middle; text-align: center; border: 1px solid #e5e7eb; }
+        .aula-card { padding: 6px; margin: 2px; border-radius: 4px; line-height: 1.2; border-left: 4px solid #15803d; text-align: center; }
+        .status-normal { background-color: #f0fdf4; border-color: #15803d; }
+        .status-extra { background-color: #ecfdf5; border-color: #059669; color: #065f46; }
+        .status-reposicao { background-color: #eff6ff; border-color: #2563eb; color: #1e40af; }
+        .status-rec { background-color: #fdf2f8; border-color: #db2777; color: #9d174d; }
+        .status-exame { background-color: #f5f5f5; border-color: #4b5563; color: #1f2937; }
+        .intervalo-row { background-color: #f3f4f6 !important; color: #6b7280; font-weight: bold; text-transform: uppercase; }
+    </style>
 </head>
-<body>
-<div id="app" class="app" role="application">
-  <aside class="sidebar" aria-label="menu">
-    <div class="logoRow">
-      <div class="logo">IF</div>
-      <div>
-        <div class="brand">INSTITUTO FEDERAL DE RONDÔNIA<br/><span style="font-weight:600;font-size:12px">CAMPUS CACOAL</span></div>
-      </div>
-    </div>
-    <div class="dept">DEPARTAMENTO DE APOIO AO ENSINO<br/>COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS</div>
+<body class="bg-gray-100 min-h-screen">
 
-    <nav class="nav" aria-label="Principal">
-      <a href="#" id="nav-cadastro" aria-expanded="false">1 — CADASTRO</a>
-      <div class="submenu" id="sub-cadastro" role="menu">
-        <button data-screen="cad-professores">Professores</button>
-        <button data-screen="cad-horarios-define">Horários (Períodos)</button>
-        <button data-screen="cad-turmas">Turmas</button>
-        <button data-screen="cad-disciplinas">Disciplinas</button>
-        <button data-screen="cad-dias-letivos">Dias Letivos</button>
-      </div>
-
-      <a href="#" id="nav-relatorio" aria-expanded="false">2 — RELATÓRIO</a>
-      <div class="submenu" id="sub-relatorio" role="menu">
-        <button data-screen="rel-individual">Relatório Individual</button>
-        <button data-screen="rel-turma">Relatório de Turma</button>
-        <button data-screen="rel-disciplina">Relatório de Disciplina</button>
-        <button data-screen="rel-export">Exportar CSV (Semana)</button>
-      </div>
-
-      <a href="#" id="nav-horario-base">3 — HORÁRIO BASE</a>
-      <a href="#" id="nav-horario-semanal">4 — HORÁRIO SEMANAL</a>
-      <a href="#" id="nav-admin">Administração</a>
-    </nav>
-
-    <div style="margin-top:auto">
-      <div class="muted">Paleta:</div>
-      <div style="display:flex;gap:6px;margin-top:8px">
-        <div style="background:var(--if-green);width:18px;height:18px;border-radius:3px"></div>
-        <div style="background:var(--if-red);width:18px;height:18px;border-radius:3px"></div>
-        <div style="background:#fff;border:1px solid #ddd;width:18px;height:18px;border-radius:3px"></div>
-      </div>
-      <div style="margin-top:10px" id="userInfo" class="muted"></div>
-      <div style="margin-top:8px">
-        <button class="smallBtn" id="btn-logout" style="display:none">Sair</button>
-      </div>
-      <div style="margin-top:10px">
-        <div class="muted" style="font-size:12px">Backup / Restore</div>
-        <div style="display:flex;gap:6px;margin-top:6px">
-          <button class="smallBtn" id="btn-export-json">Exportar JSON</button>
-          <label class="fileinput" title="Importar JSON"><input id="import-file" type="file" accept="application/json" style="display:none"/></label>
-          <button class="smallBtn" id="btn-import-json">Importar JSON</button>
+    <header class="bg-[#15803d] text-white p-6 shadow-lg">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-black italic uppercase tracking-tighter">IFRO - CAMPUS CACOAL</h1>
+                <p class="text-xs font-bold opacity-80 uppercase">Sistema de Gestão Pedagógica</p>
+            </div>
+            <div class="flex items-center gap-4 mt-4 md:mt-0">
+                <div class="flex flex-col">
+                    <label class="text-[10px] font-bold opacity-70">ANO LETIVO</label>
+                    <select id="yearSelect" class="bg-white/20 border border-white/30 p-1 rounded text-white font-bold outline-none cursor-pointer">
+                        <option value="2025" class="text-black">2025</option>
+                        <option value="2026" class="text-black" selected>2026</option>
+                    </select>
+                </div>
+                <div id="dataRelatorio" class="bg-white/10 px-4 py-2 rounded-lg font-mono text-sm border border-white/20">--/--/----</div>
+            </div>
         </div>
-      </div>
-    </div>
-
-  </aside>
-
-  <main class="main" role="main">
-    <header class="mainHeader">
-      <div class="titleGroup">
-        <div class="title">Gerador de Horários — IFRO Campus Cacoal <span style="display:inline-block;padding:4px 8px;border-radius:12px;background:var(--if-red);color:#fff;font-weight:700;margin-left:8px;font-size:12px">PROTÓTIPO</span></div>
-        <div class="subtitle">Cadastros, geração, semanas e relatórios — Salvo localmente (localStorage)</div>
-      </div>
-      <div class="topbarActions">
-        <button class="btn primary" id="btn-generate">Gerar Horário Base</button>
-        <button class="btn" id="btn-create-weeks">Criar Semanas</button>
-        <button class="btn" id="btn-print">Imprimir / PDF</button>
-      </div>
     </header>
 
-    <div class="container" id="container">
-
-      <!-- DASHBOARD -->
-      <div id="screen-dashboard" class="card screen">
-        <h2>Visão Geral</h2>
-        <p class="muted">Use o menu à esquerda. Faça login para desbloquear edição (admin).</p>
-        <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
-          <div style="background:#f1fbf4;padding:12px;border-radius:8px;border:1px solid #e1efe6;width:220px">
-            <strong>Professores</strong><div id="stat-prof-count" class="muted">0</div>
-          </div>
-          <div style="background:#fff4f4;padding:12px;border-radius:8px;border:1px solid #f3dede;width:220px">
-            <strong>Disciplinas</strong><div id="stat-subj-count" class="muted">0</div>
-          </div>
-          <div style="background:#fff;padding:12px;border-radius:8px;border:1px solid #eee;width:220px">
-            <strong>Turmas</strong><div id="stat-class-count" class="muted">0</div>
-          </div>
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex overflow-x-auto">
+            <button class="tab-btn px-6 py-4 active" data-tab="tab-disciplina">POR DISCIPLINA</button>
+            <button class="tab-btn px-6 py-4" data-tab="tab-turma">POR TURMA (PIVÔ)</button>
+            <button class="tab-btn px-6 py-4" data-tab="tab-semanal">GRADE SEMANAL</button>
         </div>
-      </div>
+    </nav>
 
-      <!-- CADASTRO -> PROFESSORES -->
-      <div id="screen-cad-professores" class="card screen hidden" role="region">
-        <h2>Cadastro de Professores</h2>
-        <form id="form-professor">
-          <div class="row">
-            <div class="col">
-              <label>Nome completo *</label>
-              <input type="text" id="prof-nome" required>
+    <main class="container mx-auto p-4 md:p-6">
+        <div id="loading" class="text-center py-10 font-bold text-green-700 italic animate-pulse">CARREGANDO DADOS...</div>
+
+        <section id="tab-disciplina" class="tab-pane active">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <select id="turmaSelect" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
+                    <select id="disciplinaSelect" class="p-3 border rounded-lg bg-gray-50" disabled><option>Selecione a Turma</option></select>
+                </div>
+                <div id="resultadoBusca" class="hidden">
+                    <div class="flex flex-wrap gap-4 mb-4 items-center">
+                        <div class="bg-green-100 p-4 rounded-lg border border-green-200 text-center flex-1">
+                            <p class="text-[10px] font-bold text-green-800">AULAS REGULARES</p>
+                            <span id="cont-regular" class="text-2xl font-black text-green-900">0</span>
+                        </div>
+                        <div class="bg-pink-100 p-4 rounded-lg border border-pink-200 text-center flex-1">
+                            <p class="text-[10px] font-bold text-pink-800">RECUPERAÇÃO/EXAME</p>
+                            <span id="cont-extra" class="text-2xl font-black text-pink-900">0</span>
+                        </div>
+                        <button onclick="exportarDisciplinaPDF()" class="bg-[#15803d] text-white px-8 py-4 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF Disciplina</button>
+                    </div>
+                    <table id="tableD" class="min-w-full bg-white border text-center">
+                        <thead class="bg-gray-50">
+                            <tr><th class="border">DATA</th><th class="border">DIA</th><th class="border">HORÁRIO</th><th class="border">PROFESSOR</th><th class="border">STATUS</th></tr>
+                        </thead>
+                        <tbody id="bodyD"></tbody>
+                    </table>
+                </div>
             </div>
-            <div class="col">
-              <label>Siape / CPF</label>
-              <input type="text" id="prof-siape">
+        </section>
+
+        <section id="tab-turma" class="tab-pane">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="flex gap-4 mb-6">
+                    <select id="turmaSelectPivo" class="p-3 border rounded-lg font-bold flex-1 bg-gray-50"></select>
+                    <button onclick="exportarPivoPDF()" class="bg-[#15803d] text-white px-8 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF Turma</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table id="tablePivo" class="min-w-full border text-center">
+                        <thead class="bg-[#15803d] text-white">
+                            <tr>
+                                <th class="text-left w-64">DISCIPLINA</th>
+                                <th>JAN</th><th>FEV</th><th>MAR</th><th>ABR</th><th>MAI</th><th>JUN</th><th>JUL</th><th>AGO</th><th>SET</th><th>OUT</th><th>NOV</th><th>DEZ</th>
+                                <th class="bg-green-600">TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bodyPivo" class="bg-white font-bold"></tbody>
+                    </table>
+                </div>
             </div>
-          </div>
+        </section>
 
-          <div class="row">
-            <div class="col">
-              <label>Situação</label>
-              <select id="prof-situacao"><option value="DE">DE</option><option value="40">40</option><option value="20">20</option><option value="Substituto">Substituto</option></select>
+        <section id="tab-semanal" class="tab-pane">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <select id="profSelect" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
+                    <input type="week" id="weekInput" class="p-3 border rounded-lg">
+                    <div class="flex gap-2">
+                        <button onclick="gerarGrade()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition uppercase">Ver Grade</button>
+                        <button onclick="exportarGradePDF()" class="bg-[#15803d] text-white font-bold rounded-lg flex-1 hover:bg-green-800 transition shadow-md uppercase">Exportar PDF Grade</button>
+                    </div>
+                </div>
+                <div id="gradeRender" class="overflow-x-auto border rounded-lg"></div>
             </div>
-            <div class="col">
-              <label>Sigla / Apelido</label>
-              <input type="text" id="prof-sigla" placeholder="ex: MAT">
-            </div>
-          </div>
+        </section>
+    </main>
 
-          <h3 style="margin-top:12px">Restrições (opcionais)</h3>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <div style="min-width:220px">
-              <label>PRD</label>
-              <select id="prof-prd"><option value="">Nenhuma</option><option value="dia">Dia inteiro</option><option value="manha">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option></select>
-            </div>
-            <div style="min-width:220px">
-              <label>PGD</label>
-              <select id="prof-pgd"><option value="">Nenhuma</option><option value="dia">Dia inteiro</option><option value="manha">Manhã</option><option value="tarde">Tarde</option><option value="noite">Noite</option></select>
-            </div>
-            <div style="min-width:220px">
-              <label>Descanso 11h (noite→manhã)</label>
-              <select id="prof-descanso"><option value="1">Aplicar</option><option value="0">Não aplicar</option></select>
-            </div>
-          </div>
+    <script>
+        const TRADUCAO = { 
+            "+": { texto: "EXTRA", class: "status-extra", soma: true },
+            "R": { texto: "REPOSIÇÃO", class: "status-reposicao", soma: true },
+            "REC": { texto: "RECUPERAÇÃO", class: "status-rec", soma: false },
+            "EX": { texto: "EXAME", class: "status-exame", soma: false }
+        };
 
-          <div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap">
-            <div style="min-width:180px">
-              <label>Não pode 1ª manhã?</label><select id="prof-no-first-m"><option value="0">Não</option><option value="1">Sim</option></select>
-            </div>
-            <div style="min-width:180px"><label>Não pode 2 primeiras manhã?</label><select id="prof-no-first2-m"><option value="0">Não</option><option value="1">Sim</option></select></div>
-            <div style="min-width:180px"><label>Não pode última manhã?</label><select id="prof-no-last-m"><option value="0">Não</option><option value="1">Sim</option></select></div>
-            <div style="min-width:180px"><label>Não pode 1ª tarde?</label><select id="prof-no-first-t"><option value="0">Não</option><option value="1">Sim</option></select></div>
-            <div style="min-width:180px"><label>Não pode 2 últimas tarde?</label><select id="prof-no-last2-t"><option value="0">Não</option><option value="1">Sim</option></select></div>
-          </div>
+        const GABARITO = [
+            {h:"07:30 - 08:20", t:"aula"}, {h:"08:20 - 09:10", t:"aula"}, 
+            {h:"09:10 - 09:30", t:"intervalo", l:"INTERVALO MATUTINO"},
+            {h:"09:30 - 10:20", t:"aula"}, {h:"10:20 - 11:10", t:"aula"}, {h:"11:10 - 12:00", t:"aula"},
+            {h:"12:00 - 13:30", t:"intervalo", l:"ALMOÇO"},
+            {h:"13:30 - 14:20", t:"aula"}, {h:"14:20 - 15:10", t:"aula"},
+            {h:"15:10 - 15:30", t:"intervalo", l:"INTERVALO VESPERTINO"},
+            {h:"15:30 - 16:20", t:"aula"}, {h:"16:20 - 17:10", t:"aula"}, {h:"17:10 - 18:00", t:"aula"},
+            {h:"18:00 - 19:00", t:"intervalo", l:"JANTAR"},
+            {h:"19:00 - 19:50", t:"aula"}, {h:"19:50 - 20:40", t:"aula"},
+            {h:"20:40 - 20:50", t:"intervalo", l:"INTERVALO NOTURNO"},
+            {h:"20:50 - 21:40", t:"aula"}, {h:"21:40 - 22:30", t:"aula"}
+        ];
 
-          <div style="margin-top:12px;display:flex;gap:8px">
-            <button class="btn primary" id="btn-save-prof">Salvar professor</button>
-            <button type="button" class="btn" id="btn-clear-prof">Limpar</button>
-          </div>
-        </form>
+        let dataStore = {};
+        const GIST_URL = "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/7f6247c6e9b67c2e2bd78b0518d7e5f224ccffdc/DADOS_2026_MESTRE";
 
-        <div style="margin-top:14px">
-          <h3>Lista de Professores</h3>
-          <div id="list-professores" class="list" role="list"></div>
-        </div>
-      </div>
+        window.onload = () => {
+            document.getElementById('dataRelatorio').textContent = new Date().toLocaleDateString('pt-BR');
+            carregarDados();
+            initTabs();
+            document.getElementById('yearSelect').onchange = carregarDados;
+        };
 
-      <!-- CADASTRO -> HORÁRIOS (definição períodos) -->
-      <div id="screen-cad-horarios-define" class="card screen hidden">
-        <h2>Horários de Aulas (períodos por turno)</h2>
-        <p class="muted">Use o padrão ou personalize. Separe por |. Use 'INTERVALO' quando houver pausa.</p>
-        <label>Manhã</label><input id="periods-manha" value="07:30-08:20|08:20-09:10|INTERVALO|09:30-10:20|10:20-11:10|11:10-12:00">
-        <label>Tarde</label><input id="periods-tarde" value="13:50-14:40|14:40-15:30|INTERVALO|15:50-16:40|16:40-17:30|17:30-18:20">
-        <label>Noite</label><input id="periods-noite" value="19:00-19:50|19:50-20:40|INTERVALO|20:50-21:40|21:40-22:30">
-        <div style="margin-top:8px"><button class="btn primary" id="btn-save-periods">Salvar períodos</button></div>
-      </div>
+        async function carregarDados() {
+            try {
+                const yearSelected = document.getElementById('yearSelect').value;
+                document.getElementById('loading').classList.remove('hidden');
+                const res = await fetch(GIST_URL + "?t=" + new Date().getTime());
+                let csv = await res.text();
+                csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
+                const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
+                const headers = lines[0].split(';').map(h => h.trim());
+                const turmas = headers.slice(2);
+                dataStore = {};
+                let lastDate = "";
+                lines.slice(1).forEach(line => {
+                    const cols = line.split(';').map(c => c?.trim());
+                    if (cols[0] && cols[0].includes('.')) lastDate = cols[0].replace(/\./g, '/');
+                    if (!cols[1] || !lastDate.endsWith(yearSelected)) return;
+                    turmas.forEach((tNome, idx) => {
+                        const cell = cols[idx + 2];
+                        if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
+                        const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        const tagM = cell.match(/\[(.*?)\]/);
+                        const tag = tagM ? tagM[1].toUpperCase() : null;
+                        const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
+                        let disc, prof;
+                        if (cleanT.includes(' - ')) {
+                            const partes = cleanT.split(' - ');
+                            prof = partes.pop().trim();
+                            disc = partes.join(' - ').trim();
+                        } else { disc = cleanT; prof = "N/I"; }
+                        if (!isNaN(disc)) return;
+                        if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
+                        const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        if (!dataStore[tId].discs[dId]) dataStore[tId].discs[dId] = { name: disc, sch: [] };
+                        const [d, m, a] = lastDate.split('/');
+                        const dt = new Date(a, m-1, d);
+                        dataStore[tId].discs[dId].sch.push({ date: lastDate, dtObj: dt, wd: dt.toLocaleDateString('pt-BR',{weekday:'long'}), time: cols[1], prof: prof, tag: tag });
+                    });
+                });
+                document.getElementById('loading').classList.add('hidden');
+                popularSelects();
+                limparResultados();
+            } catch (e) { document.getElementById('loading').innerHTML = "Erro ao sincronizar."; }
+        }
 
-      <!-- CADASTRO -> TURMAS -->
-      <div id="screen-cad-turmas" class="card screen hidden">
-        <h2>Cadastro de Turmas</h2>
-        <form id="form-turma">
-          <div class="row">
-            <div class="col"><label>Nome da turma *</label><input type="text" id="turma-nome" required></div>
-            <div class="col"><label>Regime</label><select id="turma-regime"><option>Integrado</option><option>Superior</option></select></div>
-            <div class="col"><label>Turno</label><select id="turma-turno"><option>Manhã</option><option>Tarde</option><option>Noite</option></select></div>
-          </div>
-          <div style="margin-top:8px"><button class="btn primary" id="btn-save-turma">Salvar turma</button> <button class="btn" id="btn-clear-turma" type="button">Limpar</button></div>
-        </form>
+        function limparResultados() {
+            document.getElementById('resultadoBusca').classList.add('hidden');
+            document.getElementById('bodyPivo').innerHTML = '';
+            document.getElementById('gradeRender').innerHTML = '';
+            document.getElementById('disciplinaSelect').disabled = true;
+            document.getElementById('disciplinaSelect').innerHTML = '<option>Selecione a Turma</option>';
+        }
 
-        <div style="margin-top:12px">
-          <h3>Lista de Turmas</h3>
-          <div id="list-turmas" class="list"></div>
-        </div>
-      </div>
+        function popularSelects() {
+            const t1 = document.getElementById('turmaSelect');
+            const t2 = document.getElementById('turmaSelectPivo');
+            const ps = document.getElementById('profSelect');
+            const profs = new Set();
+            const optionsHtml = '<option value="">-- SELECIONE A TURMA --</option>' + Object.keys(dataStore).sort().map(id => `<option value="${id}">${dataStore[id].name}</option>`).join('');
+            t1.innerHTML = optionsHtml; t2.innerHTML = optionsHtml;
+            for(let t in dataStore) for(let d in dataStore[t].discs) dataStore[t].discs[d].sch.forEach(x => { if(x.prof && x.prof !== "N/I") profs.add(x.prof); });
+            ps.innerHTML = '<option value="">-- PROFESSOR --</option>' + Array.from(profs).sort().map(p => `<option value="${p}">${p}</option>`).join('');
+        }
 
-      <!-- CADASTRO -> DISCIPLINAS -->
-      <div id="screen-cad-disciplinas" class="card screen hidden">
-        <h2>Cadastro de Disciplinas</h2>
-        <form id="form-disciplina">
-          <div class="row">
-            <div class="col"><label>Nome da disciplina *</label><input type="text" id="disc-nome" required></div>
-            <div class="col"><label>CH anual/semestre (h)</label><input type="number" id="disc-ch" min="1" value="60" required></div>
-            <div class="col"><label>Turma *</label><select id="disc-turma"></select></div>
-          </div>
-          <div class="row">
-            <div class="col"><label>Professor (opcional)</label><select id="disc-professor"></select></div>
-            <div class="col"><label>Aulas semanais</label><input type="number" id="disc-aulas-semana" min="1" value="4" required></div>
-          </div>
-          <div style="margin-top:8px"><button class="btn primary" id="btn-save-disc">Salvar disciplina</button> <button class="btn" id="btn-clear-disc" type="button">Limpar</button></div>
-        </form>
+        document.getElementById('turmaSelect').onchange = (e) => {
+            const dS = document.getElementById('disciplinaSelect');
+            dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
+            if(dataStore[e.target.value]) {
+                Object.keys(dataStore[e.target.value].discs).sort().forEach(id => { dS.innerHTML += `<option value="${id}">${dataStore[e.target.value].discs[id].name}</option>`; });
+                dS.disabled = false;
+            }
+        };
 
-        <div style="margin-top:12px"><h3>Lista de Disciplinas</h3><div id="list-disciplinas" class="list"></div></div>
-      </div>
+        document.getElementById('disciplinaSelect').onchange = renderD;
+        function renderD() {
+            const tId = document.getElementById('turmaSelect').value;
+            const dId = document.getElementById('disciplinaSelect').value;
+            const b = document.getElementById('bodyD');
+            if(!tId || !dId) return;
+            b.innerHTML = ''; let sR = 0, sE = 0;
+            dataStore[tId].discs[dId].sch.forEach(a => {
+                const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
+                if(info.soma) sR++; else sE++;
+                b.innerHTML += `<tr class="${info.class}"><td class="border">${a.date}</td><td class="border uppercase">${a.wd}</td><td class="border">${a.time}</td><td class="border font-bold">${a.prof}</td><td class="border font-black">${info.texto}</td></tr>`;
+            });
+            document.getElementById('cont-regular').textContent = sR;
+            document.getElementById('cont-extra').textContent = sE;
+            document.getElementById('resultadoBusca').classList.remove('hidden');
+        }
 
-      <!-- CADASTRO -> DIAS LETIVOS -->
-      <div id="screen-cad-dias-letivos" class="card screen hidden">
-        <h2>Dias Letivos</h2>
-        <div style="display:flex;gap:12px;flex-wrap:wrap">
-          <div style="flex:1">
-            <label>Regime</label><select id="cal-regime"><option>Integrado</option><option>Superior</option></select>
-            <label>Data</label><input type="date" id="cal-date">
-            <label>Tipo</label><select id="cal-type"><option value="letivo">Letivo</option><option value="feriado">Feriado</option><option value="recuperacao">Recuperação</option><option value="exame">Exame</option></select>
-            <div style="margin-top:8px"><button class="btn primary" id="btn-save-cal">Salvar</button> <button class="btn" id="btn-clear-cal" type="button">Limpar</button></div>
-          </div>
-          <div style="flex:2">
-            <h3>Calendário</h3>
-            <div id="list-calendar" class="list"></div>
-          </div>
-        </div>
-      </div>
+        document.getElementById('turmaSelectPivo').onchange = () => {
+            const tId = document.getElementById('turmaSelectPivo').value;
+            const b = document.getElementById('bodyPivo');
+            if(!tId) return;
+            b.innerHTML = '';
+            for(let dId in dataStore[tId].discs) {
+                let mCount = Array(12).fill(0);
+                dataStore[tId].discs[dId].sch.forEach(s => mCount[s.dtObj.getMonth()]++);
+                let row = `<tr class="border-b"><td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
+                mCount.forEach(c => row += `<td class="border-r">${c||'-'}</td>`);
+                row += `<td class="bg-green-100 text-green-900 font-black">${mCount.reduce((a,b)=>a+b)}</td></tr>`;
+                b.innerHTML += row;
+            }
+        };
 
-      <!-- RELATÓRIOS -->
-      <div id="screen-rel-individual" class="card screen hidden">
-        <h2>Relatório Individual (Professor)</h2>
-        <label>Professor</label><select id="rel-prof-list"></select>
-        <label>Período (início)</label><input type="date" id="rel-start">
-        <label>Período (fim)</label><input type="date" id="rel-end">
-        <div style="margin-top:8px"><button class="btn primary" id="btn-gen-rel-ind">Gerar Relatório</button> <button class="btn" id="btn-export-rel-csv">Exportar CSV</button></div>
-        <div id="report-area" style="margin-top:12px"></div>
-      </div>
+        function gerarGrade() {
+            const prof = document.getElementById('profSelect').value;
+            const week = document.getElementById('weekInput').value;
+            if(!prof || !week) return alert("Selecione Professor e Semana");
+            const [y, w] = week.split('-W').map(Number);
+            const start = getStartOfWeek(w, y);
+            const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+            let h = `<table id="tableGS" class="bg-white"><thead><tr class="bg-[#15803d] text-white"><th style="width: 100px;">HORÁRIO</th>`;
+            dias.forEach((d, i) => {
+                const dt = new Date(start); dt.setDate(dt.getDate() + i);
+                h += `<th style="width: 150px;">${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
+            });
+            h += `</tr></thead><tbody>`;
+            GABARITO.forEach(s => {
+                if(s.t === "intervalo") h += `<tr class="intervalo-row"><td>${s.h}</td><td colspan="6">${s.l}</td></tr>`;
+                else {
+                    h += `<tr><td class="bg-gray-100 font-bold border">${s.h}</td>`;
+                    for(let i=0; i<6; i++) {
+                        const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
+                        let cellContent = "";
+                        for(let t in dataStore) {
+                            for(let d in dataStore[t].discs) {
+                                dataStore[t].discs[d].sch.forEach(x => {
+                                    if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
+                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black">${dataStore[t].name}</div><div class="leading-tight">${dataStore[t].discs[d].name}</div></div>`;
+                                    }
+                                });
+                            }
+                        }
+                        h += `<td class="border" style="height: 60px;">${cellContent}</td>`;
+                    }
+                    h += `</tr>`;
+                }
+            });
+            document.getElementById('gradeRender').innerHTML = h + "</tbody></table>";
+        }
 
-      <div id="screen-rel-turma" class="card screen hidden">
-        <h2>Relatório de Turma</h2>
-        <label>Turma</label><select id="rel-turma-list"></select>
-        <label>Período início</label><input type="date" id="rel-t-start">
-        <label>Período fim</label><input type="date" id="rel-t-end">
-        <div style="margin-top:8px"><button class="btn primary" id="btn-gen-rel-turma">Gerar Relatório</button></div>
-        <div id="report-area-turma" style="margin-top:12px"></div>
-      </div>
+        function getStartOfWeek(w, y) {
+            const s = new Date(y, 0, 1 + (w - 1) * 7);
+            const d = s.getDay();
+            if (d <= 4) s.setDate(s.getDate() - s.getDay() + 1); else s.setDate(s.getDate() + 8 - s.getDay());
+            return s;
+        }
 
-      <div id="screen-rel-disciplina" class="card screen hidden">
-        <h2>Relatório de Disciplina</h2>
-        <label>Turma</label><select id="rel-disc-turma"></select>
-        <label>Disciplina</label><select id="rel-disc-list"></select>
-        <label>Período início</label><input type="date" id="rel-d-start">
-        <label>Período fim</label><input type="date" id="rel-d-end">
-        <div style="margin-top:8px"><button class="btn primary" id="btn-gen-rel-disc">Gerar Relatório</button></div>
-        <div id="report-area-disc" style="margin-top:12px"></div>
-      </div>
+        // LÓGICA DE PDF PADRONIZADA
+        function gerarCabecalhoPadrao(doc, titulo) {
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", 105, 15, { align: "center" });
+            doc.setFontSize(12);
+            doc.text("CAMPUS CACOAL", 105, 22, { align: "center" });
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text("DEPARTAMENTO DE APOIO AO ENSINO", 105, 30, { align: "center" });
+            doc.text("COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS", 105, 35, { align: "center" });
+            doc.setDrawColor(21, 128, 61);
+            doc.setLineWidth(0.5);
+            doc.line(14, 38, 196, 38);
+        }
 
-      <!-- HORÁRIO BASE -->
-      <div id="screen-horario-base" class="card screen hidden">
-        <h2>Horário Base</h2>
-        <p class="muted">Gere horário base por turma. O gerador respeita conflitos de professor e aulas semanais.</p>
-        <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px">
-          <label style="margin:0">Selecione Turma</label>
-          <select id="hb-turma"></select>
-          <button class="btn primary" id="hb-gen-one">Gerar para Turma</button>
-          <button class="btn" id="hb-gen-all">Gerar para Todas</button>
-        </div>
-        <div id="hb-area"></div>
-      </div>
+        function gerarRodapePadrao(doc) {
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(100);
+                doc.line(14, 285, 196, 285);
+                doc.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 3443-9501", 105, 289, { align: "center" });
+                doc.text("E-mail: ensino.cacoal@ifro.edu.br | Página " + i + " de " + pageCount, 105, 293, { align: "center" });
+            }
+        }
 
-      <!-- HORÁRIO SEMANAL -->
-      <div id="screen-horario-semanal" class="card screen hidden">
-        <h2>Horário Semanal</h2>
-        <p class="muted">Crie semanas a partir do horário base, edite manualmente e salve instâncias.</p>
-        <div style="display:flex;gap:12px;align-items:center">
-          <label>Início da semana</label><input type="date" id="ws-start">
-          <label>Turma</label><select id="ws-turma"></select>
-          <button class="btn primary" id="ws-create">Criar Semana</button>
-        </div>
-        <div id="ws-area" style="margin-top:12px"></div>
-      </div>
+        function exportarDisciplinaPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const tId = document.getElementById('turmaSelect').value;
+            const dId = document.getElementById('disciplinaSelect').value;
+            const data = dataStore[tId].discs[dId];
+            
+            const profs = [...new Set(data.sch.map(s => s.prof))].join(", ");
+            const somaAulas = data.sch.filter(s => !s.tag || TRADUCAO[s.tag].soma).length;
 
-      <!-- ADMIN -->
-      <div id="screen-admin" class="card screen hidden">
-        <h2>Administração</h2>
-        <p class="muted">Gerenciar usuários e configurações</p>
-        <div style="display:flex;gap:12px">
-          <div style="flex:1">
-            <label>Usuário</label><input type="text" id="admin-user">
-            <label>Senha</label><input type="text" id="admin-pass">
-            <label>Role</label><select id="admin-role"><option value="admin">admin</option><option value="user">user</option></select>
-            <div style="margin-top:8px"><button class="btn primary" id="btn-create-user">Criar usuário</button></div>
-          </div>
-          <div style="flex:2">
-            <h3>Lista de Usuários</h3>
-            <div id="list-users" class="list"></div>
-          </div>
-        </div>
-      </div>
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(11);
+            doc.text(`DISCIPLINA: ${data.name}`, 14, 45);
+            doc.text(`PROFESSORES: ${profs}`, 14, 51);
+            doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
 
-    </div>
-  </main>
-</div>
+            doc.autoTable({ html: '#tableD', startY: 62, theme: 'grid', styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            gerarRodapePadrao(doc);
+            doc.save(`Relatorio_Disciplina_${data.name}.pdf`);
+        }
 
-<!-- login modal -->
-<div id="modal-login" class="modal hidden" aria-hidden="true" style="display:none !important">
-  <div class="modalCard">
-    <h3>Entrar no Sistema</h3>
-    <p class="muted">Use: <strong>admin/admin</strong> (admin) ou <strong>user/user</strong> (usuário)</p>
-    <label>Usuário</label><input id="login-username" type="text" value="">
-    <label>Senha</label><input id="login-password" type="password" value="">
-    <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
-      <button class="btn" id="login-cancel">Cancelar</button>
-      <button class="btn primary" id="login-submit">Entrar</button>
-    </div>
-    <div style="margin-top:8px" id="login-msg" class="muted"></div>
-  </div>
-</div>
+        function exportarPivoPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const tId = document.getElementById('turmaSelectPivo').value;
+            const turmaNome = dataStore[tId].name;
 
-<script>
-/* ===========================
-   Aplicação: estado & persist
-   =========================== */
-const KEY = 'ifro_timetable_complete_v1';
-let state = {
-  professors: [], // {id,nome,siape,situacao,sigla,restrictions}
-  classes: [], // {id,nome,regime,turno}
-  subjects: [], // {id,nome,ch,classId,professorId,aulasSemana}
-  periods: {manha: [], tarde: [], noite: []},
-  calendars: [], // {id,regime,date,type}
-  baseSchedules: {}, // classId -> grid [day][period]
-  weeklySchedules: [], // {id,classId,weekStart,schedule}
-  users: [], // {username,password,role}
-  currentUser: null
-};
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.text(`RELATÓRIO ANUAL DA TURMA: ${turmaNome}`, 14, 45);
 
-const DEFAULT_PROFESSORS = [
-  "Adilson Miranda de Almeida","Adriana Aparecida Rigolon","Agatha Christie de Souza Zemke","Agmar Aparecido Felix Chaves","Agronomo","Aguinaldo Pereira","Alberto Ayres Benício","Aline da Silva Correa Valério Sakyrabiar","Aline da Silva Aquilau","Ana Caroline Carvalho Miranda","Andreia Maciel da Silva","Angelica Fernandes Estok","Angelita Aparecida Coutinho Picazevicz","Antonio Ferreira Neto","Arilson Ramos","Atila Bezerra Mira","Ayrton Schupp Pinheiro Oliveira","Barbara Ferreira Fadul","Claudemir Miranda Barboza","Claudia Aline Puerari","Coordenador","Daphne Chiara Antônio","Davys Sleman de Negreiros","Debora Costa Barroso Corrêa","Dheimy da Silva Novelli","Dhieisi Ebert Bolsanello","Dierlei dos Santos","Edmilson Maria de Brito","Edna Cristiane da Matta","Edslei Rodrigues de Almeida","Eduardo Lucas Jorge Serapião","Erick Rodrigo de Oliveira Mesquita","Eslei Justiniano dos Reis","Gabriel Tenório dos Santos","Gean Batista de Lima","Genival Gomes da Silva Junior","Gian Willian Tavares de Souza","Gilson Divino Araújo da Silva","Gilson Pedro Ranzula","Heloisa Helena Ribeiro de Miranda","Henri Francis Ternes de Oliveira","Henrique Silva Sérvio","Ideir Coto","Iramaia Grespan Ferreira","Irlan Cordeiro de Souza","Isis Lazzarini Foroni","Jakeline Melo dos Anjos","Jefferson Lemes Pinto","Jhonata Lemos da Silva","Joel Martins Braga Junior","Joelson Barral do Espírito Santo","Jorge da Silva Werneck","Jose de Anchieta Almeida da Silva","Jose Nilson Rosa Baraldi Molis","Jose Vechiatto","Julia de Souza Lopes Basso","Juliana Ferraz Huback Rodrigues","Juliana Maria Freitas de Assis Holanda","Juliane Lima Araújo","Juliano Alves de Deus","Juliano Cristhian Silva","Julio Eduardo Neves dos Santos","Jussara Maria Oliveira de Araújo","Larissa Cristina Torrezani Starling Reinicke","Leia Marcia dos Santos Kempim","Leonardo dos Santos Franca Shockness","Lilian Andrea dos Santos","Lilian Barbosa da Silva","Lilian Catiúscia Eifler Firme da Silva","Luciana Alves Ranzula","Magno Batista Amorim","Maily Marques Pereira","Marcilei Serafim Germano","Marcio Adolfo de Almeida","Marco Aurélio Nunes de Barros","Marco Rodrigo de Souza","Marcos - Prof PVH","Marcos Grutzmacher","Maria Angélica Petrini","Maria Cristiana de Freitas da Costa","Messias José dos Santos Silva","Nirvani Schroeder Henrique","Paula Michelli da Silva Franco Belmont","Paulo Fernando Campagnolli","Professor Contratado","Rafael Ayres Romanholo","Rafael Carlos Bispo","Raquel Pereira da Silva","Rivaldo José de Souza Silva","Rodolfo Gustavo Teixeira Ribas","Rogerio Giovani Soares Ferreira","Saiane Barros de Souza","Saiara Gerlaine Silva Toledo","Samanta Margarida Milani","Sergio Nunes de Jesus","Shelly Braum","Sirlei Soares dos Santos","Sirley Leite Freitas","Substituto","Substituto_a1","Substituto_a2","Substituto_a3","Substituto_a4","Substituto_a5","Substituto_a6","Tiago Roberto Silva Santos","Uberlando Tiburtino Leite","Uirande Oliveira Costa","Vera Lucia Lopes Silveira","Wellyton Rocha Vasconcellos"
-];
+            doc.autoTable({ html: '#tablePivo', startY: 50, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            gerarRodapePadrao(doc);
+            doc.save(`Relatorio_Turma_${turmaNome}.pdf`);
+        }
 
-/* ---- helpers ---- */
-function uid(prefix='id'){return prefix+'_'+Math.random().toString(36).slice(2,9)}
-function saveState(){ localStorage.setItem(KEY, JSON.stringify(state)); updateUIStats(); }
-function loadState(){
-  const raw = localStorage.getItem(KEY);
-  if(raw){ try{ Object.assign(state, JSON.parse(raw)); }catch(e){ console.warn('parse',e) } }
-  // defaults
-  if(!state.users || state.users.length===0) state.users = [{username:'admin',password:'admin',role:'admin'},{username:'user',password:'user',role:'user'}];
-  if(!state.professors || state.professors.length===0){
-    state.professors = DEFAULT_PROFESSORS.map(n=>({id:uid('p'),nome:n,siape:'',situacao:'',sigla:'',restrictions:{}}));
-  }
-  if(!state.periods || !state.periods.manha) {
-    state.periods = {
-      manha: ['07:30-08:20','08:20-09:10','INTERVALO','09:30-10:20','10:20-11:10','11:10-12:00'],
-      tarde: ['13:50-14:40','14:40-15:30','INTERVALO','15:50-16:40','16:40-17:30','17:30-18:20'],
-      noite: ['19:00-19:50','19:50-20:40','INTERVALO','20:50-21:40','21:40-22:30']
-    };
-  }
-}
-loadState();
-  state.currentUser = { username: "admin", role: "admin" };
+        function exportarGradePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const prof = document.getElementById('profSelect').value;
+            const week = document.getElementById('weekInput').value;
+            const [y, w] = week.split('-W').map(Number);
+            const start = getStartOfWeek(w, y);
+            const end = new Date(start); end.setDate(end.getDate() + 5);
+            const periodo = `${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`;
 
-/* ===========================
-   UI boot & bindings
-   =========================== */
-document.addEventListener('DOMContentLoaded',()=>{
-  bindNav();
-  bindActions();
-  renderAll();
-  //showLoginIfNeeded();
-});
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(11);
+            doc.text(`PROFESSOR(A): ${prof}`, 14, 45);
+            doc.text(`PERÍODO: ${periodo} (Semana ${w})`, 14, 51);
 
-function bindNav(){
-  document.getElementById('nav-cadastro').addEventListener('click', ()=>toggleSub('sub-cadastro'));
-  document.getElementById('nav-relatorio').addEventListener('click', ()=>toggleSub('sub-relatorio'));
-  document.querySelectorAll('#sub-cadastro button').forEach(b=>b.addEventListener('click',e=>openScreen(e.target.dataset.screen)));
-  document.querySelectorAll('#sub-relatorio button').forEach(b=>b.addEventListener('click',e=>openScreen(e.target.dataset.screen)));
-  document.getElementById('nav-horario-base').addEventListener('click', ()=>openScreen('horario-base'));
-  document.getElementById('nav-horario-semanal').addEventListener('click', ()=>openScreen('horario-semanal'));
-  document.getElementById('nav-admin').addEventListener('click', ()=>openScreen('admin'));
-}
-function toggleSub(id){
-  const el = document.getElementById(id); el.style.display = el.style.display==='flex' ? 'none' : 'flex';
-}
-function openScreen(key){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
-  const map = {
-    'cad-professores':'screen-cad-professores','cad-horarios-define':'screen-cad-horarios-define','cad-turmas':'screen-cad-turmas',
-    'cad-disciplinas':'screen-cad-disciplinas','cad-dias-letivos':'screen-cad-dias-letivos',
-    'rel-individual':'screen-rel-individual','rel-turma':'screen-rel-turma','rel-disciplina':'screen-rel-disciplina','rel-export':'screen-rel-individual',
-    'horario-base':'screen-horario-base','horario-semanal':'screen-horario-semanal','admin':'screen-admin'
-  };
-  const id = map[key] || 'screen-dashboard';
-  document.getElementById(id).classList.remove('hidden');
-  // populate dynamic selects
-  if(id==='screen-cad-disciplinas') populateDiscSelects();
-  if(id==='screen-cad-professores') renderProfessorList();
-  if(id==='screen-cad-turmas') renderTurmas();
-  if(id==='screen-cad-dias-letivos') renderCalendars();
-  if(id==='screen-rel-individual') populateRelProf();
-  if(id==='screen-horario-base') populateHBSelects();
-  if(id==='screen-horario-semanal') populateWSSelects();
-  if(id==='screen-admin') populateUsersList();
-  window.scrollTo(0,0);
-}
+            doc.autoTable({
+                html: '#tableGS', startY: 56, theme: 'grid',
+                styles: { fontSize: 7, cellPadding: 1, halign: 'center', valign: 'middle', overflow: 'linebreak' },
+                headStyles: { fillColor: [21, 128, 61] },
+                didParseCell: function(data) {
+                    const text = data.cell.text[0] || "";
+                    if (text.includes("INTERVALO") || text.includes("ALMOÇO") || text.includes("JANTAR")) {
+                        data.cell.styles.fillColor = [230, 230, 230];
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                }
+            });
+            gerarRodapePadrao(doc);
+            doc.save(`Grade_Semanal_${prof}.pdf`);
+        }
 
-/* ===========================
-   Bind actions for buttons/forms
-   =========================== */
-function bindActions(){
-  // login modal
-  document.getElementById('login-submit').addEventListener('click', loginSubmit);
-  document.getElementById('login-cancel').addEventListener('click', hideLogin);
-  document.getElementById('btn-logout').addEventListener('click', ()=>{ state.currentUser=null; saveState(); renderAll(); showLoginIfNeeded(); });
-
-  document.getElementById('btn-save-prof').addEventListener('click', saveProfessor);
-  document.getElementById('btn-clear-prof').addEventListener('click', ()=>document.getElementById('form-professor').reset());
-
-  document.getElementById('btn-save-periods').addEventListener('click', savePeriods);
-
-  document.getElementById('btn-save-turma').addEventListener('click', saveTurma);
-  document.getElementById('btn-clear-turma').addEventListener('click', ()=>document.getElementById('form-turma').reset());
-
-  document.getElementById('btn-save-disc').addEventListener('click', saveDisciplina);
-  document.getElementById('btn-clear-disc').addEventListener('click', ()=>document.getElementById('form-disciplina').reset());
-
-  document.getElementById('btn-save-cal').addEventListener('click', saveCalendar);
-  document.getElementById('btn-clear-cal').addEventListener('click', ()=>{ document.getElementById('cal-date').value=''; });
-
-  document.getElementById('btn-generate').addEventListener('click', ()=>openScreen('horario-base'));
-  document.getElementById('btn-print').addEventListener('click', ()=>window.print());
-  document.getElementById('btn-create-weeks').addEventListener('click', ()=>alert('Use Horário Semanal para criar semanas a partir do horário base.'));
-
-  document.getElementById('btn-gen-rel-ind').addEventListener('click', genRelIndividual);
-  document.getElementById('btn-export-rel-csv').addEventListener('click', exportRelCSV);
-  document.getElementById('btn-gen-rel-turma').addEventListener('click', genRelTurma);
-  document.getElementById('btn-gen-rel-disc').addEventListener('click', genRelDisciplina);
-
-  document.getElementById('hb-gen-one').addEventListener('click', ()=>generateHorarioForSelected(true));
-  document.getElementById('hb-gen-all').addEventListener('click', ()=>generateHorarioForSelected(false));
-
-  document.getElementById('ws-create').addEventListener('click', createWeekInstance);
-
-  document.getElementById('btn-create-user').addEventListener('click', createUser);
-
-  // backup / restore
-  document.getElementById('btn-export-json').addEventListener('click', ()=>{ const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='ifro_backup.json'; a.click(); URL.revokeObjectURL(url); });
-  document.getElementById('btn-import-json').addEventListener('click', ()=>document.getElementById('import-file').click());
-  document.getElementById('import-file').addEventListener('change', (ev)=>{ const f=ev.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ()=>{ try{ const obj=JSON.parse(r.result); if(confirm('Restaurar dados do arquivo? Isto substituirá os dados locais. Continuar?')){ state = obj; saveState(); location.reload(); } }catch(e){ alert('Arquivo inválido'); } }; r.readAsText(f); });
-
-  // initial populate selectors
-  populateDiscSelects();
-}
-
-/* ===========================
-   Professors CRUD
-   =========================== */
-function saveProfessor(e){
-  e?.preventDefault();
-  if(!isAdmin()) { alert('Somente admin pode salvar professores. Faça login.'); showLogin(); return; }
-  const nome = document.getElementById('prof-nome').value.trim();
-  if(!nome){ alert('Nome obrigatório'); return; }
-  const prof = {
-    id: uid('p'), nome,
-    siape: document.getElementById('prof-siape').value.trim(),
-    situacao: document.getElementById('prof-situacao').value,
-    sigla: document.getElementById('prof-sigla').value.trim(),
-    restrictions: {
-      prd: document.getElementById('prof-prd').value || null,
-      pgd: document.getElementById('prof-pgd').value || null,
-      descanso11: document.getElementById('prof-descanso').value==='1',
-      noFirstM: document.getElementById('prof-no-first-m').value==='1',
-      noFirst2M: document.getElementById('prof-no-first2-m').value==='1',
-      noLastM: document.getElementById('prof-no-last-m').value==='1',
-      noFirstT: document.getElementById('prof-no-first-t').value==='1',
-      noLast2T: document.getElementById('prof-no-last2-t').value==='1'
-    }
-  };
-  state.professors.push(prof); saveState(); renderProfessorList(); populateDiscSelects(); document.getElementById('form-professor').reset();
-}
-function renderProfessorList(){
-  const el = document.getElementById('list-professores'); el.innerHTML='';
-  state.professors.forEach(p=>{
-    const div = document.createElement('div'); div.className='item';
-    const left = document.createElement('div'); left.innerHTML = `<strong>${p.nome}</strong><div class="muted">${p.situacao || ''} ${p.siape? '• ' + p.siape : ''}</div>`;
-    const right = document.createElement('div');
-    const btnEdit = document.createElement('button'); btnEdit.className='smallBtn'; btnEdit.textContent='Editar'; btnEdit.onclick = ()=>editProfessor(p.id);
-    const btnDel = document.createElement('button'); btnDel.className='smallBtn'; btnDel.textContent='Remover'; btnDel.onclick = ()=>{ if(!isAdmin()){ alert('Somente admin'); showLogin(); return; } if(confirm('Remover professor?')){ state.professors = state.professors.filter(x=>x.id!==p.id); // unlink from subjects
-      state.subjects.forEach(s=>{ if(s.professorId===p.id) s.professorId=null }); saveState(); renderProfessorList(); populateDiscSelects(); } };
-    right.appendChild(btnEdit); right.appendChild(btnDel);
-    div.appendChild(left); div.appendChild(right); el.appendChild(div);
-  });
-}
-
-/* edit */
-function editProfessor(id){
-  if(!isAdmin()){ alert('Somente admin'); showLogin(); return; }
-  const p = state.professors.find(x=>x.id===id); if(!p) return;
-  openScreen('cad-professores');
-  document.getElementById('prof-nome').value = p.nome;
-  document.getElementById('prof-siape').value = p.siape || '';
-  document.getElementById('prof-situacao').value = p.situacao || 'DE';
-  document.getElementById('prof-sigla').value = p.sigla || '';
-  document.getElementById('prof-prd').value = p.restrictions?.prd || '';
-  document.getElementById('prof-pgd').value = p.restrictions?.pgd || '';
-  document.getElementById('prof-descanso').value = p.restrictions?.descanso11 ? '1':'0';
-  document.getElementById('prof-no-first-m').value = p.restrictions?.noFirstM ? '1':'0';
-  document.getElementById('prof-no-first2-m').value = p.restrictions?.noFirst2M ? '1':'0';
-  document.getElementById('prof-no-last-m').value = p.restrictions?.noLastM ? '1':'0';
-  document.getElementById('prof-no-first-t').value = p.restrictions?.noFirstT ? '1':'0';
-  document.getElementById('prof-no-last2-t').value = p.restrictions?.noLast2T ? '1':'0';
-
-  // change save button behavior temporarily
-  const saveBtn = document.getElementById('btn-save-prof');
-  saveBtn.textContent = 'Atualizar professor';
-  saveBtn.onclick = function updateHandler(evt){
-    evt?.preventDefault();
-    p.nome = document.getElementById('prof-nome').value.trim();
-    p.siape = document.getElementById('prof-siape').value.trim();
-    p.situacao = document.getElementById('prof-situacao').value;
-    p.sigla = document.getElementById('prof-sigla').value.trim();
-    p.restrictions = {
-      prd: document.getElementById('prof-prd').value || null,
-      pgd: document.getElementById('prof-pgd').value || null,
-      descanso11: document.getElementById('prof-descanso').value==='1',
-      noFirstM: document.getElementById('prof-no-first-m').value==='1',
-      noFirst2M: document.getElementById('prof-no-first2-m').value==='1',
-      noLastM: document.getElementById('prof-no-last-m').value==='1',
-      noFirstT: document.getElementById('prof-no-first-t').value==='1',
-      noLast2T: document.getElementById('prof-no-last2-t').value==='1'
-    };
-    saveState(); renderProfessorList(); populateDiscSelects();
-    saveBtn.textContent = 'Salvar professor'; saveBtn.onclick = saveProfessor;
-    document.getElementById('form-professor').reset();
-  };
-}
-
-/* ===========================
-   Periods
-   =========================== */
-function savePeriods(){
-  if(!isAdmin()){ alert('Somente admin'); showLogin(); return; }
-  state.periods.manha = document.getElementById('periods-manha').value.split('|').map(x=>x.trim());
-  state.periods.tarde = document.getElementById('periods-tarde').value.split('|').map(x=>x.trim());
-  state.periods.noite = document.getElementById('periods-noite').value.split('|').map(x=>x.trim());
-  saveState(); alert('Períodos salvos.');
-}
-
-/* ===========================
-   Turmas CRUD
-   =========================== */
-function saveTurma(e){
-  e?.preventDefault();
-  if(!isAdmin()){ alert('Somente admin'); showLogin(); return; }
-  const nome = document.getElementById('turma-nome').value.trim(); if(!nome){ alert('Nome obrigatório'); return; }
-  const obj = {id: uid('c'), nome, regime: document.getElementById('turma-regime').value, turno: document.getElementById('turma-turno').value};
-  state.classes.push(obj); saveState(); renderTurmas(); populateDiscSelects(); document.getElementById('form-turma').reset();
-}
-function renderTurmas(){
-  const el = document.getElementById('list-turmas'); el.innerHTML='';
-  state.classes.forEach(t=>{
-    const div=document.createElement('div'); div.className='item';
-    const left=document.createElement('div'); left.innerHTML=`<strong>${t.nome}</strong><div class="muted">${t.regime} • ${t.turno}</div>`;
-    const right=document.createElement('div');
-    const edit=document.createElement('button'); edit.className='smallBtn'; edit.textContent='Editar'; edit.onclick=()=>editTurma(t.id);
-    const del=document.createElement('button'); del.className='smallBtn'; del.textContent='Remover'; del.onclick=()=>{ if(!isAdmin()){ alert('Somente admin'); showLogin(); return; } if(confirm('Remover turma?')){ state.classes=state.classes.filter(x=>x.id!==t.id); state.subjects=state.subjects.filter(s=>s.classId!==t.id); delete state.baseSchedules[t.id]; saveState(); renderTurmas(); populateDiscSelects(); } };
-    right.appendChild(edit); right.appendChild(del);
-    div.appendChild(left); div.appendChild(right); el.appendChild(div);
-  });
-}
-function editTurma(id){
-  if(!isAdmin()){ alert('Somente admin'); showLogin(); return; }
-  const t = state.classes.find(x=>x.id===id); if(!t) return;
-  openScreen('cad-turmas');
-  document.getElementById('turma-nome').value = t.nome;
-  document.getElementById('turma-regime').value = t.regime;
-  document.getElementById('turma-turno').value = t.turno;
-  const btn = document.getElementById('btn-save-turma'); btn.textContent='Atualizar turma';
-  btn.onclick = function update(e){ e?.preventDefault(); t.nome = document.getElementById('turma-nome').value.trim(); t.regime = document.getElementById('turma-regime').value; t.turno = document.getElementById('turma-turno').value; saveState(); renderTurmas(); populateDiscSelects(); btn.textContent='Salvar turma'; btn.onclick=saveTurma; document.getElementById('form-turma').reset(); };
-}
-
-/* ===========================
-   Disciplinas CRUD
-   =========================== */
-function populateDiscSelects(){
-  const s1 = document.getElementById('disc-turma'); s1.innerHTML='';
-  state.classes.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=c.nome; s1.appendChild(o); });
-  const s2 = document.getElementById('disc-professor'); s2.innerHTML = '<option value="">-- escolher --</option>';
-  state.professors.forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent=p.nome + (p.sigla?` (${p.sigla})`:'' ); s2.appendChild(o); });
-  // reports and other selects
-  const rtd = document.getElementById('rel-turma-list'); if(rtd){ rtd.innerHTML=''; state.classes.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=c.nome; rtd.appendChild(o); }); }
-  const rtt = document.getElementById('rel-disc-turma'); if(rtt){ rtt.innerHTML=''; state.classes.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=c.nome; rtt.appendChild(o); }); }
-  const wsT = document.getElementById('ws-turma'); if(wsT){ wsT.innerHTML=''; state.classes.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=c.nome; wsT.appendChild(o); }); }
-  const hbT = document.getElementById('hb-turma'); if(hbT){ hbT.innerHTML=''; state.classes.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=c.nome; hbT.appendChild(o); }); }
-  const relDiscList = document.getElementById('rel-disc-list'); if(relDiscList){ const cid = document.getElementById('rel-disc-turma').value; relDiscList.innerHTML=''; state.subjects.filter(s=>s.classId===cid).forEach(d=>{ const o=document.createElement('option'); o.value=d.id; o.textContent=d.nome; relDiscList.appendChild(o); }); }
-}
-function saveDisciplina(e){
-  e?.preventDefault();
-  if(!isAdmin()){ alert('Somente admin'); showLogin(); return; }
-  const nome = document.getElementById('disc-nome').value.trim(); if(!nome){ alert('Nome obrigatório'); return; }
-  const ch = parseInt(document.getElementById('disc-ch').value) || 0;
-  const classId = document.getElementById('disc-turma').value;
-  const professorId = document.getElementById('disc-professor').value || null;
-  const aulas = parseInt(document.getElementById('disc-aulas-semana').value) || 1;
-  const obj = {id: uid('s'), nome, ch, classId, professorId, aulasSemana: aulas};
-  state.subjects.push(obj); saveState(); renderDisciplinas(); populateDiscSelects(); document.getElementById('form-disciplina').reset();
-}
-function renderDisciplinas(){
-  const el = document.getElementById('list-disciplinas'); el.innerHTML='';
-  state.subjects.forEach(s=>{
-    const div=document.createElement('div'); div.className='item';
-    const profName = s.professorId ? (state.professors.find(p=>p.id===s.professorId)?.nome || '(?)') : '(sem)';
-    const left=document.createElement('div'); left.innerHTML=`<strong>${s.nome}</strong><div class="muted">${s.ch}h • ${profName}</div>`;
-    const right=document.createElement('div');
-    const edit=document.createElement('button'); edit.className='smallBtn'; edit.textContent='Editar'; edit.onclick=()=>editDisciplina(s.id);
-    const del=document.createElement('button'); del.className='smallBtn'; del.textContent='Remover'; del.onclick=()=>{ if(!isAdmin()){ alert('Somente admin'); showLogin(); return;} if(confirm('Remover disciplina?')){ state.subjects = state.subjects.filter(x=>x.id!==s.id); saveState(); renderDisciplinas(); populateDiscSelects(); } };
-    right.appendChild(edit); right.appendChild(del);
-    div.appendChild(left); div.appendChild(right); el.appendChild(div);
-  });
-}
-function editDisciplina(id){
-  if(!isAdmin()){ alert('Somente admin'); showLogin(); return; }
-  const s = state.subjects.find(x=>x.id===id); if(!s) return;
-  openScreen('cad-disciplinas');
-  document.getElementById('disc-nome').value = s.nome; document.getElementById('disc-ch').value = s.ch; document.getElementById('disc-turma').value = s.classId; document.getElementById('disc-professor').value = s.professorId || '';
-  document.getElementById('disc-aulas-semana').value = s.aulasSemana;
-  const saveBtn = document.getElementById('btn-save-disc'); saveBtn.textContent='Atualizar';
-  saveBtn.onclick = function update(e){ e?.preventDefault(); s.nome = document.getElementById('disc-nome').value.trim(); s.ch = parseInt(document.getElementById('disc-ch').value)||0; s.classId = document.getElementById('disc-turma').value; s.professorId = document.getElementById('disc-professor').value || null; s.aulasSemana = parseInt(document.getElementById('disc-aulas-semana').value)||1; saveState(); renderDisciplinas(); populateDiscSelects(); saveBtn.textContent='Salvar disciplina'; saveBtn.onclick = saveDisciplina; document.getElementById('form-disciplina').reset(); };
-}
-
-/* ===========================
-   Calendars
-   =========================== */
-function saveCalendar(e){
-  e?.preventDefault();
-  if(!isAdmin()){ alert('Somente admin'); showLogin(); return; }
-  const regime = document.getElementById('cal-regime').value; const date = document.getElementById('cal-date').value; const type = document.getElementById('cal-type').value;
-  if(!date){ alert('Informe data'); return; }
-  state.calendars.push({id: uid('cal'), regime, date, type}); saveState(); renderCalendars(); document.getElementById('cal-date').value='';
-}
-function renderCalendars(){
-  const el = document.getElementById('list-calendar'); el.innerHTML='';
-  state.calendars.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(c=>{
-    const div=document.createElement('div'); div.className='item';
-    const left=document.createElement('div'); left.innerHTML=`<strong>${c.date}</strong><div class="muted">${c.regime} • ${c.type}</div>`;
-    const right=document.createElement('div'); const del=document.createElement('button'); del.className='smallBtn'; del.textContent='Remover'; del.onclick=()=>{ if(!isAdmin()){ alert('Somente admin'); showLogin(); return; } if(confirm('Remover?')){ state.calendars=state.calendars.filter(x=>x.id!==c.id); saveState(); renderCalendars(); } }; right.appendChild(del); div.appendChild(left); div.appendChild(right); el.appendChild(div);
-  });
-}
-
-/* ===========================
-   Reports
-   =========================== */
-function populateRelProf(){ const el = document.getElementById('rel-prof-list'); el.innerHTML=''; const empty=document.createElement('option'); empty.value=''; empty.textContent='-- selecione --'; el.appendChild(empty); state.professors.forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent=p.nome; el.appendChild(o); }); document.getElementById('rel-start').value=''; document.getElementById('rel-end').value=''; }
-function genRelIndividual(){
-  const profId = document.getElementById('rel-prof-list').value; if(!profId){ alert('Selecione professor'); return; }
-  const start = document.getElementById('rel-start').value || '1900-01-01'; const end = document.getElementById('rel-end').value || '2100-01-01';
-  const records = [];
-  state.weeklySchedules.forEach(ws=>{
-    if(ws.classId==null) return; const wstart=ws.weekStart; if(wstart < start || wstart > end) return;
-    const grid = ws.schedule;
-    for(let d=0; d<grid.length; d++){ for(let p=0; p<grid[d].length; p++){ const cell = grid[d][p]; if(!cell) continue; if(cell.professorId===profId){ const dt = new Date(wstart); dt.setDate(dt.getDate()+d); records.push({date: formatDate(dt), weekday: dt.getDay(), time: cell.time || '', turma: ws.className || state.classes.find(c=>c.id===ws.classId)?.nome, disciplina: state.subjects.find(s=>s.id===cell.subjectId)?.nome||''}); } } }
-  });
-  const area = document.getElementById('report-area'); area.innerHTML='';
-  if(records.length===0){ area.innerHTML='<div class="muted">Nenhuma aula encontrada no período.</div>'; return; }
-  const table = document.createElement('table'); table.innerHTML = '<thead><tr><th>Data</th><th>Dia</th><th>Horário</th><th>Turma</th><th>Disciplina</th></tr></thead>';
-  const tbody = document.createElement('tbody'); records.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td>${r.date}</td><td>${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][r.weekday]}</td><td>${r.time}</td><td>${r.turma||''}</td><td>${r.disciplina}</td>`; tbody.appendChild(tr); }); table.appendChild(tbody); area.appendChild(table);
-}
-function exportRelCSV(){
-  const area = document.getElementById('report-area'); if(!area.innerHTML){ alert('Gere o relatório antes de exportar'); return; }
-  const rows = Array.from(area.querySelectorAll('table tr')).map(tr=>Array.from(tr.children).map(td=>td.textContent.replace(/;/g,',')));
-  const csv = rows.map(r=>r.join(';')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='relatorio.csv'; a.click(); URL.revokeObjectURL(url);
-}
-function genRelTurma(){
-  const classId = document.getElementById('rel-turma-list').value; if(!classId){ alert('Selecione turma'); return; }
-  const start = document.getElementById('rel-t-start').value || '1900-01-01'; const end = document.getElementById('rel-t-end').value || '2100-01-01';
-  const area = document.getElementById('report-area-turma'); area.innerHTML=''; const records=[];
-  state.weeklySchedules.forEach(ws=>{ if(ws.classId!==classId) return; if(ws.weekStart<start||ws.weekStart> end) return; const grid = ws.schedule; for(let d=0;d<grid.length;d++){ for(let p=0;p<grid[d].length;p++){ const cell=grid[d][p]; if(!cell) continue; const dt=new Date(ws.weekStart); dt.setDate(dt.getDate()+d); records.push({date: formatDate(dt),weekday:dt.getDay(),time:cell.time||'',disciplina:state.subjects.find(s=>s.id===cell.subjectId)?.nome||'',professor:state.professors.find(pp=>pp.id===cell.professorId)?.nome||''}); } } });
-  if(records.length===0){ area.innerHTML='<div class="muted">Nenhuma aula encontrada.</div>'; return; }
-  const table = document.createElement('table'); table.innerHTML = '<thead><tr><th>Data</th><th>Dia</th><th>Horário</th><th>Disciplina</th><th>Professor</th></tr></thead>'; const tbody=document.createElement('tbody');
-  records.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${r.date}</td><td>${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][r.weekday]}</td><td>${r.time}</td><td>${r.disciplina}</td><td>${r.professor}</td>`; tbody.appendChild(tr); });
-  table.appendChild(tbody); area.appendChild(table);
-}
-function genRelDisciplina(){
-  const classId = document.getElementById('rel-disc-turma').value; const discId = document.getElementById('rel-disc-list').value;
-  if(!classId || !discId){ alert('Selecione turma e disciplina'); return; }
-  const start = document.getElementById('rel-d-start').value || '1900-01-01'; const end = document.getElementById('rel-d-end').value || '2100-01-01';
-  const area = document.getElementById('report-area-disc'); area.innerHTML=''; const rec=[];
-  state.weeklySchedules.forEach(ws=>{ if(ws.classId!==classId) return; if(ws.weekStart < start || ws.weekStart > end) return; const grid = ws.schedule; for(let d=0; d<grid.length; d++){ for(let p=0;p<grid[d].length;p++){ const cell=grid[d][p]; if(!cell) continue; if(cell.subjectId===discId){ const dt=new Date(ws.weekStart); dt.setDate(dt.getDate()+d); rec.push({date:formatDate(dt),weekday:dt.getDay(),time:cell.time||'',professor:state.professors.find(pp=>pp.id===cell.professorId)?.nome||''}); } } } });
-  if(rec.length===0){ area.innerHTML='<div class="muted">Nenhuma aula encontrada.</div>'; return; }
-  const table=document.createElement('table'); table.innerHTML='<thead><tr><th>Data</th><th>Dia</th><th>Horário</th><th>Professor</th></tr></thead>'; const tbody=document.createElement('tbody');
-  rec.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td>${r.date}</td><td>${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][r.weekday]}</td><td>${r.time}</td><td>${r.professor}</td>`; tbody.appendChild(tr); });
-  table.appendChild(tbody); area.appendChild(table);
-}
-
-/* ===========================
-   Horário Base (gerador simples)
-   =========================== */
-function populateHBSelects(){
-  const sel = document.getElementById('hb-turma'); sel.innerHTML=''; state.classes.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=c.nome; sel.appendChild(o); });
-}
-function generateHorarioForSelected(single){
-  if(single){
-    const cid = document.getElementById('hb-turma').value; if(!cid){ alert('Selecione turma'); return; }
-    try{ const grid = generateForClass(cid); state.baseSchedules[cid] = grid; saveState(); renderBaseSchedules([cid]); alert('Horário gerado para a turma.'); } catch(e){ alert('Erro: ' + e.message); }
-  } else {
-    const fails = [];
-    state.classes.forEach(c=>{ try{ state.baseSchedules[c.id] = generateForClass(c.id); }catch(e){ fails.push({turma:c.nome,erro:e.message}); } });
-    saveState(); renderBaseSchedules(); if(fails.length) alert('Algumas turmas não puderam ser alocadas. Veja console.'); else alert('Horários gerados para todas as turmas.'); console.log('fails',fails);
-  }
-}
-
-function generateForClass(classId){
-  const cls = state.classes.find(c=>c.id===classId); if(!cls) throw new Error('Turma não encontrada');
-  // choose periods for turno
-  let periods = [];
-  if(cls.turno==='Manhã') periods = state.periods.manha.filter(p=>!p.includes('INTERVALO'));
-  if(cls.turno==='Tarde') periods = state.periods.tarde.filter(p=>!p.includes('INTERVALO'));
-  if(cls.turno==='Noite') periods = state.periods.noite.filter(p=>!p.includes('INTERVALO'));
-  if(!periods.length) periods = ['P1','P2','P3','P4','P5'];
-  const days = 5;
-  const slots = days * periods.length;
-
-  const subs = state.subjects.filter(s=>s.classId===classId);
-  let tokens = [];
-  subs.forEach(s=>{ for(let i=0;i<s.aulasSemana;i++) tokens.push({subjectId:s.id, professorId:s.professorId}); });
-
-  if(tokens.length > slots) throw new Error(`Turma ${cls.nome} requer ${tokens.length} aulas mas só há ${slots} slots.`);
-
-  const grid = Array.from({length:days}, ()=> Array.from({length:periods.length}, ()=> null));
-  const teacherBusy = {};
-
-  const counts = {}; tokens.forEach(t=>counts[t.subjectId]=(counts[t.subjectId]||0)+1);
-  tokens.sort((a,b)=> {
-    if((a.professorId?1:0)!=(b.professorId?1:0)) return (b.professorId?1:0)-(a.professorId?1:0);
-    return (counts[b.subjectId]||0)-(counts[a.subjectId]||0);
-  });
-
-  function teacherAvailable(tid, dIdx, pIdx){
-    if(!tid) return true;
-    const prof = state.professors.find(x=>x.id===tid); if(!prof) return true;
-    const r = prof.restrictions || {};
-    if(r.prd==='dia') return false;
-    if(r.prd && r.prd.toLowerCase()===cls.turno.toLowerCase()) return false;
-    if(r.pgd==='dia') return false;
-    if(r.pgd && r.pgd.toLowerCase()===cls.turno.toLowerCase()) return false;
-    const n = periods.length;
-    if(cls.turno==='Manhã'){
-      if(r.noFirstM && pIdx===0) return false;
-      if(r.noFirst2M && (pIdx===0 || pIdx===1)) return false;
-      if(r.noLastM && pIdx===n-1) return false;
-    }
-    if(cls.turno==='Tarde'){
-      if(r.noFirstT && pIdx===0) return false;
-      if(r.noLast2T && (pIdx===n-1 || pIdx===n-2)) return false;
-    }
-    if(teacherBusy[tid] && teacherBusy[tid].has(`${dIdx}|${pIdx}`)) return false;
-    return true;
-  }
-
-  function place(idx){
-    if(idx>=tokens.length) return true;
-    const tk = tokens[idx];
-    for(let d=0; d<days; d++){
-      for(let p=0; p<periods.length; p++){
-        if(grid[d][p]) continue;
-        if(!teacherAvailable(tk.professorId,d,p)) continue;
-        grid[d][p] = { subjectId: tk.subjectId, professorId: tk.professorId, time: periods[p] };
-        if(tk.professorId){ teacherBusy[tk.professorId] = teacherBusy[tk.professorId] || new Set(); teacherBusy[tk.professorId].add(`${d}|${p}`); }
-        if(place(idx+1)) return true;
-        grid[d][p] = null;
-        if(tk.professorId) teacherBusy[tk.professorId].delete(`${d}|${p}`);
-      }
-    }
-    return false;
-  }
-
-  if(!place(0)) throw new Error('Não foi possível alocar com as restrições atuais.');
-  return grid;
-}
-
-function renderBaseSchedules(filterIds=[]){
-  const area = document.getElementById('hb-area'); area.innerHTML='';
-  const keys = filterIds.length ? filterIds : Object.keys(state.baseSchedules);
-  if(!keys.length){ area.innerHTML = '<div class="muted">Nenhum horário base gerado.</div>'; return; }
-  keys.forEach(cid=>{
-    const grid = state.baseSchedules[cid]; if(!grid) return;
-    const cls = state.classes.find(c=>c.id===cid);
-    const card = document.createElement('div'); card.className='card'; card.style.marginBottom='12px';
-    card.innerHTML = `<h3>Turma: ${cls?cls.nome:cid}</h3>`;
-    const tbl = document.createElement('table'); const thead=document.createElement('thead'); const trh=document.createElement('tr'); trh.innerHTML='<th>Período/Dia</th>';
-    ['Seg','Ter','Qua','Qui','Sex'].forEach(dn=>{ const th=document.createElement('th'); th.textContent=dn; trh.appendChild(th); });
-    thead.appendChild(trh); tbl.appendChild(thead);
-    const tbody=document.createElement('tbody');
-    const nPeriods = grid[0].length;
-    for(let p=0;p<nPeriods;p++){
-      const tr=document.createElement('tr'); tr.appendChild(document.createElement('th')); tr.firstChild.textContent = 'P ' + (p+1);
-      for(let d=0; d<grid.length; d++){
-        const td = document.createElement('td'); const c = grid[d][p];
-        if(c){ const subj = state.subjects.find(s=>s.id===c.subjectId); const prof = state.professors.find(pp=>pp.id===c.professorId); td.innerHTML = `<strong>${subj?subj.nome:'(disc.)'}</strong><div class="muted">${prof?prof.nome:''}</div>`; } else td.textContent='-';
-        tr.appendChild(td);
-      }
-      tbody.appendChild(tr);
-    }
-    tbl.appendChild(tbody); card.appendChild(tbl); area.appendChild(card);
-  });
-}
-
-/* ===========================
-   Weekly schedules (create/edit)
-   =========================== */
-function populateWSSelects(){ const s=document.getElementById('ws-turma'); s.innerHTML=''; state.classes.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=c.nome; s.appendChild(o); }); }
-function createWeekInstance(){
-  if(!isAdmin()){ if(!confirm('Você não é admin. Criar semana exigirá permissão (continuar apenas visual)?')) return; }
-  const start = document.getElementById('ws-start').value; if(!start){ alert('Informe início da semana'); return; }
-  const classId = document.getElementById('ws-turma').value; if(!classId){ alert('Informe turma'); return; }
-  const base = state.baseSchedules[classId]; if(!base){ alert('Não existe horário base para a turma selecionada. Gere antes.'); return; }
-  const clone = JSON.parse(JSON.stringify(base)); const ws = { id: uid('ws'), classId, weekStart: start, schedule: clone, className: state.classes.find(c=>c.id===classId)?.nome || '' };
-  state.weeklySchedules.push(ws); saveState(); renderWeekly(ws);
-}
-function renderWeekly(ws){
-  const area = document.getElementById('ws-area');
-  const card = document.createElement('div'); card.className='card'; card.style.marginBottom='12px';
-  card.innerHTML = `<h3>Semana: ${ws.weekStart} • Turma: ${ws.className}</h3>`;
-  const tbl = document.createElement('table'); const thead=document.createElement('thead'); const trh=document.createElement('tr'); trh.innerHTML = '<th>Período/Dia</th>';
-  ['Seg','Ter','Qua','Qui','Sex'].forEach(dn=>{ const th=document.createElement('th'); th.textContent=dn; trh.appendChild(th); });
-  thead.appendChild(trh); tbl.appendChild(thead);
-  const tbody=document.createElement('tbody');
-  const grid = ws.schedule;
-  for(let p=0;p<grid[0].length;p++){
-    const tr=document.createElement('tr'); tr.appendChild(document.createElement('th')); tr.firstChild.textContent='P '+(p+1);
-    for(let d=0; d<grid.length; d++){
-      const td=document.createElement('td'); const cell=grid[d][p];
-      if(cell){ const subj = state.subjects.find(s=>s.id===cell.subjectId); const prof = state.professors.find(pp=>pp.id===cell.professorId); td.innerHTML = `<div><strong>${subj?subj.nome:'(disc.)'}</strong></div><div class="muted">${prof?prof.nome:''}</div>`; }
-      else td.textContent='-';
-      td.style.cursor='pointer';
-      td.onclick = ()=>editWeeklyCell(ws.id,d,p);
-      tr.appendChild(td);
-    }
-    tbody.appendChild(tr);
-  }
-  tbl.appendChild(tbody); card.appendChild(tbl);
-  const btnSave = document.createElement('button'); btnSave.className='btn primary'; btnSave.textContent='Salvar semana'; btnSave.style.marginTop='8px';
-  btnSave.onclick = ()=>{ if(!isAdmin()){ alert('Somente admin pode salvar'); return; } saveState(); alert('Semana salva.'); };
-  const btnDel = document.createElement('button'); btnDel.className='btn'; btnDel.textContent='Remover semana'; btnDel.style.marginLeft='8px';
-  btnDel.onclick = ()=>{ if(!isAdmin()){ alert('Somente admin'); return; } if(confirm('Remover semana?')){ state.weeklySchedules = state.weeklySchedules.filter(x=>x.id!==ws.id); saveState(); area.removeChild(card); } };
-  card.appendChild(btnSave); card.appendChild(btnDel);
-  area.appendChild(card);
-}
-function editWeeklyCell(wsId, dayIdx, periodIdx){
-  const ws = state.weeklySchedules.find(x=>x.id===wsId); if(!ws) return;
-  const subs = state.subjects.filter(s=>s.classId===ws.classId);
-  const promptText = 'Selecione disciplina por índice:\\n' + subs.map((a,i)=>`${i+1} - ${a.nome} (${a.aulasSemana} aulas/semana)`).join('\\n') + '\\n0 - limpar';
-  const sel = prompt(promptText);
-  if(sel===null) return;
-  const idx = parseInt(sel)||0;
-  if(idx===0){ ws.schedule[dayIdx][periodIdx] = null; saveState(); alert('Removido'); document.getElementById('ws-area').innerHTML=''; state.weeklySchedules.forEach(w=>renderWeekly(w)); return; }
-  const subj = subs[idx-1]; if(!subj){ alert('Índice inválido'); return; }
-  ws.schedule[dayIdx][periodIdx] = { subjectId: subj.id, professorId: subj.professorId || null, time: '' };
-  saveState(); alert('Alterado'); document.getElementById('ws-area').innerHTML=''; state.weeklySchedules.forEach(w=>renderWeekly(w));
-}
-
-/* ===========================
-   Users / Auth
-   =========================== */
-function createUser(){
-  if(!isAdmin()){ alert('Somente admin pode criar usuários.'); showLogin(); return; }
-  const username = document.getElementById('admin-user').value.trim();
-  const pass = document.getElementById('admin-pass').value.trim();
-  const role = document.getElementById('admin-role').value;
-  if(!username||!pass){ alert('Usuário e senha obrigatórios'); return; }
-  if(state.users.find(u=>u.username===username)){ alert('Usuário já existe'); return; }
-  state.users.push({username, password:pass, role}); saveState(); populateUsersList(); document.getElementById('admin-user').value=''; document.getElementById('admin-pass').value='';
-}
-function populateUsersList(){
-  const el = document.getElementById('list-users'); el.innerHTML='';
-  state.users.forEach(u=>{ const div=document.createElement('div'); div.className='item'; const left=document.createElement('div'); left.innerHTML=`<strong>${u.username}</strong><div class="muted">${u.role}</div>`; const right=document.createElement('div'); const del=document.createElement('button'); del.className='smallBtn'; del.textContent='Remover'; del.onclick = ()=>{ if(!isAdmin()){ alert('Somente admin'); showLogin(); return; } if(confirm('Remover usuário?')){ state.users = state.users.filter(x=>x.username!==u.username); saveState(); populateUsersList(); } }; right.appendChild(del); div.appendChild(left); div.appendChild(right); el.appendChild(div); });
-}
-function loginSubmit(){
-  const u = document.getElementById('login-username').value.trim();
-  const p = document.getElementById('login-password').value;
-  const user = state.users.find(x=>x.username===u && x.password===p);
-  const msg = document.getElementById('login-msg'); if(!user){ msg.textContent='Credenciais inválidas'; msg.classList.add('danger'); return; }
-  state.currentUser = {username: user.username, role: user.role}; saveState(); hideLogin(); renderAll();
-}
-function logout(){ state.currentUser=null; saveState(); renderAll(); showLoginIfNeeded(); }
-function isAdmin(){ return state.currentUser && state.currentUser.role==='admin'; }
-function showLogin(){ document.getElementById('modal-login').classList.remove('hidden'); document.getElementById('modal-login').ariaHidden='false'; }
-function hideLogin(){ document.getElementById('modal-login').classList.add('hidden'); document.getElementById('modal-login').ariaHidden='true'; }
-function showLoginIfNeeded() {
-    return; // nunca mostra o modal
-}
-
-/* ===========================
-   Helpers & Utilities
-   =========================== */
-function renderAll(){
-  renderProfessorList(); renderDisciplinas(); renderTurmas(); renderCalendars(); populateDiscSelects(); populateRelProf(); populateClassSelects(); populateHBSelects(); populateWSSelects(); populateUsersList(); updateUIStats(); document.getElementById('ws-area').innerHTML=''; state.weeklySchedules.forEach(w=>renderWeekly(w)); renderBaseSchedules();
-  document.getElementById('userInfo').textContent = state.currentUser ? `Usuário: ${state.currentUser.username} (${state.currentUser.role})` : 'Não autenticado';
-  document.getElementById('btn-logout').style.display = state.currentUser ? 'inline-block' : 'none';
-}
-function updateUIStats(){ document.getElementById('stat-prof-count').textContent = state.professors.length; document.getElementById('stat-subj-count').textContent = state.subjects.length; document.getElementById('stat-class-count').textContent = state.classes.length; }
-function populateClassSelects(){ const el = document.getElementById('rel-turma-list'); if(el){ el.innerHTML=''; state.classes.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=c.nome; el.appendChild(o); }); } }
-function populateClassSelectsForDisc(){ const el = document.getElementById('rel-disc-turma'); if(el){ el.innerHTML=''; state.classes.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=c.nome; el.appendChild(o); }); } }
-function formatDate(dt){ return dt.toISOString().slice(0,10); }
-function populateClassList(){ const sel = document.getElementById('disc-turma'); if(sel){ sel.innerHTML=''; state.classes.forEach(c=>{ const o=document.createElement('option'); o.value=c.id; o.textContent=c.nome; sel.appendChild(o); }); } }
-
-/* convenience */
-function populateClassSelects(){ populateClassList(); populateClassSelectsForDisc(); }
-
-/* ===========================
-   Small bootstrap of UI
-   =========================== */
-renderAll();
-
-/* utility used by some report flows */
-function formatDateString(s){ return s; }
-
-/* Expose save/load for debugging */
-window._STATE = state;
-window.saveState = saveState;
-
-/* END */
-</script>
+        function initTabs() {
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.onclick = () => {
+                    document.querySelectorAll('.tab-btn, .tab-pane').forEach(e => e.classList.remove('active'));
+                    b.classList.add('active'); document.getElementById(b.dataset.tab).classList.add('active');
+                };
+            });
+        }
+    </script>
 </body>
 </html>
