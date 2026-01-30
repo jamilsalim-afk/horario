@@ -545,44 +545,56 @@
         }
 
         function exportarDisciplinaPDF() {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
-            const tId = document.getElementById('turmaSelect').value;
-            const dId = document.getElementById('disciplinaSelect').value;
-            const sem = document.getElementById('semestreSelect').value;
-            const data = dataStore[tId].discs[dId];
-            const aulasFiltradas = data.sch.filter(a => {
-                const m = a.dtObj.getMonth() + 1;
-                return ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
-            });
-            const profs = [...new Set(aulasFiltradas.map(s => s.prof))].join(", ");
-            const somaAulas = aulasFiltradas.filter(s => !s.tag || TRADUCAO[s.tag].soma).length;
-            gerarCabecalhoPadrao(doc);
-            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-            doc.text(`DISCIPLINA: ${data.name} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
-            doc.text(`PROFESSORES: ${profs}`, 14, 51);
-            doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
-            doc.autoTable({ html: '#tableD', startY: 62, theme: 'grid', styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
-            gerarRodapePadrao(doc);
-            doc.save(`Relatorio_Disciplina_${data.name}.pdf`);
-        }
+    const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
+    const tId = document.getElementById('turmaSelect').value;
+    const dId = document.getElementById('disciplinaSelect').value;
+    const sem = document.getElementById('semestreSelect').value;
+    const data = dataStore[tId].discs[dId];
+    const turmaNome = dataStore[tId].name;
+    const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+
+    const aulasFiltradas = data.sch.filter(a => {
+        const m = a.dtObj.getMonth() + 1;
+        return ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
+    });
+    
+    const profs = [...new Set(aulasFiltradas.map(s => s.prof))].join(", ");
+    const somaAulas = aulasFiltradas.filter(s => !s.tag || TRADUCAO[s.tag].soma).length;
+    
+    gerarCabecalhoPadrao(doc);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+    doc.text(`DISCIPLINA: ${data.name} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
+    doc.text(`PROFESSORES: ${profs}`, 14, 51);
+    doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
+    doc.autoTable({ html: '#tableD', startY: 62, theme: 'grid', styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+    gerarRodapePadrao(doc);
+    
+    // Nome: Disciplina - Turma - Data
+    doc.save(`${data.name} - ${turmaNome} - ${dataEmissao}.pdf`);
+}
 
         function exportarPivoPDF() {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
-            const tId = document.getElementById('turmaSelectPivo').value;
-            const sem = document.getElementById('semestreSelectPivo').value;
-            const turmaNome = dataStore[tId].name;
-            gerarCabecalhoPadrao(doc);
-            doc.setFont("helvetica", "bold"); doc.setFontSize(12);
-            doc.text(`RELATÓRIO ANUAL DA TURMA: ${turmaNome} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
-            doc.autoTable({ html: '#tablePivo', startY: 50, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
-            gerarRodapePadrao(doc);
-            doc.save(`Relatorio_Turma_${turmaNome}.pdf`);
-        }
+    const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
+    const tId = document.getElementById('turmaSelectPivo').value;
+    const sem = document.getElementById('semestreSelectPivo').value;
+    const turmaNome = dataStore[tId].name;
+    const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+
+    gerarCabecalhoPadrao(doc);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+    doc.text(`RELATÓRIO ANUAL DA TURMA: ${turmaNome} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
+    doc.autoTable({ html: '#tablePivo', startY: 50, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+    gerarRodapePadrao(doc);
+    
+    // Nome: Turma - Data
+    doc.save(`${turmaNome} - ${dataEmissao}.pdf`);
+}
 
     function exportarGradePDF() {
     const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
     const prof = document.getElementById('profSelect').value;
     const week = document.getElementById('weekInput').value;
+    const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
     if(!prof || !week) return alert("Selecione Professor e Semana");
     
     const [y, w] = week.split('-W').map(Number);
@@ -600,38 +612,26 @@
         theme: 'grid', 
         styles: { fontSize: 7, cellPadding: 1.5, halign: 'center', valign: 'middle', overflow: 'linebreak' }, 
         headStyles: { fillColor: [21, 128, 61] },
-        // LARGURAS FIXAS EM MM PARA O PDF
-        columnStyles: {
-            0: { cellWidth: 25 }, // Horário
-            1: { cellWidth: 26 }, // Seg
-            2: { cellWidth: 26 }, // Ter
-            3: { cellWidth: 26 }, // Qua
-            4: { cellWidth: 26 }, // Qui
-            5: { cellWidth: 26 }, // Sex
-            6: { cellWidth: 26 }  // Sab
-        },
+        columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 26 }, 2: { cellWidth: 26 }, 3: { cellWidth: 26 }, 4: { cellWidth: 26 }, 5: { cellWidth: 26 }, 6: { cellWidth: 26 } },
         didParseCell: function(data) {
-            // Estilo para intervalos
-            if (data.cell.text[0]?.includes("INTERVALO") || data.cell.text[0]?.includes("ALMOÇO")) {
-                data.cell.styles.fillColor = [240, 240, 240];
-            }
-            // Estilo para as linhas de resumo finais
             if (data.row.index >= data.table.body.length - 4) {
                 data.cell.styles.fillColor = [250, 250, 250];
                 data.cell.styles.fontStyle = 'bold';
-                data.cell.styles.fontSize = 6.5;
             }
         }
     });
     gerarRodapePadrao(doc);
-    doc.save(`Grade_Semanal_Professor_${prof}.pdf`);
+    
+    // Nome: Ficha Semanal - Professor - Data
+    doc.save(`Ficha Semanal - ${prof} - ${dataEmissao}.pdf`);
 }
 
         // NOVA FUNÇÃO DE EXPORTAÇÃO: GRADE SEMANAL TURMA
-       function exportarGradeTurmaPDF() {
+    function exportarGradeTurmaPDF() {
     const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
     const tId = document.getElementById('turmaSelectSemanal').value;
     const week = document.getElementById('weekInputTurma').value;
+    const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
     if(!tId || !week) return alert("Selecione Turma e Semana");
     
     const turmaNome = dataStore[tId].name;
@@ -650,19 +650,12 @@
         theme: 'grid', 
         styles: { fontSize: 7, cellPadding: 2, halign: 'center', valign: 'middle', overflow: 'linebreak' }, 
         headStyles: { fillColor: [21, 128, 61] },
-        columnStyles: {
-            0: { cellWidth: 22 }, 1: { cellWidth: 27.3 }, 2: { cellWidth: 27.3 }, 
-            3: { cellWidth: 27.3 }, 4: { cellWidth: 27.3 }, 5: { cellWidth: 27.3 }, 6: { cellWidth: 27.3 }
-        },
-        didParseCell: function(data) {
-            if (data.cell.text[0]?.includes("INTERVALO") || data.cell.text[0]?.includes("ALMOÇO") || data.cell.text[0]?.includes("JANTAR")) {
-                data.cell.styles.fillColor = [230, 230, 230];
-                data.cell.styles.fontStyle = 'bold';
-            }
-        }
+        columnStyles: { 0: { cellWidth: 22 }, 1: { cellWidth: 27.3 }, 2: { cellWidth: 27.3 }, 3: { cellWidth: 27.3 }, 4: { cellWidth: 27.3 }, 5: { cellWidth: 27.3 }, 6: { cellWidth: 27.3 } }
     });
     gerarRodapePadrao(doc);
-    doc.save(`Grade_Semanal_Turma_${turmaNome}.pdf`);
+    
+    // Nome: Ficha Semanal - Turma - Data
+    doc.save(`Ficha Semanal - ${turmaNome} - ${dataEmissao}.pdf`);
 }
         function initTabs() {
             document.querySelectorAll('.tab-btn').forEach(b => {
