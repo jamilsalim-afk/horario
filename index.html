@@ -53,9 +53,9 @@
 
     <nav class="bg-white shadow-md sticky top-0 z-50">
         <div class="container mx-auto flex overflow-x-auto">
-            <button class="tab-btn px-6 py-4 active" data-tab="tab-disciplina">POR DISCIPLINA</button>
-            <button class="tab-btn px-6 py-4" data-tab="tab-turma">POR TURMA (PIVÔ)</button>
-            <button class="tab-btn px-6 py-4" data-tab="tab-semanal">GRADE SEMANAL</button>
+            <button class="tab-btn px-6 py-4 active" data-tab="tab-disciplina">RELATÓRIO POR DISCIPLINA</button>
+            <button class="tab-btn px-6 py-4" data-tab="tab-turma">RELATÓRIO POR TURMA</button>
+            <button class="tab-btn px-6 py-4" data-tab="tab-semanal">RELATÓRIO SEMANAL POR PROFESSOR</button>
         </div>
     </nav>
 
@@ -330,7 +330,7 @@
                 doc.setTextColor(100);
                 doc.line(14, 285, 196, 285);
                 doc.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 3443-9501", 105, 289, { align: "center" });
-                doc.text("E-mail: ensino.cacoal@ifro.edu.br | Página " + i + " de " + pageCount, 105, 293, { align: "center" });
+                doc.text("E-mail: dape.cacoal@ifro.edu.br | Página " + i + " de " + pageCount, 105, 293, { align: "center" });
             }
         }
 
