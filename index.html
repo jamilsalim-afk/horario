@@ -380,44 +380,116 @@
 
         // LÓGICA DE GRADE SEMANAL (PROFESSOR)
         function gerarGrade() {
-            const prof = document.getElementById('profSelect').value;
-            const week = document.getElementById('weekInput').value;
-            if(!prof || !week) return alert("Selecione Professor e Semana");
-            const [y, w] = week.split('-W').map(Number);
-            const start = getStartOfWeek(w, y);
-            const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-            let h = `<table class="tableGS bg-white" id="tableGS"><thead><tr class="bg-[#15803d] text-white"><th style="width: 80px;">HORÁRIO</th>`;
-            dias.forEach((d, i) => {
-                const dt = new Date(start); dt.setDate(dt.getDate() + i);
-                h += `<th>${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
-            });
-            h += `</tr></thead><tbody>`;
-            GABARITO.forEach(s => {
-                if(s.t === "intervalo") h += `<tr class="intervalo-row"><td>${s.h}</td><td colspan="6">${s.l}</td></tr>`;
-                else {
-                    h += `<tr><td class="bg-gray-100 font-bold border text-[10px]">${s.h}</td>`;
-                    for(let i=0; i<6; i++) {
-                        const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
-                        let cellContent = "";
-                        for(let t in dataStore) {
-                            for(let d in dataStore[t].discs) {
-                                dataStore[t].discs[d].sch.forEach(x => {
-                                    if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
-                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}">
-    <div class="font-black uppercase" style="margin-bottom: 2px;">${dataStore[t].name}</div>
-    <div class="border-t border-gray-200 pt-1">${dataStore[t].discs[d].name}</div>
-</div>`;
-                                    }
-                                });
+    const prof = document.getElementById('profSelect').value;
+    const week = document.getElementById('weekInput').value;
+    if(!prof || !week) return alert("Selecione Professor e Semana");
+    const [y, w] = week.split('-W').map(Number);
+    const start = getStartOfWeek(w, y);
+    const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    
+    // Variáveis para cálculos
+    let aulasPorDia = Array(6).fill(0);
+    let horasPermanencia = Array(6).fill(0);
+    let observacoes = [];
+    let ultimaAulaDiaAnterior = null;
+
+    let h = `<table class="tableGS bg-white" id="tableGS"><thead><tr class="bg-[#15803d] text-white"><th style="width: 80px;">HORÁRIO</th>`;
+    dias.forEach((d, i) => {
+        const dt = new Date(start); dt.setDate(dt.getDate() + i);
+        h += `<th>${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
+    });
+    h += `</tr></thead><tbody>`;
+
+    GABARITO.forEach(s => {
+        if(s.t === "intervalo") h += `<tr class="intervalo-row"><td>${s.h}</td><td colspan="6">${s.l}</td></tr>`;
+        else {
+            h += `<tr><td class="bg-gray-100 font-bold border text-[10px]">${s.h}</td>`;
+            for(let i=0; i<6; i++) {
+                const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
+                let cellContent = "";
+                for(let t in dataStore) {
+                    for(let d in dataStore[t].discs) {
+                        dataStore[t].discs[d].sch.forEach(x => {
+                            if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
+                                aulasPorDia[i]++;
+                                cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}">
+                                    <div class="font-black uppercase" style="margin-bottom: 2px;">${dataStore[t].name}</div>
+                                    <div class="border-t border-gray-200 pt-1">${dataStore[t].discs[d].name}</div>
+                                </div>`;
                             }
-                        }
-                        h += `<td class="border">${cellContent}</td>`;
+                        });
                     }
-                    h += `</tr>`;
                 }
-            });
-            document.getElementById('gradeRender').innerHTML = h + "</tbody></table>";
+                h += `<td class="border">${cellContent}</td>`;
+            }
+            h += `</tr>`;
         }
+    });
+
+    // Cálculos de Horas e Interjornada (11h)
+    for(let i=0; i<6; i++) {
+        let aulasNoDia = [];
+        const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
+        
+        // Coleta todas as aulas do professor no dia i
+        for(let t in dataStore) {
+            for(let d in dataStore[t].discs) {
+                dataStore[t].discs[d].sch.forEach(x => {
+                    if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth()) {
+                        const [hInicio] = x.time.split(' - ')[0].split(':').map(Number);
+                        const [hFim] = x.time.split(' - ')[1].split(':').map(Number);
+                        aulasNoDia.push({ inicio: hInicio, fim: hFim, fullTime: x.time, data: new Date(dtR) });
+                    }
+                });
+            }
+        }
+
+        if(aulasNoDia.length > 0) {
+            aulasNoDia.sort((a,b) => a.inicio - b.inicio);
+            let primeira = aulasNoDia[0];
+            let ultima = aulasNoDia[aulasNoDia.length - 1];
+            
+            // Cálculo simplificado de permanência (fim - início)
+            let diff = ultima.fim - primeira.inicio;
+            // Desconto de almoço se atravessar o horário (ex: início < 12 e fim > 13)
+            if(primeira.inicio <= 12 && ultima.fim >= 14) diff -= 2;
+            horasPermanencia[i] = diff > 0 ? diff : 0;
+
+            // Verificação de 11h de intervalo (Interjornada)
+            if(ultimaAulaDiaAnterior) {
+                let dataFimAnterior = new Date(ultimaAulaDiaAnterior.data);
+                dataFimAnterior.setHours(ultimaAulaDiaAnterior.fim, 0, 0);
+                let dataInicioAtual = new Date(primeira.data);
+                dataInicioAtual.setHours(primeira.inicio, 0, 0);
+                
+                let diffInter = (dataInicioAtual - dataFimAnterior) / (1000 * 60 * 60);
+                if(diffInter < 11) {
+                    observacoes.push(`Atenção: Intervalo de ${diffInter.toFixed(1)}h entre ${dias[i-1]} e ${dias[i]} (Mínimo 11h).`);
+                }
+            }
+            ultimaAulaDiaAnterior = ultima;
+        } else {
+            ultimaAulaDiaAnterior = null;
+        }
+    }
+
+    // Adiciona as linhas de resumo na tabela Web
+    h += `<tr class="bg-gray-50 font-bold"><td class="text-[9px]">AULAS DIÁRIAS</td>`;
+    aulasPorDia.forEach(c => h += `<td>${c}</td>`);
+    h += `</tr>`;
+    
+    h += `<tr class="bg-blue-50 font-bold"><td class="text-[9px]">PERMANÊNCIA (H)</td>`;
+    horasPermanencia.forEach(h_val => h += `<td>${h_val}h</td>`);
+    h += `</tr>`;
+
+    const totalSemana = aulasPorDia.reduce((a,b) => a+b, 0);
+    h += `<tr class="bg-green-100 font-black"><td colspan="3" class="text-left px-2">QUANTIDADE DE AULAS NA SEMANA:</td><td colspan="4" class="text-left px-2">${totalSemana} Aulas</td></tr>`;
+    
+    let obsTexto = observacoes.length > 0 ? observacoes.join(' | ') : "Nenhuma pendência de interjornada detectada.";
+    h += `<tr class="bg-yellow-50 text-[10px] italic"><td colspan="1" class="font-bold">OBS:</td><td colspan="6" class="text-left px-2 text-red-600">${obsTexto}</td></tr>`;
+
+    document.getElementById('gradeRender').innerHTML = h + "</tbody></table>";
+}
 
         // LÓGICA DE GRADE SEMANAL (TURMA) - NOVA FUNÇÃO
         function gerarGradeTurma() {
@@ -540,18 +612,17 @@
         html: '#tableGS', 
         startY: 56, 
         theme: 'grid', 
-        // overflow: 'linebreak' permite que o texto quebre a linha e aumente a altura
-        styles: { fontSize: 7, cellPadding: 2, halign: 'center', valign: 'middle', overflow: 'linebreak' }, 
+        styles: { fontSize: 7, cellPadding: 1, halign: 'center', valign: 'middle', overflow: 'linebreak' }, 
         headStyles: { fillColor: [21, 128, 61] },
-        // Larguras fixas: 22mm para a hora e 27.3mm para cada dia (total ~186mm útil)
-        columnStyles: {
-            0: { cellWidth: 22 }, 1: { cellWidth: 27.3 }, 2: { cellWidth: 27.3 }, 
-            3: { cellWidth: 27.3 }, 4: { cellWidth: 27.3 }, 5: { cellWidth: 27.3 }, 6: { cellWidth: 27.3 }
-        },
+        columnStyles: { 0: { cellWidth: 22 } },
         didParseCell: function(data) {
-            if (data.cell.text[0]?.includes("INTERVALO") || data.cell.text[0]?.includes("ALMOÇO") || data.cell.text[0]?.includes("JANTAR")) {
-                data.cell.styles.fillColor = [230, 230, 230];
+            // Estilização das linhas de resumo no PDF
+            if (data.row.index >= data.table.body.length - 4) {
+                data.cell.styles.fillColor = [245, 245, 245];
                 data.cell.styles.fontStyle = 'bold';
+            }
+            if (data.cell.text[0]?.includes("Atenção:")) {
+                data.cell.styles.textColor = [200, 0, 0];
             }
         }
     });
