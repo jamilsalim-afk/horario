@@ -516,51 +516,70 @@
         }
 
         function exportarGradePDF() {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
-            const prof = document.getElementById('profSelect').value;
-            const week = document.getElementById('weekInput').value;
-            const [y, w] = week.split('-W').map(Number);
-            const start = getStartOfWeek(w, y);
-            const end = new Date(start); end.setDate(end.getDate() + 5);
-            gerarCabecalhoPadrao(doc);
-            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-            doc.text(`PROFESSOR(A): ${prof}`, 14, 45);
-            doc.text(`PERÍODO: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')} (Semana ${w})`, 14, 51);
-            doc.autoTable({ html: '#tableGS', startY: 56, theme: 'grid', styles: { fontSize: 6, cellPadding: 1, halign: 'center', valign: 'middle' }, headStyles: { fillColor: [21, 128, 61] },
-                didParseCell: function(data) {
-                    if (data.cell.text[0]?.includes("INTERVALO") || data.cell.text[0]?.includes("ALMOÇO")) {
-                        data.cell.styles.fillColor = [230, 230, 230];
-                    }
-                }
-            });
-            gerarRodapePadrao(doc);
-            doc.save(`Grade_Semanal_Professor_${prof}.pdf`);
+    const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
+    const prof = document.getElementById('profSelect').value;
+    const week = document.getElementById('weekInput').value;
+    if(!prof || !week) return alert("Selecione Professor e Semana");
+    
+    const [y, w] = week.split('-W').map(Number);
+    const start = getStartOfWeek(w, y);
+    const end = new Date(start); end.setDate(end.getDate() + 5);
+    
+    gerarCabecalhoPadrao(doc);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+    doc.text(`PROFESSOR(A): ${prof}`, 14, 45);
+    // MODELO SOLICITADO APLICADO AQUI:
+    doc.text(`Semana: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')} - Semana ${w}`, 14, 51);
+    
+    doc.autoTable({ 
+        html: '#tableGS', 
+        startY: 56, 
+        theme: 'grid', 
+        styles: { fontSize: 6, cellPadding: 1, halign: 'center', valign: 'middle' }, 
+        headStyles: { fillColor: [21, 128, 61] },
+        didParseCell: function(data) {
+            if (data.cell.text[0]?.includes("INTERVALO") || data.cell.text[0]?.includes("ALMOÇO")) {
+                data.cell.styles.fillColor = [230, 230, 230];
+            }
         }
+    });
+    gerarRodapePadrao(doc);
+    doc.save(`Grade_Semanal_Professor_${prof}.pdf`);
+}
 
         // NOVA FUNÇÃO DE EXPORTAÇÃO: GRADE SEMANAL TURMA
         function exportarGradeTurmaPDF() {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
-            const tId = document.getElementById('turmaSelectSemanal').value;
-            const week = document.getElementById('weekInputTurma').value;
-            if(!tId || !week) return alert("Selecione Turma e Semana");
-            const turmaNome = dataStore[tId].name;
-            const [y, w] = week.split('-W').map(Number);
-            const start = getStartOfWeek(w, y);
-            const end = new Date(start); end.setDate(end.getDate() + 5);
-            gerarCabecalhoPadrao(doc);
-            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-            doc.text(`TURMA: ${turmaNome}`, 14, 45);
-            doc.text(`PERÍODO: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')} (Semana ${w})`, 14, 51);
-            doc.autoTable({ html: '#tableGSTurma', startY: 56, theme: 'grid', styles: { fontSize: 6, cellPadding: 1, halign: 'center', valign: 'middle' }, headStyles: { fillColor: [21, 128, 61] },
-                didParseCell: function(data) {
-                    if (data.cell.text[0]?.includes("INTERVALO") || data.cell.text[0]?.includes("ALMOÇO")) {
-                        data.cell.styles.fillColor = [230, 230, 230];
-                    }
-                }
-            });
-            gerarRodapePadrao(doc);
-            doc.save(`Grade_Semanal_Turma_${turmaNome}.pdf`);
+    const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
+    const tId = document.getElementById('turmaSelectSemanal').value;
+    const week = document.getElementById('weekInputTurma').value;
+    if(!tId || !week) return alert("Selecione Turma e Semana");
+    
+    const turmaNome = dataStore[tId].name;
+    const [y, w] = week.split('-W').map(Number);
+    const start = getStartOfWeek(w, y);
+    const end = new Date(start); end.setDate(end.getDate() + 5);
+    
+    gerarCabecalhoPadrao(doc);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+    doc.text(`TURMA: ${turmaNome}`, 14, 45);
+    // MODELO SOLICITADO APLICADO AQUI:
+    doc.text(`Semana: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')} - Semana ${w}`, 14, 51);
+    
+    doc.autoTable({ 
+        html: '#tableGSTurma', 
+        startY: 56, 
+        theme: 'grid', 
+        styles: { fontSize: 6, cellPadding: 1, halign: 'center', valign: 'middle' }, 
+        headStyles: { fillColor: [21, 128, 61] },
+        didParseCell: function(data) {
+            if (data.cell.text[0]?.includes("INTERVALO") || data.cell.text[0]?.includes("ALMOÇO")) {
+                data.cell.styles.fillColor = [230, 230, 230];
+            }
         }
+    });
+    gerarRodapePadrao(doc);
+    doc.save(`Grade_Semanal_Turma_${turmaNome}.pdf`);
+}
 
         function initTabs() {
             document.querySelectorAll('.tab-btn').forEach(b => {
