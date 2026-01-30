@@ -209,7 +209,7 @@
         ];
 
         let dataStore = {};
-        const GIST_URL = "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/22c3a111a0dab7d5ecba150ed49993fab8899669/DADOS_2026_MESTRE";
+        const GIST_URL = "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/12fb098d4143f71f4e1664c27bd8297cdcc9a5a3/DADOS_2026_MESTRE";
 
         window.onload = () => {
             document.getElementById('dataRelatorio').textContent = new Date().toLocaleDateString('pt-BR');
