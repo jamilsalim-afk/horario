@@ -17,15 +17,15 @@
         table { width: 100%; border-collapse: collapse; }
         th { font-size: 14px !important; font-weight: 700 !important; text-transform: uppercase; padding: 12px 8px !important; }
         td { font-size: 12px !important; padding: 8px !important; }
-        #tableGS { table-layout: fixed; }
-        #tableGS td, #tableGS th { word-wrap: break-word; vertical-align: middle; text-align: center; border: 1px solid #e5e7eb; }
-        .aula-card { padding: 6px; margin: 2px; border-radius: 4px; line-height: 1.2; border-left: 4px solid #15803d; text-align: center; }
+        .tableGS { table-layout: fixed; width: 100%; }
+        .tableGS td, .tableGS th { word-wrap: break-word; vertical-align: middle; text-align: center; border: 1px solid #e5e7eb; }
+        .aula-card { padding: 4px; margin: 1px; border-radius: 4px; line-height: 1.1; border-left: 3px solid #15803d; text-align: center; font-size: 10px; }
         .status-normal { background-color: #f0fdf4; border-color: #15803d; }
         .status-extra { background-color: #ecfdf5; border-color: #059669; color: #065f46; }
         .status-reposicao { background-color: #eff6ff; border-color: #2563eb; color: #1e40af; }
         .status-rec { background-color: #fdf2f8; border-color: #db2777; color: #9d174d; }
         .status-exame { background-color: #f5f5f5; border-color: #4b5563; color: #1f2937; }
-        .intervalo-row { background-color: #f3f4f6 !important; color: #6b7280; font-weight: bold; text-transform: uppercase; }
+        .intervalo-row { background-color: #f3f4f6 !important; color: #6b7280; font-weight: bold; text-transform: uppercase; font-size: 10px; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -56,6 +56,7 @@
             <button class="tab-btn px-6 py-4 active" data-tab="tab-disciplina">RELATÓRIO POR DISCIPLINA</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-turma">RELATÓRIO POR TURMA</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-semanal">RELATÓRIO SEMANAL POR PROFESSOR</button>
+            <button class="tab-btn px-6 py-4" data-tab="tab-semanal-turma">RELATÓRIO SEMANAL POR TURMA</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-info">INFORMAÇÕES DO SISTEMA</button>
         </div>
     </nav>
@@ -126,11 +127,25 @@
                     <select id="profSelect" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
                     <input type="week" id="weekInput" class="p-3 border rounded-lg">
                     <div class="flex gap-2">
-                        <button onclick="gerarGrade()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition uppercase">Ver Grade</button>
-                        <button onclick="exportarGradePDF()" class="bg-[#15803d] text-white font-bold rounded-lg flex-1 hover:bg-green-800 transition shadow-md uppercase">Exportar PDF Grade</button>
+                        <button onclick="gerarGrade()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition uppercase text-xs">Ver Grade</button>
+                        <button onclick="exportarGradePDF()" class="bg-[#15803d] text-white font-bold rounded-lg flex-1 hover:bg-green-800 transition shadow-md uppercase text-xs">Exportar PDF Grade</button>
                     </div>
                 </div>
                 <div id="gradeRender" class="overflow-x-auto border rounded-lg"></div>
+            </div>
+        </section>
+
+        <section id="tab-semanal-turma" class="tab-pane">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <select id="turmaSelectSemanal" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
+                    <input type="week" id="weekInputTurma" class="p-3 border rounded-lg">
+                    <div class="flex gap-2">
+                        <button onclick="gerarGradeTurma()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition uppercase text-xs">Ver Grade Turma</button>
+                        <button onclick="exportarGradeTurmaPDF()" class="bg-[#15803d] text-white font-bold rounded-lg flex-1 hover:bg-green-800 transition shadow-md uppercase text-xs">Exportar PDF Grade</button>
+                    </div>
+                </div>
+                <div id="gradeTurmaRender" class="overflow-x-auto border rounded-lg"></div>
             </div>
         </section>
 
@@ -171,9 +186,7 @@
     </main>
 
     <script>
-        // LISTA DE CURSOS SEMESTRAIS
         const CURSOS_SEMESTRAIS = ["GEOGRAFIA", "MATEMÁTICA", "AGRONEGÓCIO", "ZOOTECNIA", "AGRONOMIA"];
-
         const TRADUCAO = { 
             "+": { texto: "EXTRA", class: "status-extra", soma: true },
             "R": { texto: "REPOSIÇÃO", class: "status-reposicao", soma: true },
@@ -205,7 +218,6 @@
             document.getElementById('yearSelect').onchange = carregarDados;
         };
 
-        // FUNÇÃO DE AUXÍLIO PARA IDENTIFICAR SEMESTRALIDADE
         function ehSemestral(tId) {
             if(!dataStore[tId]) return false;
             const nome = dataStore[tId].name.toUpperCase();
@@ -264,6 +276,7 @@
             document.getElementById('resultadoBusca').classList.add('hidden');
             document.getElementById('bodyPivo').innerHTML = '';
             document.getElementById('gradeRender').innerHTML = '';
+            document.getElementById('gradeTurmaRender').innerHTML = '';
             document.getElementById('disciplinaSelect').disabled = true;
             document.getElementById('disciplinaSelect').innerHTML = '<option>Selecione a Turma</option>';
             document.getElementById('semestreSelect').classList.add('hidden');
@@ -273,15 +286,15 @@
         function popularSelects() {
             const t1 = document.getElementById('turmaSelect');
             const t2 = document.getElementById('turmaSelectPivo');
+            const t3 = document.getElementById('turmaSelectSemanal');
             const ps = document.getElementById('profSelect');
             const profs = new Set();
             const optionsHtml = '<option value="">-- SELECIONE A TURMA --</option>' + Object.keys(dataStore).sort().map(id => `<option value="${id}">${dataStore[id].name}</option>`).join('');
-            t1.innerHTML = optionsHtml; t2.innerHTML = optionsHtml;
+            t1.innerHTML = optionsHtml; t2.innerHTML = optionsHtml; t3.innerHTML = optionsHtml;
             for(let t in dataStore) for(let d in dataStore[t].discs) dataStore[t].discs[d].sch.forEach(x => { if(x.prof && x.prof !== "N/I") profs.add(x.prof); });
             ps.innerHTML = '<option value="">-- PROFESSOR --</option>' + Array.from(profs).sort().map(p => `<option value="${p}">${p}</option>`).join('');
         }
 
-        // EVENTOS DE MUDANÇA COM FILTRO DE SEMESTRE
         document.getElementById('turmaSelect').onchange = (e) => {
             const tId = e.target.value;
             const semS = document.getElementById('semestreSelect');
@@ -365,7 +378,7 @@
             }
         }
 
-        // AS FUNÇÕES DE GRADE SEMANAL E PDF PERMANECEM IGUAIS À ÚLTIMA VERSÃO CONSOLIDADA
+        // LÓGICA DE GRADE SEMANAL (PROFESSOR)
         function gerarGrade() {
             const prof = document.getElementById('profSelect').value;
             const week = document.getElementById('weekInput').value;
@@ -373,16 +386,16 @@
             const [y, w] = week.split('-W').map(Number);
             const start = getStartOfWeek(w, y);
             const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-            let h = `<table id="tableGS" class="bg-white"><thead><tr class="bg-[#15803d] text-white"><th style="width: 100px;">HORÁRIO</th>`;
+            let h = `<table class="tableGS bg-white" id="tableGS"><thead><tr class="bg-[#15803d] text-white"><th style="width: 80px;">HORÁRIO</th>`;
             dias.forEach((d, i) => {
                 const dt = new Date(start); dt.setDate(dt.getDate() + i);
-                h += `<th style="width: 150px;">${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
+                h += `<th>${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
             });
             h += `</tr></thead><tbody>`;
             GABARITO.forEach(s => {
                 if(s.t === "intervalo") h += `<tr class="intervalo-row"><td>${s.h}</td><td colspan="6">${s.l}</td></tr>`;
                 else {
-                    h += `<tr><td class="bg-gray-100 font-bold border">${s.h}</td>`;
+                    h += `<tr><td class="bg-gray-100 font-bold border text-[10px]">${s.h}</td>`;
                     for(let i=0; i<6; i++) {
                         const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
                         let cellContent = "";
@@ -390,17 +403,55 @@
                             for(let d in dataStore[t].discs) {
                                 dataStore[t].discs[d].sch.forEach(x => {
                                     if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
-                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black">${dataStore[t].name}</div><div class="leading-tight">${dataStore[t].discs[d].name}</div></div>`;
+                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black">${dataStore[t].name}</div><div>${dataStore[t].discs[d].name}</div></div>`;
                                     }
                                 });
                             }
                         }
-                        h += `<td class="border" style="height: 60px;">${cellContent}</td>`;
+                        h += `<td class="border">${cellContent}</td>`;
                     }
                     h += `</tr>`;
                 }
             });
             document.getElementById('gradeRender').innerHTML = h + "</tbody></table>";
+        }
+
+        // LÓGICA DE GRADE SEMANAL (TURMA) - NOVA FUNÇÃO
+        function gerarGradeTurma() {
+            const tId = document.getElementById('turmaSelectSemanal').value;
+            const week = document.getElementById('weekInputTurma').value;
+            if(!tId || !week) return alert("Selecione Turma e Semana");
+            const [y, w] = week.split('-W').map(Number);
+            const start = getStartOfWeek(w, y);
+            const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+            let h = `<table class="tableGS bg-white" id="tableGSTurma"><thead><tr class="bg-[#15803d] text-white"><th style="width: 80px;">HORÁRIO</th>`;
+            dias.forEach((d, i) => {
+                const dt = new Date(start); dt.setDate(dt.getDate() + i);
+                h += `<th>${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
+            });
+            h += `</tr></thead><tbody>`;
+            GABARITO.forEach(s => {
+                if(s.t === "intervalo") h += `<tr class="intervalo-row"><td>${s.h}</td><td colspan="6">${s.l}</td></tr>`;
+                else {
+                    h += `<tr><td class="bg-gray-100 font-bold border text-[10px]">${s.h}</td>`;
+                    for(let i=0; i<6; i++) {
+                        const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
+                        let cellContent = "";
+                        if(dataStore[tId]) {
+                            for(let d in dataStore[tId].discs) {
+                                dataStore[tId].discs[d].sch.forEach(x => {
+                                    if(x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
+                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black uppercase">${dataStore[tId].discs[d].name}</div><div class="italic text-[8px]">${x.prof}</div></div>`;
+                                    }
+                                });
+                            }
+                        }
+                        h += `<td class="border">${cellContent}</td>`;
+                    }
+                    h += `</tr>`;
+                }
+            });
+            document.getElementById('gradeTurmaRender').innerHTML = h + "</tbody></table>";
         }
 
         function getStartOfWeek(w, y) {
@@ -411,13 +462,10 @@
         }
 
         function gerarCabecalhoPadrao(doc) {
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(14);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(14);
             doc.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", 105, 15, { align: "center" });
-            doc.setFontSize(12);
-            doc.text("CAMPUS CACOAL", 105, 22, { align: "center" });
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "normal");
+            doc.setFontSize(12); doc.text("CAMPUS CACOAL", 105, 22, { align: "center" });
+            doc.setFontSize(10); doc.setFont("helvetica", "normal");
             doc.text("DEPARTAMENTO DE APOIO AO ENSINO", 105, 30, { align: "center" });
             doc.text("COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS", 105, 35, { align: "center" });
             doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 38, 196, 38);
@@ -474,21 +522,44 @@
             const [y, w] = week.split('-W').map(Number);
             const start = getStartOfWeek(w, y);
             const end = new Date(start); end.setDate(end.getDate() + 5);
-            const periodo = `${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`;
             gerarCabecalhoPadrao(doc);
             doc.setFont("helvetica", "bold"); doc.setFontSize(11);
             doc.text(`PROFESSOR(A): ${prof}`, 14, 45);
-            doc.text(`PERÍODO: ${periodo} (Semana ${w})`, 14, 51);
-            doc.autoTable({ html: '#tableGS', startY: 56, theme: 'grid', styles: { fontSize: 7, cellPadding: 1, halign: 'center', valign: 'middle' }, headStyles: { fillColor: [21, 128, 61] },
+            doc.text(`PERÍODO: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')} (Semana ${w})`, 14, 51);
+            doc.autoTable({ html: '#tableGS', startY: 56, theme: 'grid', styles: { fontSize: 6, cellPadding: 1, halign: 'center', valign: 'middle' }, headStyles: { fillColor: [21, 128, 61] },
                 didParseCell: function(data) {
-                    const text = data.cell.text[0] || "";
-                    if (text.includes("INTERVALO") || text.includes("ALMOÇO") || text.includes("JANTAR")) {
-                        data.cell.styles.fillColor = [230, 230, 230]; data.cell.styles.fontStyle = 'bold';
+                    if (data.cell.text[0]?.includes("INTERVALO") || data.cell.text[0]?.includes("ALMOÇO")) {
+                        data.cell.styles.fillColor = [230, 230, 230];
                     }
                 }
             });
             gerarRodapePadrao(doc);
-            doc.save(`Grade_Semanal_${prof}.pdf`);
+            doc.save(`Grade_Semanal_Professor_${prof}.pdf`);
+        }
+
+        // NOVA FUNÇÃO DE EXPORTAÇÃO: GRADE SEMANAL TURMA
+        function exportarGradeTurmaPDF() {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
+            const tId = document.getElementById('turmaSelectSemanal').value;
+            const week = document.getElementById('weekInputTurma').value;
+            if(!tId || !week) return alert("Selecione Turma e Semana");
+            const turmaNome = dataStore[tId].name;
+            const [y, w] = week.split('-W').map(Number);
+            const start = getStartOfWeek(w, y);
+            const end = new Date(start); end.setDate(end.getDate() + 5);
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+            doc.text(`TURMA: ${turmaNome}`, 14, 45);
+            doc.text(`PERÍODO: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')} (Semana ${w})`, 14, 51);
+            doc.autoTable({ html: '#tableGSTurma', startY: 56, theme: 'grid', styles: { fontSize: 6, cellPadding: 1, halign: 'center', valign: 'middle' }, headStyles: { fillColor: [21, 128, 61] },
+                didParseCell: function(data) {
+                    if (data.cell.text[0]?.includes("INTERVALO") || data.cell.text[0]?.includes("ALMOÇO")) {
+                        data.cell.styles.fillColor = [230, 230, 230];
+                    }
+                }
+            });
+            gerarRodapePadrao(doc);
+            doc.save(`Grade_Semanal_Turma_${turmaNome}.pdf`);
         }
 
         function initTabs() {
