@@ -387,11 +387,16 @@
                             filtrar = (s.dtObj >= cal.s2.inicio && s.dtObj <= cal.s2.fim);
                         }
                     }
-                    if(filtrar) { 
+
+                    // --- NOVA CORREÇÃO: VERIFICA SE A AULA É REC OU EXAME ---
+                    const infoStatus = TRADUCAO[s.tag] || { soma: true };
+                    
+                    if(filtrar && infoStatus.soma) { 
                         mCount[s.dtObj.getMonth()]++; 
                         temNoSem = true; 
                     }
                 });
+                
                 if(temNoSem) {
                     let row = `<tr class="border-b"><td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
                     mCount.forEach(c => row += `<td class="border-r">${c||'-'}</td>`);
