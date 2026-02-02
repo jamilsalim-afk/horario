@@ -258,13 +258,24 @@
                 const yearSelected = document.getElementById('yearSelect').value;
                 const cal = CALENDARIOS[yearSelected];
                 
+                // Busca a URL correta do Gist para o ano selecionado
+                const urlAtiva = GIST_URLS[yearSelected];
+
+                // Validação caso o link do ano ainda não tenha sido inserido
+                if (!urlAtiva) {
+                    alert("URL do banco de dados para o ano " + yearSelected + " não configurada.");
+                    return;
+                }
+
                 // Atualização Aba Info
                 document.getElementById('infoYear').textContent = yearSelected;
                 document.getElementById('semestre1').textContent = `${cal.s1.inicio.toLocaleDateString('pt-BR')} a ${cal.s1.fim.toLocaleDateString('pt-BR')}`;
                 document.getElementById('semestre2').textContent = `${cal.s2.inicio.toLocaleDateString('pt-BR')} a ${cal.s2.fim.toLocaleDateString('pt-BR')}`;
 
                 document.getElementById('loading').classList.remove('hidden');
-                const res = await fetch(GIST_URL + "?t=" + new Date().getTime());
+                
+                // Usa a urlAtiva em vez da GIST_URL fixa
+                const res = await fetch(urlAtiva + "?t=" + new Date().getTime());
                 let csv = await res.text();
                 csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
                 const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
