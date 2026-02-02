@@ -234,8 +234,12 @@
         ];
 
         let dataStore = {};
-        const GIST_URL = "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/02cd1ffd77a42cb20efb6b8844bf79d16b1ee6bb/DADOS_2026_MESTRE";
-
+        const GIST_URLS = {
+            "2025": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/02cd1ffd77a42cb20efb6b8844bf79d16b1ee6bb/DADOS_2026_MESTRE",
+            "2026": "https://gist.githubusercontent.com/usuario/link_do_arquivo_2026",
+            "2027": "https://gist.githubusercontent.com/usuario/link_do_arquivo_2027"
+        };
+        
         window.onload = () => {
             document.getElementById('dataRelatorio').textContent = new Date().toLocaleDateString('pt-BR');
             carregarDados();
