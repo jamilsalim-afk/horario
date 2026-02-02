@@ -209,7 +209,7 @@
         ];
 
         let dataStore = {};
-        const GIST_URL = "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/7f6247c6e9b67c2e2bd78b0518d7e5f224ccffdc/DADOS_2026_MESTRE";
+        const GIST_URL = "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/02cd1ffd77a42cb20efb6b8844bf79d16b1ee6bb/DADOS_2026_MESTRE";
 
         window.onload = () => {
             document.getElementById('dataRelatorio').textContent = new Date().toLocaleDateString('pt-BR');
@@ -228,8 +228,8 @@
             try {
                 const yearSelected = document.getElementById('yearSelect').value;
                 document.getElementById('infoYear').textContent = yearSelected;
-                document.getElementById('semestre1').textContent = `01/01/${yearSelected} a 30/06/${yearSelected}`;
-                document.getElementById('semestre2').textContent = `01/07/${yearSelected} a 31/12/${yearSelected}`;
+                document.getElementById('semestre1').textContent = `01/01/${yearSelected} a 12/07/${yearSelected}`;
+                document.getElementById('semestre2').textContent = `27/07/${yearSelected} a 31/12/${yearSelected}`;
 
                 document.getElementById('loading').classList.remove('hidden');
                 const res = await fetch(GIST_URL + "?t=" + new Date().getTime());
@@ -242,28 +242,55 @@
                 let lastDate = "";
                 lines.slice(1).forEach(line => {
                     const cols = line.split(';').map(c => c?.trim());
-                    if (cols[0] && cols[0].includes('.')) lastDate = cols[0].replace(/\./g, '/');
-                    if (!cols[1] || !lastDate.endsWith(yearSelected)) return;
+                    
+                    // CORREÇÃO AQUI: Se a primeira coluna tiver conteúdo, 
+                    // padronizamos para barra, independentemente de vir com ponto ou barra.
+                    if (cols[0] && cols[0].length > 0) {
+                        lastDate = cols[0].replace(/\./g, '/'); 
+                    }
+
+                    // Se não temos data ou a data não pertence ao ano selecionado, ignoramos a linha
+                    if (!cols[1] || !lastDate || !lastDate.endsWith(yearSelected)) return;
+
                     turmas.forEach((tNome, idx) => {
                         const cell = cols[idx + 2];
                         if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
+                        
                         const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
                         const tagM = cell.match(/\[(.*?)\]/);
                         const tag = tagM ? tagM[1].toUpperCase() : null;
                         const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
+                        
                         let disc, prof;
                         if (cleanT.includes(' - ')) {
                             const partes = cleanT.split(' - ');
                             prof = partes.pop().trim();
                             disc = partes.join(' - ').trim();
                         } else { disc = cleanT; prof = "N/I"; }
+                        
                         if (!isNaN(disc)) return;
                         if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
+                        
                         const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
                         if (!dataStore[tId].discs[dId]) dataStore[tId].discs[dId] = { name: disc, sch: [] };
-                        const [d, m, a] = lastDate.split('/');
-                        const dt = new Date(a, m-1, d);
-                        dataStore[tId].discs[dId].sch.push({ date: lastDate, dtObj: dt, wd: dt.toLocaleDateString('pt-BR',{weekday:'long'}), time: cols[1], prof: prof, tag: tag });
+                        
+                        // Processamento seguro da data para o objeto Date
+                        const partesData = lastDate.split('/');
+                        if (partesData.length === 3) {
+                            const d = parseInt(partesData[0]);
+                            const m = parseInt(partesData[1]);
+                            const a = parseInt(partesData[2]);
+                            const dt = new Date(a, m - 1, d);
+                            
+                            dataStore[tId].discs[dId].sch.push({ 
+                                date: lastDate, 
+                                dtObj: dt, 
+                                wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }), 
+                                time: cols[1], 
+                                prof: prof, 
+                                tag: tag 
+                            });
+                        }
                     });
                 });
                 document.getElementById('loading').classList.add('hidden');
