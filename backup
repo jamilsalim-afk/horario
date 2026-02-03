@@ -41,9 +41,8 @@
                 <div class="flex flex-col">
                     <label class="text-[10px] font-bold opacity-70">ANO LETIVO</label>
                     <select id="yearSelect" class="bg-white/20 border border-white/30 p-1 rounded text-white font-bold outline-none cursor-pointer">
-                        <option value="2025" class="text-black" selected>2025</option>
-                        <option value="2026" class="text-black">2026</option>
-                        <option value="2027" class="text-black">2027</option>
+                        <option value="2025" class="text-black">2025</option>
+                        <option value="2026" class="text-black" selected>2026</option>
                     </select>
                 </div>
                 <div id="dataRelatorio" class="bg-white/10 px-4 py-2 rounded-lg font-mono text-sm border border-white/20">--/--/----</div>
@@ -204,11 +203,133 @@
             "2026": {
                 s1: { inicio: new Date(2026, 1, 2), fim: new Date(2026, 6, 10) },
                 s2: { inicio: new Date(2026, 6, 27), fim: new Date(2026, 11, 22) }
-            },
-            "2027": {
-                s1: { inicio: new Date(2027, 1, 1), fim: new Date(2027, 6, 30) },
-                s2: { inicio: new Date(2027, 7, 01), fim: new Date(2027, 12, 31) }
-            }            
+            }
+        };
+
+        // --- MAPEAMENTO DE ARQUIVOS POR ANO ---
+        const GIST_URLS = {
+            "2025": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/02cd1ffd77a42cb20efb6b8844bf79d16b1ee6bb/DADOS_2026_MESTRE",
+            "2026": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw"
+        };
+
+        // --- DICIONÁRIO PARA NOMES COMPLETOS DOS PROFESSORES ---
+        const NOMES_PROFESSORES = {
+            "Adilson": "Adilson Miranda de Almeida",
+"Adriana": "Adriana Aparecida Rigolon",
+"Agatha": "Agatha Christie de Souza Zemke",
+"Agmar": "Agmar Aparecido Felix Chaves",
+"Aguinaldo": "Aguinaldo Pereira",
+"Alberto": "Alberto Ayres Benício",
+"Aline": "Aline da Silva Correa Valério Sakyrabiar",
+"Aline S": "Aline da Silva Aquilau",
+"Ana C": "Ana Caroline Carvalho Miranda",
+"Andreia": "Andreia Maciel da Silva",
+"Angelica": "Angelica Fernandes Estok",
+"Angelita": "Angelita Aparecida Coutinho Picazevicz",
+"Antonio": "Antonio Ferreira Neto",
+"Arilson": "Arilson Ramos",
+"Atila": "Atila Bezerra Mira",
+"Ayrton": "Ayrton Schupp Pinheiro Oliveira",
+"Barbara": "Barbara Ferreira Fadul",
+"Cirlania": "Cirlania Pereira Batista",
+"Claudemir": "Claudemir Miranda Barboza",
+"Claudia": "Claudia Aline Puerari",
+"Coordenador": "Coordenador",
+"Daianne": "Daianne Castilho Silva",
+"Daphne": "Daphne Chiara Antônio",
+"Davys": "Davys Sleman de Negreiros",
+"Debora": "Debora Costa Barroso Corrêa",
+"Dheimy": "Dheimy da Silva Novelli",
+"Dhieisi": "Dhieisi Ebert Bolsanello",
+"Dierlei": "Dierlei dos Santos",
+"Edmilson": "Edmilson Maria de Brito",
+"Edna": "Edna Cristiane da Matta",
+"Edslei": "Edslei Rodrigues de Almeida",
+"Eduardo": "Eduardo Lucas Jorge Serapião",
+"Erick": "Erick Rodrigo de Oliveira Mesquita",
+"Eslei": "Eslei Justiniano dos Reis",
+"Gabriel": "Gabriel Tenório dos Santos",
+"Gean": "Gean Batista de Lima",
+"Genival": "Genival Gomes da Silva Junior",
+"Gian": "Gian Willian Tavares de Souza",
+"Gilson D": "Gilson Divino Araújo da Silva",
+"Gilson P": "Gilson Pedro Ranzula",
+"Heloisa": "Heloisa Helena Ribeiro de Miranda",
+"Henri": "Henri Francis Ternes de Oliveira",
+"Henrique": "Henrique Silva Sérvio",
+"Ideir": "Ideir Coto",
+"Ingrid": "Ingrid Leticia Menezes Barbosa",
+"Iramaia": "Iramaia Grespan Ferreira",
+"Irlan": "Irlan Cordeiro de Souza",
+"Isis": "Isis Lazzarini Foroni",
+"Jakeline": "Jakeline Melo dos Anjos",
+"Jefferson": "Jefferson Lemes Pinto",
+"Jhonata": "Jhonata Lemos da Silva",
+"Joel M": "Joel Martins Braga Junior",
+"Joelson": "Joelson Barral do Espírito Santo",
+"Jorge": "Jorge da Silva Werneck",
+"Jose A": "Jose de Anchieta Almeida da Silva",
+"Jose N": "Jose Nilson Rosa Baraldi Molis",
+"Jose V": "Jose Vechiatto",
+"Josimar": "Josimar Monteiro Santos",
+"Julia S": "Julia de Souza Lopes Basso",
+"Juliana F": "Juliana Ferraz Huback Rodrigues",
+"Juliana M": "Juliana Maria Freitas de Assis Holanda",
+"Juliane": "Juliane Lima Araújo",
+"Juliano A": "Juliano Alves de Deus",
+"Juliano C": "Juliano Cristhian Silva",
+"Julio": "Julio Eduardo Neves dos Santos",
+"Junia": "Junia de Souza Lopes",
+"Jussara": "Jussara Maria Oliveira de Araújo",
+"Larissa": "Larissa Cristina Torrezani Starling Reinicke",
+"Leia": "Leia Marcia dos Santos Kempim",
+"Leonardo": "Leonardo dos Santos Franca Shockness",
+"Lilian A": "Lilian Andrea dos Santos",
+"Lilian B": "Lilian Barbosa da Silva",
+"Lilian C": "Lilian Catiúscia Eifler Firme da Silva",
+"Luciana": "Luciana Alves Ranzula",
+"Magno": "Magno Batista Amorim",
+"Maily": "Maily Marques Pereira",
+"Marcilei": "Marcilei Serafim Germano",
+"Marcio": "Marcio Adolfo de Almeida",
+"Marco A": "Marco Aurélio Nunes de Barros",
+"Marco R": "Marco Rodrigo de Souza",
+"Marcos": "Marcos - Prof PVH",
+"Marcos G": "Marcos Grutzmacher",
+"Maria A": "Maria Angélica Petrini",
+"Maria C": "Maria Cristiana de Freitas da Costa",
+"Messias": "Messias José dos Santos Silva",
+"Nirvani": "Nirvani Schroeder Henrique",
+"Paula": "Paula Michelli da Silva Franco Belmont",
+"Paulo": "Paulo Fernando Campagnolli",
+"Professor": "Professor Contratado",
+"Rafael A": "Rafael Ayres Romanholo",
+"Rafael C": "Rafael Carlos Bispo",
+"Raquel": "Raquel Pereira da Silva",
+"Rivaldo": "Rivaldo José de Souza Silva",
+"Rodolfo": "Rodolfo Gustavo Teixeira Ribas",
+"Rogerio": "Rogerio Giovani Soares Ferreira",
+"Saiane": "Saiane Barros de Souza",
+"Saiara": "Saiara Gerlaine Silva Toledo",
+"Samanta": "Samanta Margarida Milani",
+"Sergio": "Sergio Nunes de Jesus",
+"Shelly": "Shelly Braum",
+"Sirlei": "Sirlei Soares dos Santos",
+"Sirley": "Sirley Leite Freitas",
+"Substituto": "Substituto",
+"Substituto_a1": "Substituto_a1",
+"Substituto_a2": "Substituto_a2",
+"Substituto_a3": "Substituto_a3",
+"Substituto_a4": "Substituto_a4",
+"Substituto_a5": "Substituto_a5",
+"Substituto_a6": "Substituto_a6",
+"Thiago": "Thiago Jose Sampaio Kaiser",
+"Tiago": "Tiago Roberto Silva Santos",
+"Uberlando": "Uberlando Tiburtino Leite",
+"Uirande": "Uirande Oliveira Costa",
+"Vera": "Vera Lucia Lopes Silveira",
+"Wellyton": "Wellyton Rocha Vasconcellos",
+            // "NOME_NO_CSV": "NOME COMPLETO AQUI"
         };
 
         const CURSOS_SEMESTRAIS = ["GEOGRAFIA", "MATEMÁTICA", "AGRONEGÓCIO", "ZOOTECNIA", "AGRONOMIA"];
@@ -234,18 +355,29 @@
         ];
 
         let dataStore = {};
-        const GIST_URLS = {
-            "2025": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/02cd1ffd77a42cb20efb6b8844bf79d16b1ee6bb/DADOS_2026_MESTRE",
-            "2026": "https://gist.githubusercontent.com/usuario/link_do_arquivo_2026",
-            "2027": "https://gist.githubusercontent.com/usuario/link_do_arquivo_2027"
-        };
-        
+
         window.onload = () => {
             document.getElementById('dataRelatorio').textContent = new Date().toLocaleDateString('pt-BR');
             carregarDados();
             initTabs();
             document.getElementById('yearSelect').onchange = carregarDados;
         };
+
+        function obterNomeCompleto(nomeCurto) {
+            if (!nomeCurto || nomeCurto === "N/I") return "N/I";
+
+            // 1. Pegamos o nome do CSV e deixamos tudo minúsculo para comparar
+            const busca = nomeCurto.trim().toLowerCase();
+
+            // 2. Procuramos no dicionário comparando também em minúsculo
+            // Isso ignora se você escreveu Maiúsculo ou Minúsculo em qualquer um dos lados
+            const chaveEncontrada = Object.keys(NOMES_PROFESSORES).find(
+                key => key.toLowerCase() === busca
+            );
+
+            // 3. Se achou, retorna o nome completo (valor). Se não, retorna o original do CSV.
+            return chaveEncontrada ? NOMES_PROFESSORES[chaveEncontrada] : nomeCurto;
+        }
 
         function ehSemestral(tId) {
             if(!dataStore[tId]) return false;
@@ -257,24 +389,18 @@
             try {
                 const yearSelected = document.getElementById('yearSelect').value;
                 const cal = CALENDARIOS[yearSelected];
-                
-                // Busca a URL correta do Gist para o ano selecionado
                 const urlAtiva = GIST_URLS[yearSelected];
 
-                // Validação caso o link do ano ainda não tenha sido inserido
                 if (!urlAtiva) {
-                    alert("URL do banco de dados para o ano " + yearSelected + " não configurada.");
+                    alert("URL para o ano " + yearSelected + " não configurada.");
                     return;
                 }
-
-                // Atualização Aba Info
+                
                 document.getElementById('infoYear').textContent = yearSelected;
                 document.getElementById('semestre1').textContent = `${cal.s1.inicio.toLocaleDateString('pt-BR')} a ${cal.s1.fim.toLocaleDateString('pt-BR')}`;
                 document.getElementById('semestre2').textContent = `${cal.s2.inicio.toLocaleDateString('pt-BR')} a ${cal.s2.fim.toLocaleDateString('pt-BR')}`;
 
                 document.getElementById('loading').classList.remove('hidden');
-                
-                // Usa a urlAtiva em vez da GIST_URL fixa
                 const res = await fetch(urlAtiva + "?t=" + new Date().getTime());
                 let csv = await res.text();
                 csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
@@ -287,8 +413,6 @@
                 lines.slice(1).forEach(line => {
                     const cols = line.split(';').map(c => c?.trim());
                     if (cols[0] && cols[0].length > 0) { lastDate = cols[0].replace(/\./g, '/'); }
-
-                    // Filtro de ano para evitar carregar dados de anos diferentes
                     if (!cols[1] || !lastDate || !lastDate.includes(`/${yearSelected}`)) return;
 
                     turmas.forEach((tNome, idx) => {
@@ -356,7 +480,7 @@
                         <td class="border">${a.date}</td>
                         <td class="border uppercase">${a.wd}</td>
                         <td class="border">${a.time}</td>
-                        <td class="border font-bold">${a.prof}</td>
+                        <td class="border font-bold">${obterNomeCompleto(a.prof)}</td>
                         <td class="border font-black">${info.texto}</td>
                     </tr>`;
                 }
@@ -387,16 +511,12 @@
                             filtrar = (s.dtObj >= cal.s2.inicio && s.dtObj <= cal.s2.fim);
                         }
                     }
-
-                    // --- NOVA CORREÇÃO: VERIFICA SE A AULA É REC OU EXAME ---
                     const infoStatus = TRADUCAO[s.tag] || { soma: true };
-                    
                     if(filtrar && infoStatus.soma) { 
                         mCount[s.dtObj.getMonth()]++; 
                         temNoSem = true; 
                     }
                 });
-                
                 if(temNoSem) {
                     let row = `<tr class="border-b"><td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
                     mCount.forEach(c => row += `<td class="border-r">${c||'-'}</td>`);
@@ -522,7 +642,7 @@
                         let cellContent = "";
                         if(dataStore[tId]) for(let d in dataStore[tId].discs) dataStore[tId].discs[d].sch.forEach(x => {
                             if(x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
-                                cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black uppercase" style="margin-bottom: 2px;">${dataStore[tId].discs[d].name}</div><div class="border-t border-gray-200 pt-1 italic text-[8px]">${x.prof}</div></div>`;
+                                cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black uppercase" style="margin-bottom: 2px;">${dataStore[tId].discs[d].name}</div><div class="border-t border-gray-200 pt-1 italic text-[8px]">${obterNomeCompleto(x.prof)}</div></div>`;
                             }
                         });
                         h += `<td class="border">${cellContent}</td>`;
@@ -571,7 +691,7 @@
                 if(!ehSemestral(tId)) return true;
                 return sem === "1" ? (a.dtObj >= cal.s1.inicio && a.dtObj <= cal.s1.fim) : (a.dtObj >= cal.s2.inicio && a.dtObj <= cal.s2.fim);
             });
-            const profs = [...new Set(aulasFiltradas.map(s => s.prof))].join(", ");
+            const profs = [...new Set(aulasFiltradas.map(s => obterNomeCompleto(s.prof)))].join(", ");
             const somaAulas = aulasFiltradas.filter(s => !s.tag || TRADUCAO[s.tag].soma).length;
             gerarCabecalhoPadrao(doc); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
             doc.text(`DISCIPLINA: ${data.name} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
@@ -598,7 +718,7 @@
             const [y, w] = week.split('-W').map(Number);
             const start = getStartOfWeek(w, y); const end = new Date(start); end.setDate(end.getDate() + 5);
             gerarCabecalhoPadrao(doc); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-            doc.text(`PROFESSOR(A): ${prof}`, 14, 45); doc.text(`Semana: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`, 14, 51);
+            doc.text(`PROFESSOR(A): ${obterNomeCompleto(prof)}`, 14, 45); doc.text(`Semana: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`, 14, 51);
             doc.autoTable({ html: '#tableGS', startY: 56, theme: 'grid', styles: { fontSize: 7, halign: 'center', valign: 'middle' }, headStyles: { fillColor: [21, 128, 61] } });
             gerarRodapePadrao(doc); doc.save(`Grade - ${prof}.pdf`);
         }
