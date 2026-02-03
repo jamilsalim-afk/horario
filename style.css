@@ -687,17 +687,47 @@
             const yearSelected = document.getElementById('yearSelect').value;
             const cal = CALENDARIOS[yearSelected];
             const data = dataStore[tId].discs[dId];
+            
             const aulasFiltradas = data.sch.filter(a => {
                 if(!ehSemestral(tId)) return true;
                 return sem === "1" ? (a.dtObj >= cal.s1.inicio && a.dtObj <= cal.s1.fim) : (a.dtObj >= cal.s2.inicio && a.dtObj <= cal.s2.fim);
             });
+            
             const profs = [...new Set(aulasFiltradas.map(s => obterNomeCompleto(s.prof)))].join(", ");
             const somaAulas = aulasFiltradas.filter(s => !s.tag || TRADUCAO[s.tag].soma).length;
-            gerarCabecalhoPadrao(doc); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
             doc.text(`DISCIPLINA: ${data.name} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
-            doc.text(`PROFESSORES: ${profs}`, 14, 51); doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
-            doc.autoTable({ html: '#tableD', startY: 62, theme: 'grid', styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
-            gerarRodapePadrao(doc); doc.save(`${data.name} - ${dataStore[tId].name}.pdf`);
+            doc.text(`PROFESSORES: ${profs}`, 14, 51); 
+            doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
+
+            doc.autoTable({ 
+                html: '#tableD', 
+                startY: 62, 
+                theme: 'grid', 
+                styles: { fontSize: 9, halign: 'center', textColor: [0, 0, 0] }, 
+                headStyles: { fillColor: [21, 128, 61], textColor: [255, 255, 255] },
+                // Lógica para colorir as linhas conforme o status
+                didParseCell: function(data) {
+                    if (data.section === 'body') {
+                        const statusCell = data.row.cells[4].text[0]; // Pega o texto da coluna STATUS
+                        
+                        if (statusCell === "EXTRA") {
+                            data.cell.styles.fillColor = [236, 253, 245]; // Verde claro
+                        } else if (statusCell === "REPOSIÇÃO") {
+                            data.cell.styles.fillColor = [239, 246, 255]; // Azul claro
+                        } else if (statusCell === "RECUPERAÇÃO") {
+                            data.cell.styles.fillColor = [253, 242, 248]; // Rosa claro
+                        } else if (statusCell === "EXAME") {
+                            data.cell.styles.fillColor = [245, 245, 245]; // Cinza
+                        }
+                    }
+                }
+            });
+
+            gerarRodapePadrao(doc); 
+            doc.save(`${data.name} - ${dataStore[tId].name}.pdf`);
         }
 
         function exportarPivoPDF() {
@@ -706,7 +736,21 @@
             const sem = document.getElementById('semestreSelectPivo').value;
             gerarCabecalhoPadrao(doc); doc.setFont("helvetica", "bold"); doc.setFontSize(12);
             doc.text(`RELATÓRIO DA TURMA: ${dataStore[tId].name} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
-            doc.autoTable({ html: '#tablePivo', startY: 50, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            
+            doc.autoTable({ 
+                html: '#tablePivo', 
+                startY: 50, 
+                theme: 'grid', 
+                styles: { fontSize: 7, halign: 'center', textColor: [0, 0, 0] }, 
+                headStyles: { fillColor: [21, 128, 61] },
+                didParseCell: function(data) {
+                    // Colore a coluna TOTAL (última coluna)
+                    if (data.section === 'body' && data.column.index === 13) {
+                        data.cell.styles.fillColor = [220, 252, 231]; // Verde claro
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                }
+            });
             gerarRodapePadrao(doc); doc.save(`${dataStore[tId].name}.pdf`);
         }
 
@@ -717,9 +761,25 @@
             if(!prof || !week) return alert("Selecione Professor e Semana");
             const [y, w] = week.split('-W').map(Number);
             const start = getStartOfWeek(w, y); const end = new Date(start); end.setDate(end.getDate() + 5);
+            
             gerarCabecalhoPadrao(doc); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-            doc.text(`PROFESSOR(A): ${obterNomeCompleto(prof)}`, 14, 45); doc.text(`Semana: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`, 14, 51);
-            doc.autoTable({ html: '#tableGS', startY: 56, theme: 'grid', styles: { fontSize: 7, halign: 'center', valign: 'middle' }, headStyles: { fillColor: [21, 128, 61] } });
+            doc.text(`PROFESSOR(A): ${obterNomeCompleto(prof)}`, 14, 45); 
+            doc.text(`Semana: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`, 14, 51);
+            
+            doc.autoTable({ 
+                html: '#tableGS', 
+                startY: 56, 
+                theme: 'grid', 
+                styles: { fontSize: 7, halign: 'center', valign: 'middle' }, 
+                headStyles: { fillColor: [21, 128, 61] },
+                didParseCell: function(data) {
+                    // Pintar linhas de intervalo
+                    if (data.row.section === 'body' && data.row.raw.classList.contains('intervalo-row')) {
+                        data.cell.styles.fillColor = [243, 244, 246];
+                        data.cell.styles.textColor = [107, 114, 128];
+                    }
+                }
+            });
             gerarRodapePadrao(doc); doc.save(`Grade - ${prof}.pdf`);
         }
 
@@ -730,9 +790,23 @@
             if(!tId || !week) return alert("Selecione Turma e Semana");
             const [y, w] = week.split('-W').map(Number);
             const start = getStartOfWeek(w, y); const end = new Date(start); end.setDate(end.getDate() + 5);
+            
             gerarCabecalhoPadrao(doc); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-            doc.text(`TURMA: ${dataStore[tId].name}`, 14, 45); doc.text(`Semana: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`, 14, 51);
-            doc.autoTable({ html: '#tableGSTurma', startY: 56, theme: 'grid', styles: { fontSize: 7, halign: 'center', valign: 'middle' }, headStyles: { fillColor: [21, 128, 61] } });
+            doc.text(`TURMA: ${dataStore[tId].name}`, 14, 45); 
+            doc.text(`Semana: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`, 14, 51);
+            
+            doc.autoTable({ 
+                html: '#tableGSTurma', 
+                startY: 56, 
+                theme: 'grid', 
+                styles: { fontSize: 7, halign: 'center', valign: 'middle' }, 
+                headStyles: { fillColor: [21, 128, 61] },
+                didParseCell: function(data) {
+                    if (data.row.section === 'body' && data.row.raw.classList.contains('intervalo-row')) {
+                        data.cell.styles.fillColor = [243, 244, 246];
+                    }
+                }
+            });
             gerarRodapePadrao(doc); doc.save(`Grade - ${dataStore[tId].name}.pdf`);
         }
 
