@@ -13,6 +13,7 @@
         .tab-btn.active { border-bottom: 4px solid #15803d; color: #15803d; font-weight: 800; }
         .tab-pane { display: none; }
         .tab-pane.active { display: block; }
+        
         table { width: 100%; border-collapse: collapse; }
         th { font-size: 14px !important; font-weight: 700 !important; text-transform: uppercase; padding: 12px 8px !important; }
         td { font-size: 12px !important; padding: 8px !important; }
@@ -71,9 +72,7 @@
                         <option value="1">1º SEMESTRE</option>
                         <option value="2">2º SEMESTRE</option>
                     </select>
-                    <select id="disciplinaSelect" class="p-3 border rounded-lg bg-gray-50" disabled>
-                        <option>Selecione a Turma</option>
-                    </select>
+                    <select id="disciplinaSelect" class="p-3 border rounded-lg bg-gray-50" disabled><option>Selecione a Turma</option></select>
                 </div>
                 <div id="resultadoBusca" class="hidden">
                     <div class="flex flex-wrap gap-4 mb-4 items-center">
@@ -89,13 +88,7 @@
                     </div>
                     <table id="tableD" class="min-w-full bg-white border text-center">
                         <thead class="bg-gray-50">
-                            <tr>
-                                <th class="border">DATA</th>
-                                <th class="border">DIA</th>
-                                <th class="border">HORÁRIO</th>
-                                <th class="border">PROFESSOR</th>
-                                <th class="border">STATUS</th>
-                            </tr>
+                            <tr><th class="border">DATA</th><th class="border">DIA</th><th class="border">HORÁRIO</th><th class="border">PROFESSOR</th><th class="border">STATUS</th></tr>
                         </thead>
                         <tbody id="bodyD"></tbody>
                     </table>
@@ -118,8 +111,7 @@
                         <thead class="bg-[#15803d] text-white">
                             <tr>
                                 <th class="text-left w-64">DISCIPLINA</th>
-                                <th>JAN</th><th>FEV</th><th>MAR</th><th>ABR</th><th>MAI</th><th>JUN</th>
-                                <th>JUL</th><th>AGO</th><th>SET</th><th>OUT</th><th>NOV</th><th>DEZ</th>
+                                <th>JAN</th><th>FEV</th><th>MAR</th><th>ABR</th><th>MAI</th><th>JUN</th><th>JUL</th><th>AGO</th><th>SET</th><th>OUT</th><th>NOV</th><th>DEZ</th>
                                 <th class="bg-green-600">TOTAL</th>
                             </tr>
                         </thead>
@@ -194,144 +186,6 @@
     </main>
 
     <script>
-        // --- CONFIGURAÇÃO DE DATAS POR ANO ---
-        const CALENDARIOS = {
-            "2025": {
-                s1: { inicio: new Date(2025, 1, 1), fim: new Date(2025, 6, 12) },
-                s2: { inicio: new Date(2025, 6, 27), fim: new Date(2025, 11, 31) }
-            },
-            "2026": {
-                s1: { inicio: new Date(2026, 1, 2), fim: new Date(2026, 6, 10) },
-                s2: { inicio: new Date(2026, 6, 27), fim: new Date(2026, 11, 22) }
-            }
-        };
-
-        // --- MAPEAMENTO DE ARQUIVOS POR ANO ---
-        const GIST_URLS = {
-            "2025": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/02cd1ffd77a42cb20efb6b8844bf79d16b1ee6bb/DADOS_2026_MESTRE",
-            "2026": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw"
-        };
-
-        // --- DICIONÁRIO PARA NOMES COMPLETOS DOS PROFESSORES ---
-        const NOMES_PROFESSORES = {
-            "Adilson": "Adilson Miranda de Almeida",
-"Adriana": "Adriana Aparecida Rigolon",
-"Agatha": "Agatha Christie de Souza Zemke",
-"Agmar": "Agmar Aparecido Felix Chaves",
-"Aguinaldo": "Aguinaldo Pereira",
-"Alberto": "Alberto Ayres Benício",
-"Aline": "Aline da Silva Correa Valério Sakyrabiar",
-"Aline S": "Aline da Silva Aquilau",
-"Ana C": "Ana Caroline Carvalho Miranda",
-"Andreia": "Andreia Maciel da Silva",
-"Angelica": "Angelica Fernandes Estok",
-"Angelita": "Angelita Aparecida Coutinho Picazevicz",
-"Antonio": "Antonio Ferreira Neto",
-"Arilson": "Arilson Ramos",
-"Atila": "Atila Bezerra Mira",
-"Ayrton": "Ayrton Schupp Pinheiro Oliveira",
-"Barbara": "Barbara Ferreira Fadul",
-"Cirlania": "Cirlania Pereira Batista",
-"Claudemir": "Claudemir Miranda Barboza",
-"Claudia": "Claudia Aline Puerari",
-"Coordenador": "Coordenador",
-"Daianne": "Daianne Castilho Silva",
-"Daphne": "Daphne Chiara Antônio",
-"Davys": "Davys Sleman de Negreiros",
-"Debora": "Debora Costa Barroso Corrêa",
-"Dheimy": "Dheimy da Silva Novelli",
-"Dhieisi": "Dhieisi Ebert Bolsanello",
-"Dierlei": "Dierlei dos Santos",
-"Edmilson": "Edmilson Maria de Brito",
-"Edna": "Edna Cristiane da Matta",
-"Edslei": "Edslei Rodrigues de Almeida",
-"Eduardo": "Eduardo Lucas Jorge Serapião",
-"Erick": "Erick Rodrigo de Oliveira Mesquita",
-"Eslei": "Eslei Justiniano dos Reis",
-"Gabriel": "Gabriel Tenório dos Santos",
-"Gean": "Gean Batista de Lima",
-"Genival": "Genival Gomes da Silva Junior",
-"Gian": "Gian Willian Tavares de Souza",
-"Gilson D": "Gilson Divino Araújo da Silva",
-"Gilson P": "Gilson Pedro Ranzula",
-"Heloisa": "Heloisa Helena Ribeiro de Miranda",
-"Henri": "Henri Francis Ternes de Oliveira",
-"Henrique": "Henrique Silva Sérvio",
-"Ideir": "Ideir Coto",
-"Ingrid": "Ingrid Leticia Menezes Barbosa",
-"Iramaia": "Iramaia Grespan Ferreira",
-"Irlan": "Irlan Cordeiro de Souza",
-"Isis": "Isis Lazzarini Foroni",
-"Jakeline": "Jakeline Melo dos Anjos",
-"Jefferson": "Jefferson Lemes Pinto",
-"Jhonata": "Jhonata Lemos da Silva",
-"Joel M": "Joel Martins Braga Junior",
-"Joelson": "Joelson Barral do Espírito Santo",
-"Jorge": "Jorge da Silva Werneck",
-"Jose A": "Jose de Anchieta Almeida da Silva",
-"Jose N": "Jose Nilson Rosa Baraldi Molis",
-"Jose V": "Jose Vechiatto",
-"Josimar": "Josimar Monteiro Santos",
-"Julia S": "Julia de Souza Lopes Basso",
-"Juliana F": "Juliana Ferraz Huback Rodrigues",
-"Juliana M": "Juliana Maria Freitas de Assis Holanda",
-"Juliane": "Juliane Lima Araújo",
-"Juliano A": "Juliano Alves de Deus",
-"Juliano C": "Juliano Cristhian Silva",
-"Julio": "Julio Eduardo Neves dos Santos",
-"Junia": "Junia de Souza Lopes",
-"Jussara": "Jussara Maria Oliveira de Araújo",
-"Larissa": "Larissa Cristina Torrezani Starling Reinicke",
-"Leia": "Leia Marcia dos Santos Kempim",
-"Leonardo": "Leonardo dos Santos Franca Shockness",
-"Lilian A": "Lilian Andrea dos Santos",
-"Lilian B": "Lilian Barbosa da Silva",
-"Lilian C": "Lilian Catiúscia Eifler Firme da Silva",
-"Luciana": "Luciana Alves Ranzula",
-"Magno": "Magno Batista Amorim",
-"Maily": "Maily Marques Pereira",
-"Marcilei": "Marcilei Serafim Germano",
-"Marcio": "Marcio Adolfo de Almeida",
-"Marco A": "Marco Aurélio Nunes de Barros",
-"Marco R": "Marco Rodrigo de Souza",
-"Marcos": "Marcos - Prof PVH",
-"Marcos G": "Marcos Grutzmacher",
-"Maria A": "Maria Angélica Petrini",
-"Maria C": "Maria Cristiana de Freitas da Costa",
-"Messias": "Messias José dos Santos Silva",
-"Nirvani": "Nirvani Schroeder Henrique",
-"Paula": "Paula Michelli da Silva Franco Belmont",
-"Paulo": "Paulo Fernando Campagnolli",
-"Professor": "Professor Contratado",
-"Rafael A": "Rafael Ayres Romanholo",
-"Rafael C": "Rafael Carlos Bispo",
-"Raquel": "Raquel Pereira da Silva",
-"Rivaldo": "Rivaldo José de Souza Silva",
-"Rodolfo": "Rodolfo Gustavo Teixeira Ribas",
-"Rogerio": "Rogerio Giovani Soares Ferreira",
-"Saiane": "Saiane Barros de Souza",
-"Saiara": "Saiara Gerlaine Silva Toledo",
-"Samanta": "Samanta Margarida Milani",
-"Sergio": "Sergio Nunes de Jesus",
-"Shelly": "Shelly Braum",
-"Sirlei": "Sirlei Soares dos Santos",
-"Sirley": "Sirley Leite Freitas",
-"Substituto": "Substituto",
-"Substituto_a1": "Substituto_a1",
-"Substituto_a2": "Substituto_a2",
-"Substituto_a3": "Substituto_a3",
-"Substituto_a4": "Substituto_a4",
-"Substituto_a5": "Substituto_a5",
-"Substituto_a6": "Substituto_a6",
-"Thiago": "Thiago Jose Sampaio Kaiser",
-"Tiago": "Tiago Roberto Silva Santos",
-"Uberlando": "Uberlando Tiburtino Leite",
-"Uirande": "Uirande Oliveira Costa",
-"Vera": "Vera Lucia Lopes Silveira",
-"Wellyton": "Wellyton Rocha Vasconcellos",
-            // "NOME_NO_CSV": "NOME COMPLETO AQUI"
-        };
-
         const CURSOS_SEMESTRAIS = ["GEOGRAFIA", "MATEMÁTICA", "AGRONEGÓCIO", "ZOOTECNIA", "AGRONOMIA"];
         const TRADUCAO = { 
             "+": { texto: "EXTRA", class: "status-extra", soma: true },
@@ -355,6 +209,7 @@
         ];
 
         let dataStore = {};
+        const GIST_URL = "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/02cd1ffd77a42cb20efb6b8844bf79d16b1ee6bb/DADOS_2026_MESTRE";
 
         window.onload = () => {
             document.getElementById('dataRelatorio').textContent = new Date().toLocaleDateString('pt-BR');
@@ -362,22 +217,6 @@
             initTabs();
             document.getElementById('yearSelect').onchange = carregarDados;
         };
-
-        function obterNomeCompleto(nomeCurto) {
-            if (!nomeCurto || nomeCurto === "N/I") return "N/I";
-
-            // 1. Pegamos o nome do CSV e deixamos tudo minúsculo para comparar
-            const busca = nomeCurto.trim().toLowerCase();
-
-            // 2. Procuramos no dicionário comparando também em minúsculo
-            // Isso ignora se você escreveu Maiúsculo ou Minúsculo em qualquer um dos lados
-            const chaveEncontrada = Object.keys(NOMES_PROFESSORES).find(
-                key => key.toLowerCase() === busca
-            );
-
-            // 3. Se achou, retorna o nome completo (valor). Se não, retorna o original do CSV.
-            return chaveEncontrada ? NOMES_PROFESSORES[chaveEncontrada] : nomeCurto;
-        }
 
         function ehSemestral(tId) {
             if(!dataStore[tId]) return false;
@@ -388,20 +227,12 @@
         async function carregarDados() {
             try {
                 const yearSelected = document.getElementById('yearSelect').value;
-                const cal = CALENDARIOS[yearSelected];
-                const urlAtiva = GIST_URLS[yearSelected];
-
-                if (!urlAtiva) {
-                    alert("URL para o ano " + yearSelected + " não configurada.");
-                    return;
-                }
-                
                 document.getElementById('infoYear').textContent = yearSelected;
-                document.getElementById('semestre1').textContent = `${cal.s1.inicio.toLocaleDateString('pt-BR')} a ${cal.s1.fim.toLocaleDateString('pt-BR')}`;
-                document.getElementById('semestre2').textContent = `${cal.s2.inicio.toLocaleDateString('pt-BR')} a ${cal.s2.fim.toLocaleDateString('pt-BR')}`;
+                document.getElementById('semestre1').textContent = `01/01/${yearSelected} a 12/07/${yearSelected}`;
+                document.getElementById('semestre2').textContent = `27/07/${yearSelected} a 31/12/${yearSelected}`;
 
                 document.getElementById('loading').classList.remove('hidden');
-                const res = await fetch(urlAtiva + "?t=" + new Date().getTime());
+                const res = await fetch(GIST_URL + "?t=" + new Date().getTime());
                 let csv = await res.text();
                 csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
                 const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
@@ -409,11 +240,12 @@
                 const turmas = headers.slice(2);
                 dataStore = {};
                 let lastDate = "";
-
                 lines.slice(1).forEach(line => {
                     const cols = line.split(';').map(c => c?.trim());
-                    if (cols[0] && cols[0].length > 0) { lastDate = cols[0].replace(/\./g, '/'); }
-                    if (!cols[1] || !lastDate || !lastDate.includes(`/${yearSelected}`)) return;
+                    if (cols[0] && cols[0].length > 0) {
+                        lastDate = cols[0].replace(/\./g, '/'); 
+                    }
+                    if (!cols[1] || !lastDate || !lastDate.endsWith(yearSelected)) return;
 
                     turmas.forEach((tNome, idx) => {
                         const cell = cols[idx + 2];
@@ -431,99 +263,34 @@
                             disc = partes.join(' - ').trim();
                         } else { disc = cleanT; prof = "N/I"; }
                         
+                        if (!isNaN(disc)) return;
                         if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
+                        
                         const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
                         if (!dataStore[tId].discs[dId]) dataStore[tId].discs[dId] = { name: disc, sch: [] };
                         
-                        const p = lastDate.split('/');
-                        const dt = new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
-                        
-                        dataStore[tId].discs[dId].sch.push({ 
-                            date: lastDate, dtObj: dt, 
-                            wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }), 
-                            time: cols[1], prof: prof, tag: tag 
-                        });
+                        const partesData = lastDate.split('/');
+                        if (partesData.length === 3) {
+                            const d = parseInt(partesData[0]);
+                            const m = parseInt(partesData[1]);
+                            const a = parseInt(partesData[2]);
+                            const dt = new Date(a, m - 1, d);
+                            
+                            dataStore[tId].discs[dId].sch.push({ 
+                                date: lastDate, 
+                                dtObj: dt, 
+                                wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }), 
+                                time: cols[1], 
+                                prof: prof, 
+                                tag: tag 
+                            });
+                        }
                     });
                 });
                 document.getElementById('loading').classList.add('hidden');
                 popularSelects();
                 limparResultados();
             } catch (e) { document.getElementById('loading').innerHTML = "Erro ao sincronizar."; }
-        }
-
-        function renderD() {
-            const tId = document.getElementById('turmaSelect').value;
-            const dId = document.getElementById('disciplinaSelect').value;
-            const sem = document.getElementById('semestreSelect').value;
-            const yearSelected = document.getElementById('yearSelect').value;
-            const cal = CALENDARIOS[yearSelected];
-            
-            const b = document.getElementById('bodyD');
-            if(!tId || !dId) return;
-            b.innerHTML = ''; 
-            let sR = 0, sE = 0;
-
-            dataStore[tId].discs[dId].sch.forEach(a => {
-                let filtrar = true;
-                if(ehSemestral(tId)) {
-                    if(sem === "1") {
-                        filtrar = (a.dtObj >= cal.s1.inicio && a.dtObj <= cal.s1.fim);
-                    } else {
-                        filtrar = (a.dtObj >= cal.s2.inicio && a.dtObj <= cal.s2.fim);
-                    }
-                }
-
-                if(filtrar) {
-                    const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
-                    if(info.soma) sR++; else sE++;
-                    b.innerHTML += `<tr class="${info.class}">
-                        <td class="border">${a.date}</td>
-                        <td class="border uppercase">${a.wd}</td>
-                        <td class="border">${a.time}</td>
-                        <td class="border font-bold">${obterNomeCompleto(a.prof)}</td>
-                        <td class="border font-black">${info.texto}</td>
-                    </tr>`;
-                }
-            });
-            document.getElementById('cont-regular').textContent = sR;
-            document.getElementById('cont-extra').textContent = sE;
-            document.getElementById('resultadoBusca').classList.remove('hidden');
-        }
-
-        function renderPivo() {
-            const tId = document.getElementById('turmaSelectPivo').value;
-            const sem = document.getElementById('semestreSelectPivo').value;
-            const yearSelected = document.getElementById('yearSelect').value;
-            const cal = CALENDARIOS[yearSelected];
-            const b = document.getElementById('bodyPivo');
-            if(!tId) return;
-            b.innerHTML = '';
-
-            for(let dId in dataStore[tId].discs) {
-                let mCount = Array(12).fill(0);
-                let temNoSem = false;
-                dataStore[tId].discs[dId].sch.forEach(s => {
-                    let filtrar = true;
-                    if(ehSemestral(tId)) {
-                        if(sem === "1") {
-                            filtrar = (s.dtObj >= cal.s1.inicio && s.dtObj <= cal.s1.fim);
-                        } else {
-                            filtrar = (s.dtObj >= cal.s2.inicio && s.dtObj <= cal.s2.fim);
-                        }
-                    }
-                    const infoStatus = TRADUCAO[s.tag] || { soma: true };
-                    if(filtrar && infoStatus.soma) { 
-                        mCount[s.dtObj.getMonth()]++; 
-                        temNoSem = true; 
-                    }
-                });
-                if(temNoSem) {
-                    let row = `<tr class="border-b"><td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
-                    mCount.forEach(c => row += `<td class="border-r">${c||'-'}</td>`);
-                    row += `<td class="bg-green-100 text-green-900 font-black">${mCount.reduce((a,b)=>a+b)}</td></tr>`;
-                    b.innerHTML += row;
-                }
-            }
         }
 
         function limparResultados() {
@@ -561,15 +328,14 @@
         function atualizarListaDisciplinas() {
             const tId = document.getElementById('turmaSelect').value;
             const sem = document.getElementById('semestreSelect').value;
-            const yearSelected = document.getElementById('yearSelect').value;
-            const cal = CALENDARIOS[yearSelected];
             const dS = document.getElementById('disciplinaSelect');
             dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
             if(dataStore[tId]) {
                 Object.keys(dataStore[tId].discs).sort().forEach(id => {
-                    const temAulaNoSem = dataStore[tId].discs[id].sch.some(a => {
-                        if(!ehSemestral(tId)) return true;
-                        return sem === "1" ? (a.dtObj >= cal.s1.inicio && a.dtObj <= cal.s1.fim) : (a.dtObj >= cal.s2.inicio && a.dtObj <= cal.s2.fim);
+                    const aulas = dataStore[tId].discs[id].sch;
+                    const temAulaNoSem = aulas.some(a => {
+                        const m = a.dtObj.getMonth() + 1;
+                        return ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
                     });
                     if(temAulaNoSem) dS.innerHTML += `<option value="${id}">${dataStore[tId].discs[id].name}</option>`;
                 });
@@ -579,13 +345,59 @@
         }
 
         document.getElementById('disciplinaSelect').onchange = renderD;
+
+        function renderD() {
+            const tId = document.getElementById('turmaSelect').value;
+            const dId = document.getElementById('disciplinaSelect').value;
+            const sem = document.getElementById('semestreSelect').value;
+            const b = document.getElementById('bodyD');
+            if(!tId || !dId) return;
+            b.innerHTML = ''; let sR = 0, sE = 0;
+            dataStore[tId].discs[dId].sch.forEach(a => {
+                const m = a.dtObj.getMonth() + 1;
+                const filtrar = ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
+                if(filtrar) {
+                    const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
+                    if(info.soma) sR++; else sE++;
+                    b.innerHTML += `<tr class="${info.class}"><td class="border">${a.date}</td><td class="border uppercase">${a.wd}</td><td class="border">${a.time}</td><td class="border font-bold">${a.prof}</td><td class="border font-black">${info.texto}</td></tr>`;
+                }
+            });
+            document.getElementById('cont-regular').textContent = sR;
+            document.getElementById('cont-extra').textContent = sE;
+            document.getElementById('resultadoBusca').classList.remove('hidden');
+        }
+
         document.getElementById('turmaSelectPivo').onchange = (e) => {
             const tId = e.target.value;
             const semS = document.getElementById('semestreSelectPivo');
             if(ehSemestral(tId)) semS.classList.remove('hidden'); else semS.classList.add('hidden');
             renderPivo();
         };
+
         document.getElementById('semestreSelectPivo').onchange = renderPivo;
+
+        function renderPivo() {
+            const tId = document.getElementById('turmaSelectPivo').value;
+            const sem = document.getElementById('semestreSelectPivo').value;
+            const b = document.getElementById('bodyPivo');
+            if(!tId) return;
+            b.innerHTML = '';
+            for(let dId in dataStore[tId].discs) {
+                let mCount = Array(12).fill(0);
+                let temNoSem = false;
+                dataStore[tId].discs[dId].sch.forEach(s => {
+                    const m = s.dtObj.getMonth();
+                    const filtrar = ehSemestral(tId) ? (sem === "1" ? m < 6 : m >= 6) : true;
+                    if(filtrar) { mCount[m]++; temNoSem = true; }
+                });
+                if(temNoSem) {
+                    let row = `<tr class="border-b"><td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
+                    mCount.forEach(c => row += `<td class="border-r">${c||'-'}</td>`);
+                    row += `<td class="bg-green-100 text-green-900 font-black">${mCount.reduce((a,b)=>a+b)}</td></tr>`;
+                    b.innerHTML += row;
+                }
+            }
+        }
 
         function gerarGrade() {
             const prof = document.getElementById('profSelect').value;
@@ -594,29 +406,91 @@
             const [y, w] = week.split('-W').map(Number);
             const start = getStartOfWeek(w, y);
             const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-            let h = `<table class="tableGS bg-white" id="tableGS"><thead><tr class="bg-[#15803d] text-white"><th style="width: 100px;">HORÁRIO</th>`;
+            
+            let aulasPorDia = Array(6).fill(0);
+            let horasPermanencia = Array(6).fill(0);
+            let observacoes = [];
+            let ultimaAulaDiaAnterior = null;
+
+            let h = `<table class="tableGS bg-white" id="tableGS" style="width:100%; table-layout:fixed; border-collapse:collapse;">
+                <thead>
+                    <tr class="bg-[#15803d] text-white">
+                        <th style="width: 100px;">HORÁRIO</th>`;
             dias.forEach((d, i) => {
                 const dt = new Date(start); dt.setDate(dt.getDate() + i);
                 h += `<th style="width: 14%;">${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
             });
             h += `</tr></thead><tbody>`;
+
             GABARITO.forEach(s => {
-                if(s.t === "intervalo") h += `<tr class="intervalo-row"><td>${s.h}</td><td colspan="6">${s.l}</td></tr>`;
-                else {
+                if(s.t === "intervalo") {
+                    h += `<tr class="intervalo-row"><td style="border:1px solid #ddd;">${s.h}</td><td colspan="6" style="border:1px solid #ddd;">${s.l}</td></tr>`;
+                } else {
                     h += `<tr><td class="bg-gray-100 font-bold border text-[10px]">${s.h}</td>`;
                     for(let i=0; i<6; i++) {
                         const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
                         let cellContent = "";
-                        for(let t in dataStore) for(let d in dataStore[t].discs) dataStore[t].discs[d].sch.forEach(x => {
-                            if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
-                                cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black uppercase" style="font-size:9px;">${dataStore[t].name}</div><div class="border-t border-gray-200 mt-1" style="font-size:8px;">${dataStore[t].discs[d].name}</div></div>`;
+                        for(let t in dataStore) {
+                            for(let d in dataStore[t].discs) {
+                                dataStore[t].discs[d].sch.forEach(x => {
+                                    if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
+                                        aulasPorDia[i]++;
+                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}">
+                                            <div class="font-black uppercase" style="font-size:9px;">${dataStore[t].name}</div>
+                                            <div class="border-t border-gray-200 mt-1" style="font-size:8px;">${dataStore[t].discs[d].name}</div>
+                                        </div>`;
+                                    }
+                                });
                             }
-                        });
+                        }
                         h += `<td class="border" style="height:50px; vertical-align:top;">${cellContent}</td>`;
                     }
                     h += `</tr>`;
                 }
             });
+
+            for(let i=0; i<6; i++) {
+                let aulasNoDia = [];
+                const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
+                for(let t in dataStore) {
+                    for(let d in dataStore[t].discs) {
+                        dataStore[t].discs[d].sch.forEach(x => {
+                            if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth()) {
+                                const [hIni] = x.time.split(' - ')[0].split(':').map(Number);
+                                const [hFim] = x.time.split(' - ')[1].split(':').map(Number);
+                                aulasNoDia.push({ inicio: hIni, fim: hFim, data: new Date(dtR) });
+                            }
+                        });
+                    }
+                }
+                if(aulasNoDia.length > 0) {
+                    aulasNoDia.sort((a,b) => a.inicio - b.inicio);
+                    let primeira = aulasNoDia[0], ultima = aulasNoDia[aulasNoDia.length-1];
+                    let diff = ultima.fim - primeira.inicio;
+                    if(primeira.inicio <= 12 && ultima.fim >= 14) diff -= 2;
+                    horasPermanencia[i] = diff > 0 ? diff : 0;
+                    if(ultimaAulaDiaAnterior) {
+                        let dFimAnt = new Date(ultimaAulaDiaAnterior.data); dFimAnt.setHours(ultimaAulaDiaAnterior.fim, 0, 0);
+                        let dIniAtu = new Date(primeira.data); dIniAtu.setHours(primeira.inicio, 0, 0);
+                        let diffInter = (dIniAtu - dFimAnt) / (1000 * 60 * 60);
+                        if(diffInter < 11) observacoes.push(`${dias[i]}: Intervalo de ${diffInter.toFixed(1)}h (mín. 11h)`);
+                    }
+                    ultimaAulaDiaAnterior = ultima;
+                } else { ultimaAulaDiaAnterior = null; }
+            }
+
+            h += `<tr class="bg-gray-50 font-bold"><td class="text-[9px] border">AULAS DIÁRIAS</td>`;
+            aulasPorDia.forEach(c => h += `<td class="border">${c}</td>`);
+            h += `</tr><tr class="bg-blue-50 font-bold"><td class="text-[9px] border">PERMANÊNCIA</td>`;
+            horasPermanencia.forEach(v => h += `<td class="border">${v}h</td>`);
+            h += `</tr>`;
+
+            const totalSemana = aulasPorDia.reduce((a,b) => a+b, 0);
+            h += `<tr class="bg-green-50 font-black"><td colspan="2" class="text-left px-2 border">TOTAL SEMANAL:</td><td colspan="5" class="text-left px-2 border">${totalSemana} Aulas</td></tr>`;
+            
+            let obsTexto = observacoes.length > 0 ? observacoes.join(' | ') : "Interjornada regular.";
+            h += `<tr class="text-[9px]"><td class="font-bold border bg-yellow-50">OBSERVAÇÕES:</td><td colspan="6" class="text-left px-2 border text-red-600 font-bold">${obsTexto}</td></tr>`;
+
             document.getElementById('gradeRender').innerHTML = h + "</tbody></table>";
         }
 
@@ -640,11 +514,18 @@
                     for(let i=0; i<6; i++) {
                         const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
                         let cellContent = "";
-                        if(dataStore[tId]) for(let d in dataStore[tId].discs) dataStore[tId].discs[d].sch.forEach(x => {
-                            if(x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
-                                cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}"><div class="font-black uppercase" style="margin-bottom: 2px;">${dataStore[tId].discs[d].name}</div><div class="border-t border-gray-200 pt-1 italic text-[8px]">${obterNomeCompleto(x.prof)}</div></div>`;
+                        if(dataStore[tId]) {
+                            for(let d in dataStore[tId].discs) {
+                                dataStore[tId].discs[d].sch.forEach(x => {
+                                    if(x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
+                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}">
+                                            <div class="font-black uppercase" style="margin-bottom: 2px;">${dataStore[tId].discs[d].name}</div>
+                                            <div class="border-t border-gray-200 pt-1 italic text-[8px]">${x.prof}</div>
+                                        </div>`;
+                                    }
+                                });
                             }
-                        });
+                        }
                         h += `<td class="border">${cellContent}</td>`;
                     }
                     h += `</tr>`;
@@ -684,130 +565,104 @@
             const tId = document.getElementById('turmaSelect').value;
             const dId = document.getElementById('disciplinaSelect').value;
             const sem = document.getElementById('semestreSelect').value;
-            const yearSelected = document.getElementById('yearSelect').value;
-            const cal = CALENDARIOS[yearSelected];
             const data = dataStore[tId].discs[dId];
-            
+            const turmaNome = dataStore[tId].name;
+            const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+
             const aulasFiltradas = data.sch.filter(a => {
-                if(!ehSemestral(tId)) return true;
-                return sem === "1" ? (a.dtObj >= cal.s1.inicio && a.dtObj <= cal.s1.fim) : (a.dtObj >= cal.s2.inicio && a.dtObj <= cal.s2.fim);
+                const m = a.dtObj.getMonth() + 1;
+                return ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
             });
             
-            const profs = [...new Set(aulasFiltradas.map(s => obterNomeCompleto(s.prof)))].join(", ");
+            const profs = [...new Set(aulasFiltradas.map(s => s.prof))].join(", ");
             const somaAulas = aulasFiltradas.filter(s => !s.tag || TRADUCAO[s.tag].soma).length;
-
+            
             gerarCabecalhoPadrao(doc);
             doc.setFont("helvetica", "bold"); doc.setFontSize(11);
             doc.text(`DISCIPLINA: ${data.name} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
-            doc.text(`PROFESSORES: ${profs}`, 14, 51); 
+            doc.text(`PROFESSORES: ${profs}`, 14, 51);
             doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
-
-            doc.autoTable({ 
-                html: '#tableD', 
-                startY: 62, 
-                theme: 'grid', 
-                styles: { fontSize: 9, halign: 'center', textColor: [0, 0, 0] }, 
-                headStyles: { fillColor: [21, 128, 61], textColor: [255, 255, 255] },
-                // Lógica para colorir as linhas conforme o status
-                didParseCell: function(data) {
-                    if (data.section === 'body') {
-                        const statusCell = data.row.cells[4].text[0]; // Pega o texto da coluna STATUS
-                        
-                        if (statusCell === "EXTRA") {
-                            data.cell.styles.fillColor = [236, 253, 245]; // Verde claro
-                        } else if (statusCell === "REPOSIÇÃO") {
-                            data.cell.styles.fillColor = [239, 246, 255]; // Azul claro
-                        } else if (statusCell === "RECUPERAÇÃO") {
-                            data.cell.styles.fillColor = [253, 242, 248]; // Rosa claro
-                        } else if (statusCell === "EXAME") {
-                            data.cell.styles.fillColor = [245, 245, 245]; // Cinza
-                        }
-                    }
-                }
-            });
-
-            gerarRodapePadrao(doc); 
-            doc.save(`${data.name} - ${dataStore[tId].name}.pdf`);
+            doc.autoTable({ html: '#tableD', startY: 62, theme: 'grid', styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            gerarRodapePadrao(doc);
+            doc.save(`${data.name} - ${turmaNome} - ${dataEmissao}.pdf`);
         }
 
         function exportarPivoPDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
             const tId = document.getElementById('turmaSelectPivo').value;
             const sem = document.getElementById('semestreSelectPivo').value;
-            gerarCabecalhoPadrao(doc); doc.setFont("helvetica", "bold"); doc.setFontSize(12);
-            doc.text(`RELATÓRIO DA TURMA: ${dataStore[tId].name} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
-            
-            doc.autoTable({ 
-                html: '#tablePivo', 
-                startY: 50, 
-                theme: 'grid', 
-                styles: { fontSize: 7, halign: 'center', textColor: [0, 0, 0] }, 
-                headStyles: { fillColor: [21, 128, 61] },
-                didParseCell: function(data) {
-                    // Colore a coluna TOTAL (última coluna)
-                    if (data.section === 'body' && data.column.index === 13) {
-                        data.cell.styles.fillColor = [220, 252, 231]; // Verde claro
-                        data.cell.styles.fontStyle = 'bold';
-                    }
-                }
-            });
-            gerarRodapePadrao(doc); doc.save(`${dataStore[tId].name}.pdf`);
+            const turmaNome = dataStore[tId].name;
+            const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+            doc.text(`RELATÓRIO ANUAL DA TURMA: ${turmaNome} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
+            doc.autoTable({ html: '#tablePivo', startY: 50, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            gerarRodapePadrao(doc);
+            doc.save(`${turmaNome} - ${dataEmissao}.pdf`);
         }
 
         function exportarGradePDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
             const prof = document.getElementById('profSelect').value;
             const week = document.getElementById('weekInput').value;
+            const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
             if(!prof || !week) return alert("Selecione Professor e Semana");
-            const [y, w] = week.split('-W').map(Number);
-            const start = getStartOfWeek(w, y); const end = new Date(start); end.setDate(end.getDate() + 5);
             
-            gerarCabecalhoPadrao(doc); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-            doc.text(`PROFESSOR(A): ${obterNomeCompleto(prof)}`, 14, 45); 
-            doc.text(`Semana: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`, 14, 51);
+            const [y, w] = week.split('-W').map(Number);
+            const start = getStartOfWeek(w, y);
+            const end = new Date(start); end.setDate(end.getDate() + 5);
+            
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+            doc.text(`PROFESSOR(A): ${prof}`, 14, 45);
+            doc.text(`Semana: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')} - Semana ${w}`, 14, 51);
             
             doc.autoTable({ 
                 html: '#tableGS', 
                 startY: 56, 
                 theme: 'grid', 
-                styles: { fontSize: 7, halign: 'center', valign: 'middle' }, 
+                styles: { fontSize: 7, cellPadding: 1.5, halign: 'center', valign: 'middle', overflow: 'linebreak' }, 
                 headStyles: { fillColor: [21, 128, 61] },
+                columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 26 }, 2: { cellWidth: 26 }, 3: { cellWidth: 26 }, 4: { cellWidth: 26 }, 5: { cellWidth: 26 }, 6: { cellWidth: 26 } },
                 didParseCell: function(data) {
-                    // Pintar linhas de intervalo
-                    if (data.row.section === 'body' && data.row.raw.classList.contains('intervalo-row')) {
-                        data.cell.styles.fillColor = [243, 244, 246];
-                        data.cell.styles.textColor = [107, 114, 128];
+                    if (data.row.index >= data.table.body.length - 4) {
+                        data.cell.styles.fillColor = [250, 250, 250];
+                        data.cell.styles.fontStyle = 'bold';
                     }
                 }
             });
-            gerarRodapePadrao(doc); doc.save(`Grade - ${prof}.pdf`);
+            gerarRodapePadrao(doc);
+            doc.save(`Ficha Semanal - ${prof} - ${dataEmissao}.pdf`);
         }
 
         function exportarGradeTurmaPDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
             const tId = document.getElementById('turmaSelectSemanal').value;
             const week = document.getElementById('weekInputTurma').value;
+            const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
             if(!tId || !week) return alert("Selecione Turma e Semana");
-            const [y, w] = week.split('-W').map(Number);
-            const start = getStartOfWeek(w, y); const end = new Date(start); end.setDate(end.getDate() + 5);
             
-            gerarCabecalhoPadrao(doc); doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-            doc.text(`TURMA: ${dataStore[tId].name}`, 14, 45); 
-            doc.text(`Semana: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}`, 14, 51);
+            const turmaNome = dataStore[tId].name;
+            const [y, w] = week.split('-W').map(Number);
+            const start = getStartOfWeek(w, y);
+            const end = new Date(start); end.setDate(end.getDate() + 5);
+            
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+            doc.text(`TURMA: ${turmaNome}`, 14, 45);
+            doc.text(`Semana: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')} - Semana ${w}`, 14, 51);
             
             doc.autoTable({ 
                 html: '#tableGSTurma', 
                 startY: 56, 
                 theme: 'grid', 
-                styles: { fontSize: 7, halign: 'center', valign: 'middle' }, 
+                styles: { fontSize: 7, cellPadding: 2, halign: 'center', valign: 'middle', overflow: 'linebreak' }, 
                 headStyles: { fillColor: [21, 128, 61] },
-                didParseCell: function(data) {
-                    if (data.row.section === 'body' && data.row.raw.classList.contains('intervalo-row')) {
-                        data.cell.styles.fillColor = [243, 244, 246];
-                    }
-                }
+                columnStyles: { 0: { cellWidth: 22 }, 1: { cellWidth: 27.3 }, 2: { cellWidth: 27.3 }, 3: { cellWidth: 27.3 }, 4: { cellWidth: 27.3 }, 5: { cellWidth: 27.3 }, 6: { cellWidth: 27.3 } }
             });
-            gerarRodapePadrao(doc); doc.save(`Grade - ${dataStore[tId].name}.pdf`);
+            gerarRodapePadrao(doc);
+            doc.save(`Ficha Semanal - ${turmaNome} - ${dataEmissao}.pdf`);
         }
 
         function initTabs() {
