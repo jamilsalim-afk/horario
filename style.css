@@ -186,6 +186,18 @@
     </main>
 
     <script>
+        // --- CONFIGURAÇÃO DE DATAS POR ANO (AJUSTE AQUI OS LIMITES REAIS) ---
+        const CALENDARIOS = {
+            "2025": {
+                s1: { inicio: new Date(2025, 1, 1), fim: new Date(2025, 6, 12) }, // 01/02 a 12/07
+                s2: { inicio: new Date(2025, 6, 27), fim: new Date(2025, 11, 31) } // 27/07 a 31/12
+            },
+            "2026": {
+                s1: { inicio: new Date(2026, 1, 2), fim: new Date(2026, 6, 10) }, // 02/02 a 10/07
+                s2: { inicio: new Date(2026, 6, 27), fim: new Date(2026, 11, 22) } // 27/07 a 22/12
+            }
+        };
+
         const CURSOS_SEMESTRAIS = ["GEOGRAFIA", "MATEMÁTICA", "AGRONEGÓCIO", "ZOOTECNIA", "AGRONOMIA"];
         const TRADUCAO = { 
             "+": { texto: "EXTRA", class: "status-extra", soma: true },
@@ -227,9 +239,12 @@
         async function carregarDados() {
             try {
                 const yearSelected = document.getElementById('yearSelect').value;
+                const cal = CALENDARIOS[yearSelected];
+                
+                // ABA INFO DINÂMICA
                 document.getElementById('infoYear').textContent = yearSelected;
-                document.getElementById('semestre1').textContent = `01/01/${yearSelected} a 12/07/${yearSelected}`;
-                document.getElementById('semestre2').textContent = `27/07/${yearSelected} a 31/12/${yearSelected}`;
+                document.getElementById('semestre1').textContent = `${cal.s1.inicio.toLocaleDateString('pt-BR')} a ${cal.s1.fim.toLocaleDateString('pt-BR')}`;
+                document.getElementById('semestre2').textContent = `${cal.s2.inicio.toLocaleDateString('pt-BR')} a ${cal.s2.fim.toLocaleDateString('pt-BR')}`;
 
                 document.getElementById('loading').classList.remove('hidden');
                 const res = await fetch(GIST_URL + "?t=" + new Date().getTime());
@@ -240,12 +255,13 @@
                 const turmas = headers.slice(2);
                 dataStore = {};
                 let lastDate = "";
+
                 lines.slice(1).forEach(line => {
                     const cols = line.split(';').map(c => c?.trim());
-                    if (cols[0] && cols[0].length > 0) {
-                        lastDate = cols[0].replace(/\./g, '/'); 
-                    }
-                    if (!cols[1] || !lastDate || !lastDate.endsWith(yearSelected)) return;
+                    if (cols[0] && cols[0].length > 0) { lastDate = cols[0].replace(/\./g, '/'); }
+
+                    // Filtro de Ano Rigoroso
+                    if (!cols[1] || !lastDate || !lastDate.includes(`/${yearSelected}`)) return;
 
                     turmas.forEach((tNome, idx) => {
                         const cell = cols[idx + 2];
@@ -263,28 +279,18 @@
                             disc = partes.join(' - ').trim();
                         } else { disc = cleanT; prof = "N/I"; }
                         
-                        if (!isNaN(disc)) return;
                         if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
-                        
                         const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
                         if (!dataStore[tId].discs[dId]) dataStore[tId].discs[dId] = { name: disc, sch: [] };
                         
-                        const partesData = lastDate.split('/');
-                        if (partesData.length === 3) {
-                            const d = parseInt(partesData[0]);
-                            const m = parseInt(partesData[1]);
-                            const a = parseInt(partesData[2]);
-                            const dt = new Date(a, m - 1, d);
-                            
-                            dataStore[tId].discs[dId].sch.push({ 
-                                date: lastDate, 
-                                dtObj: dt, 
-                                wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }), 
-                                time: cols[1], 
-                                prof: prof, 
-                                tag: tag 
-                            });
-                        }
+                        const p = lastDate.split('/');
+                        const dt = new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
+                        
+                        dataStore[tId].discs[dId].sch.push({ 
+                            date: lastDate, dtObj: dt, 
+                            wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }), 
+                            time: cols[1], prof: prof, tag: tag 
+                        });
                     });
                 });
                 document.getElementById('loading').classList.add('hidden');
@@ -293,6 +299,65 @@
             } catch (e) { document.getElementById('loading').innerHTML = "Erro ao sincronizar."; }
         }
 
+        // LÓGICA DE RENDERIZAÇÃO COM FILTRO CRONOLÓGICO POR DIA/MÊS
+        function renderD() {
+            const tId = document.getElementById('turmaSelect').value;
+            const dId = document.getElementById('disciplinaSelect').value;
+            const sem = document.getElementById('semestreSelect').value;
+            const year = document.getElementById('yearSelect').value;
+            const cal = CALENDARIOS[year];
+            const b = document.getElementById('bodyD');
+            
+            if(!tId || !dId) return;
+            b.innerHTML = ''; let sR = 0, sE = 0;
+
+            dataStore[tId].discs[dId].sch.forEach(a => {
+                let filtrar = true;
+                if(ehSemestral(tId)) {
+                    if(sem === "1") filtrar = (a.dtObj >= cal.s1.inicio && a.dtObj <= cal.s1.fim);
+                    else filtrar = (a.dtObj >= cal.s2.inicio && a.dtObj <= cal.s2.fim);
+                }
+
+                if(filtrar) {
+                    const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
+                    if(info.soma) sR++; else sE++;
+                    b.innerHTML += `<tr class="${info.class}"><td class="border">${a.date}</td><td class="border uppercase">${a.wd}</td><td class="border">${a.time}</td><td class="border font-bold">${a.prof}</td><td class="border font-black">${info.texto}</td></tr>`;
+                }
+            });
+            document.getElementById('cont-regular').textContent = sR;
+            document.getElementById('cont-extra').textContent = sE;
+            document.getElementById('resultadoBusca').classList.remove('hidden');
+        }
+
+        function renderPivo() {
+            const tId = document.getElementById('turmaSelectPivo').value;
+            const sem = document.getElementById('semestreSelectPivo').value;
+            const year = document.getElementById('yearSelect').value;
+            const cal = CALENDARIOS[year];
+            const b = document.getElementById('bodyPivo');
+            if(!tId) return;
+            b.innerHTML = '';
+
+            for(let dId in dataStore[tId].discs) {
+                let mCount = Array(12).fill(0);
+                let temNoSem = false;
+                dataStore[tId].discs[dId].sch.forEach(s => {
+                    let filtrar = true;
+                    if(ehSemestral(tId)) {
+                        if(sem === "1") filtrar = (s.dtObj >= cal.s1.inicio && s.dtObj <= cal.s1.fim);
+                        else filtrar = (s.dtObj >= cal.s2.inicio && s.dtObj <= cal.s2.fim);
+                    }
+                    if(filtrar) { mCount[s.dtObj.getMonth()]++; temNoSem = true; }
+                });
+                if(temNoSem) {
+                    let row = `<tr class="border-b"><td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
+                    mCount.forEach(c => row += `<td class="border-r">${c||'-'}</td>`);
+                    row += `<td class="bg-green-100 text-green-900 font-black">${mCount.reduce((a,b)=>a+b)}</td></tr>`;
+                    b.innerHTML += row;
+                }
+            }
+        }
+        
         function limparResultados() {
             document.getElementById('resultadoBusca').classList.add('hidden');
             document.getElementById('bodyPivo').innerHTML = '';
