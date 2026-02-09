@@ -301,62 +301,82 @@
 
         // LÓGICA DE RENDERIZAÇÃO COM FILTRO CRONOLÓGICO POR DIA/MÊS
         function renderD() {
-            const tId = document.getElementById('turmaSelect').value;
-            const dId = document.getElementById('disciplinaSelect').value;
-            const sem = document.getElementById('semestreSelect').value;
-            const year = document.getElementById('yearSelect').value;
-            const cal = CALENDARIOS[year];
-            const b = document.getElementById('bodyD');
-            
-            if(!tId || !dId) return;
-            b.innerHTML = ''; let sR = 0, sE = 0;
+    const tId = document.getElementById('turmaSelect').value;
+    const dId = document.getElementById('disciplinaSelect').value;
+    const sem = document.getElementById('semestreSelect').value;
+    const year = document.getElementById('yearSelect').value;
+    const cal = CALENDARIOS[year]; // Puxa as datas exatas do calendário
+    const b = document.getElementById('bodyD');
+    
+    if(!tId || !dId) return;
+    b.innerHTML = ''; let sR = 0, sE = 0;
 
-            dataStore[tId].discs[dId].sch.forEach(a => {
-                let filtrar = true;
-                if(ehSemestral(tId)) {
-                    if(sem === "1") filtrar = (a.dtObj >= cal.s1.inicio && a.dtObj <= cal.s1.fim);
-                    else filtrar = (a.dtObj >= cal.s2.inicio && a.dtObj <= cal.s2.fim);
-                }
-
-                if(filtrar) {
-                    const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
-                    if(info.soma) sR++; else sE++;
-                    b.innerHTML += `<tr class="${info.class}"><td class="border">${a.date}</td><td class="border uppercase">${a.wd}</td><td class="border">${a.time}</td><td class="border font-bold">${a.prof}</td><td class="border font-black">${info.texto}</td></tr>`;
-                }
-            });
-            document.getElementById('cont-regular').textContent = sR;
-            document.getElementById('cont-extra').textContent = sE;
-            document.getElementById('resultadoBusca').classList.remove('hidden');
-        }
-
-        function renderPivo() {
-            const tId = document.getElementById('turmaSelectPivo').value;
-            const sem = document.getElementById('semestreSelectPivo').value;
-            const year = document.getElementById('yearSelect').value;
-            const cal = CALENDARIOS[year];
-            const b = document.getElementById('bodyPivo');
-            if(!tId) return;
-            b.innerHTML = '';
-
-            for(let dId in dataStore[tId].discs) {
-                let mCount = Array(12).fill(0);
-                let temNoSem = false;
-                dataStore[tId].discs[dId].sch.forEach(s => {
-                    let filtrar = true;
-                    if(ehSemestral(tId)) {
-                        if(sem === "1") filtrar = (s.dtObj >= cal.s1.inicio && s.dtObj <= cal.s1.fim);
-                        else filtrar = (s.dtObj >= cal.s2.inicio && s.dtObj <= cal.s2.fim);
-                    }
-                    if(filtrar) { mCount[s.dtObj.getMonth()]++; temNoSem = true; }
-                });
-                if(temNoSem) {
-                    let row = `<tr class="border-b"><td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
-                    mCount.forEach(c => row += `<td class="border-r">${c||'-'}</td>`);
-                    row += `<td class="bg-green-100 text-green-900 font-black">${mCount.reduce((a,b)=>a+b)}</td></tr>`;
-                    b.innerHTML += row;
-                }
+    dataStore[tId].discs[dId].sch.forEach(a => {
+        let filtrar = true;
+        // Agora comparamos o objeto de data completo (dia, mês e ano)
+        if(ehSemestral(tId)) {
+            if(sem === "1") {
+                filtrar = (a.dtObj >= cal.s1.inicio && a.dtObj <= cal.s1.fim);
+            } else {
+                filtrar = (a.dtObj >= cal.s2.inicio && a.dtObj <= cal.s2.fim);
             }
         }
+
+        if(filtrar) {
+            const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
+            if(info.soma) sR++; else sE++;
+            b.innerHTML += `<tr class="${info.class}">
+                <td class="border">${a.date}</td>
+                <td class="border uppercase">${a.wd}</td>
+                <td class="border">${a.time}</td>
+                <td class="border font-bold">${a.prof}</td>
+                <td class="border font-black">${info.texto}</td>
+            </tr>`;
+        }
+    });
+    document.getElementById('cont-regular').textContent = sR;
+    document.getElementById('cont-extra').textContent = sE;
+    document.getElementById('resultadoBusca').classList.remove('hidden');
+}
+
+        function renderPivo() {
+    const tId = document.getElementById('turmaSelectPivo').value;
+    const sem = document.getElementById('semestreSelectPivo').value;
+    const year = document.getElementById('yearSelect').value;
+    const cal = CALENDARIOS[year];
+    const b = document.getElementById('bodyPivo');
+    
+    if(!tId) return;
+    b.innerHTML = '';
+
+    for(let dId in dataStore[tId].discs) {
+        let mCount = Array(12).fill(0);
+        let temNoSem = false;
+        
+        dataStore[tId].discs[dId].sch.forEach(s => {
+            let filtrar = true;
+            if(ehSemestral(tId)) {
+                if(sem === "1") {
+                    filtrar = (s.dtObj >= cal.s1.inicio && s.dtObj <= cal.s1.fim);
+                } else {
+                    filtrar = (s.dtObj >= cal.s2.inicio && s.dtObj <= cal.s2.fim);
+                }
+            }
+            
+            if(filtrar) { 
+                mCount[s.dtObj.getMonth()]++; 
+                temNoSem = true; 
+            }
+        });
+
+        if(temNoSem) {
+            let row = `<tr class="border-b"><td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
+            mCount.forEach(c => row += `<td class="border-r">${c||'-'}</td>`);
+            row += `<td class="bg-green-100 text-green-900 font-black">${mCount.reduce((a,b)=>a+b)}</td></tr>`;
+            b.innerHTML += row;
+        }
+    }
+}
         
         function limparResultados() {
             document.getElementById('resultadoBusca').classList.add('hidden');
