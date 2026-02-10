@@ -189,12 +189,12 @@
         // --- CONFIGURAÇÃO DE DATAS POR ANO (AJUSTE AQUI OS LIMITES REAIS) ---
         const CALENDARIOS = {
     "2025": {
-        s1: { inicio: new Date(2025, 1, 1).getTime(), fim: new Date(2025, 6, 12).getTime() }, // Fim: 12/07
-        s2: { inicio: new Date(2025, 6, 27).getTime(), fim: new Date(2025, 11, 31).getTime() } // Início: 27/07
+        s1: { inicio: new Date(2025, 1, 1), fim: new Date(2025, 6, 12) }, // 01/02 a 12/07
+        s2: { inicio: new Date(2025, 6, 27), fim: new Date(2025, 11, 31) } // 27/07 a 31/12
     },
     "2026": {
-        s1: { inicio: new Date(2026, 1, 2).getTime(), fim: new Date(2026, 6, 10).getTime() }, // Fim: 10/07
-        s2: { inicio: new Date(2026, 6, 27).getTime(), fim: new Date(2026, 11, 22).getTime() } // Início: 27/07
+        s1: { inicio: new Date(2026, 1, 2), fim: new Date(2026, 6, 10) }, // 02/02 a 10/07
+        s2: { inicio: new Date(2026, 6, 27), fim: new Date(2026, 11, 22) } // 27/07 a 22/12
     }
 };
 
@@ -311,15 +311,19 @@
     if(!tId || !dId) return;
     b.innerHTML = ''; let sR = 0, sE = 0;
 
+    // Normaliza as datas para comparação apenas de dia/mês/ano
+    const fimS1 = new Date(cal.s1.fim).setHours(23, 59, 59, 999);
+    const inicioS2 = new Date(cal.s2.inicio).setHours(0, 0, 0, 0);
+
     dataStore[tId].discs[dId].sch.forEach(a => {
         let filtrar = true;
         const dataAula = a.dtObj.getTime();
 
         if(ehSemestral(tId)) {
             if(sem === "1") {
-                filtrar = (dataAula >= cal.s1.inicio && dataAula <= cal.s1.fim);
+                filtrar = dataAula <= fimS1;
             } else {
-                filtrar = (dataAula >= cal.s2.inicio && dataAula <= cal.s2.fim);
+                filtrar = dataAula >= inicioS2;
             }
         }
 
@@ -344,6 +348,9 @@
     if(!tId) return;
     b.innerHTML = '';
 
+    const fimS1 = new Date(cal.s1.fim).setHours(23, 59, 59, 999);
+    const inicioS2 = new Date(cal.s2.inicio).setHours(0, 0, 0, 0);
+
     for(let dId in dataStore[tId].discs) {
         let mCount = Array(12).fill(0);
         let temNoSem = false;
@@ -353,11 +360,7 @@
             const dataAula = s.dtObj.getTime();
 
             if(ehSemestral(tId)) {
-                if(sem === "1") {
-                    filtrar = (dataAula >= cal.s1.inicio && dataAula <= cal.s1.fim);
-                } else {
-                    filtrar = (dataAula >= cal.s2.inicio && dataAula <= cal.s2.fim);
-                }
+                filtrar = (sem === "1") ? (dataAula <= fimS1) : (dataAula >= inicioS2);
             }
             
             if(filtrar) { 
