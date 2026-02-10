@@ -189,12 +189,12 @@
         // --- CONFIGURAÇÃO DE DATAS POR ANO (AJUSTE AQUI OS LIMITES REAIS) ---
         const CALENDARIOS = {
     "2025": {
-        s1: { inicio: new Date(2025, 1, 1), fim: new Date(2025, 6, 12) }, // 01/02 a 12/07
-        s2: { inicio: new Date(2025, 6, 27), fim: new Date(2025, 11, 31) } // 27/07 a 31/12
+        s1: { inicio: new Date(2025, 1, 1, 0, 0, 0), fim: new Date(2025, 6, 12, 23, 59, 59) }, 
+        s2: { inicio: new Date(2025, 6, 27, 0, 0, 0), fim: new Date(2025, 11, 31, 23, 59, 59) }
     },
     "2026": {
-        s1: { inicio: new Date(2026, 1, 2), fim: new Date(2026, 6, 10) }, // 02/02 a 10/07
-        s2: { inicio: new Date(2026, 6, 27), fim: new Date(2026, 11, 22) } // 27/07 a 22/12
+        s1: { inicio: new Date(2026, 1, 2, 0, 0, 0), fim: new Date(2026, 6, 10, 23, 59, 59) },
+        s2: { inicio: new Date(2026, 6, 27, 0, 0, 0), fim: new Date(2026, 11, 22, 23, 59, 59) }
     }
 };
 
@@ -237,67 +237,70 @@
         }
 
         async function carregarDados() {
-            try {
-                const yearSelected = document.getElementById('yearSelect').value;
-                const cal = CALENDARIOS[yearSelected];
+    try {
+        const yearSelected = document.getElementById('yearSelect').value;
+        const cal = CALENDARIOS[yearSelected];
+        
+        document.getElementById('infoYear').textContent = yearSelected;
+        document.getElementById('semestre1').textContent = `${cal.s1.inicio.toLocaleDateString('pt-BR')} a ${cal.s1.fim.toLocaleDateString('pt-BR')}`;
+        document.getElementById('semestre2').textContent = `${cal.s2.inicio.toLocaleDateString('pt-BR')} a ${cal.s2.fim.toLocaleDateString('pt-BR')}`;
+
+        document.getElementById('loading').classList.remove('hidden');
+        const res = await fetch(GIST_URL + "?t=" + new Date().getTime());
+        let csv = await res.text();
+        csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
+        const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
+        const headers = lines[0].split(';').map(h => h.trim());
+        const turmas = headers.slice(2);
+        dataStore = {};
+        let lastDate = "";
+
+        lines.slice(1).forEach(line => {
+            const cols = line.split(';').map(c => c?.trim());
+            if (cols[0] && cols[0].length > 0) { lastDate = cols[0].replace(/\./g, '/'); }
+
+            if (!cols[1] || !lastDate || !lastDate.includes(`/${yearSelected}`)) return;
+
+            turmas.forEach((tNome, idx) => {
+                const cell = cols[idx + 2];
+                if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
                 
-                // ABA INFO DINÂMICA
-                document.getElementById('infoYear').textContent = yearSelected;
-                document.getElementById('semestre1').textContent = `${cal.s1.inicio.toLocaleDateString('pt-BR')} a ${cal.s1.fim.toLocaleDateString('pt-BR')}`;
-                document.getElementById('semestre2').textContent = `${cal.s2.inicio.toLocaleDateString('pt-BR')} a ${cal.s2.fim.toLocaleDateString('pt-BR')}`;
-
-                document.getElementById('loading').classList.remove('hidden');
-                const res = await fetch(GIST_URL + "?t=" + new Date().getTime());
-                let csv = await res.text();
-                csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
-                const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
-                const headers = lines[0].split(';').map(h => h.trim());
-                const turmas = headers.slice(2);
-                dataStore = {};
-                let lastDate = "";
-
-                lines.slice(1).forEach(line => {
-                    const cols = line.split(';').map(c => c?.trim());
-                    if (cols[0] && cols[0].length > 0) { lastDate = cols[0].replace(/\./g, '/'); }
-
-                    // Filtro de Ano Rigoroso
-                    if (!cols[1] || !lastDate || !lastDate.includes(`/${yearSelected}`)) return;
-
-                    turmas.forEach((tNome, idx) => {
-                        const cell = cols[idx + 2];
-                        if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
-                        
-                        const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        const tagM = cell.match(/\[(.*?)\]/);
-                        const tag = tagM ? tagM[1].toUpperCase() : null;
-                        const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
-                        
-                        let disc, prof;
-                        if (cleanT.includes(' - ')) {
-                            const partes = cleanT.split(' - ');
-                            prof = partes.pop().trim();
-                            disc = partes.join(' - ').trim();
-                        } else { disc = cleanT; prof = "N/I"; }
-                        
-                        if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
-                        const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        if (!dataStore[tId].discs[dId]) dataStore[tId].discs[dId] = { name: disc, sch: [] };
-                        
-                        const p = lastDate.split('/');
-                        const dt = new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
-                        
-                        dataStore[tId].discs[dId].sch.push({ 
-                            date: lastDate, dtObj: dt, 
-                            wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }), 
-                            time: cols[1], prof: prof, tag: tag 
-                        });
-                    });
+                const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const tagM = cell.match(/\[(.*?)\]/);
+                const tag = tagM ? tagM[1].toUpperCase() : null;
+                const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
+                
+                let disc, prof;
+                if (cleanT.includes(' - ')) {
+                    const partes = cleanT.split(' - ');
+                    prof = partes.pop().trim();
+                    disc = partes.join(' - ').trim();
+                } else { disc = cleanT; prof = "N/I"; }
+                
+                if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
+                const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (!dataStore[tId].discs[dId]) dataStore[tId].discs[dId] = { name: disc, sch: [] };
+                
+                // CRIAÇÃO DA DATA COM OFFSET DE MEIO-DIA (SEGURANÇA)
+                const p = lastDate.split('/');
+                const dt = new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]), 12, 0, 0);
+                
+                dataStore[tId].discs[dId].sch.push({ 
+                    date: lastDate, 
+                    dtObj: dt, 
+                    wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }), 
+                    time: cols[1], prof: prof, tag: tag 
                 });
-                document.getElementById('loading').classList.add('hidden');
-                popularSelects();
-                limparResultados();
-            } catch (e) { document.getElementById('loading').innerHTML = "Erro ao sincronizar."; }
-        }
+            });
+        });
+        document.getElementById('loading').classList.add('hidden');
+        popularSelects();
+        limparResultados();
+    } catch (e) { 
+        console.error(e);
+        document.getElementById('loading').innerHTML = "Erro ao sincronizar."; 
+    }
+}
 
         // LÓGICA DE RENDERIZAÇÃO COM FILTRO CRONOLÓGICO POR DIA/MÊS
         function renderD() {
@@ -311,26 +314,27 @@
     if(!tId || !dId) return;
     b.innerHTML = ''; let sR = 0, sE = 0;
 
-    // Normaliza as datas para comparação apenas de dia/mês/ano
-    const fimS1 = new Date(cal.s1.fim).setHours(23, 59, 59, 999);
-    const inicioS2 = new Date(cal.s2.inicio).setHours(0, 0, 0, 0);
+    const limiteS1 = cal.s1.fim.getTime();
 
     dataStore[tId].discs[dId].sch.forEach(a => {
         let filtrar = true;
-        const dataAula = a.dtObj.getTime();
+        const tempoAula = a.dtObj.getTime();
 
         if(ehSemestral(tId)) {
-            if(sem === "1") {
-                filtrar = dataAula <= fimS1;
-            } else {
-                filtrar = dataAula >= inicioS2;
-            }
+            // Se sem "1", pega tudo até o limite do fim do S1. Se "2", pega o que for depois.
+            filtrar = (sem === "1") ? (tempoAula <= limiteS1) : (tempoAula > limiteS1);
         }
 
         if(filtrar) {
             const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
             if(info.soma) sR++; else sE++;
-            b.innerHTML += `<tr class="${info.class}"><td class="border">${a.date}</td><td class="border uppercase">${a.wd}</td><td class="border">${a.time}</td><td class="border font-bold">${a.prof}</td><td class="border font-black">${info.texto}</td></tr>`;
+            b.innerHTML += `<tr class="${info.class}">
+                <td class="border">${a.date}</td>
+                <td class="border uppercase">${a.wd}</td>
+                <td class="border">${a.time}</td>
+                <td class="border font-bold">${a.prof}</td>
+                <td class="border font-black">${info.texto}</td>
+            </tr>`;
         }
     });
     document.getElementById('cont-regular').textContent = sR;
@@ -338,7 +342,7 @@
     document.getElementById('resultadoBusca').classList.remove('hidden');
 }
 
-        function renderPivo() {
+function renderPivo() {
     const tId = document.getElementById('turmaSelectPivo').value;
     const sem = document.getElementById('semestreSelectPivo').value;
     const year = document.getElementById('yearSelect').value;
@@ -347,9 +351,7 @@
     
     if(!tId) return;
     b.innerHTML = '';
-
-    const fimS1 = new Date(cal.s1.fim).setHours(23, 59, 59, 999);
-    const inicioS2 = new Date(cal.s2.inicio).setHours(0, 0, 0, 0);
+    const limiteS1 = cal.s1.fim.getTime();
 
     for(let dId in dataStore[tId].discs) {
         let mCount = Array(12).fill(0);
@@ -357,10 +359,10 @@
         
         dataStore[tId].discs[dId].sch.forEach(s => {
             let filtrar = true;
-            const dataAula = s.dtObj.getTime();
+            const tempoAula = s.dtObj.getTime();
 
             if(ehSemestral(tId)) {
-                filtrar = (sem === "1") ? (dataAula <= fimS1) : (dataAula >= inicioS2);
+                filtrar = (sem === "1") ? (tempoAula <= limiteS1) : (tempoAula > limiteS1);
             }
             
             if(filtrar) { 
