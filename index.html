@@ -422,7 +422,6 @@ function renderPivo() {
                     const aulas = dataStore[tId].discs[id].sch;
                     const temAulaNoSem = aulas.some(a => {
                         const year = document.getElementById('yearSelect').value;
-const year = document.getElementById('yearSelect').value;
 const cal = CALENDARIOS[year];
 const limiteS1 = cal.s1.fim.getTime();
 const tempoAula = a.dtObj.getTime();
