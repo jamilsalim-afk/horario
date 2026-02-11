@@ -421,8 +421,14 @@ function renderPivo() {
                 Object.keys(dataStore[tId].discs).sort().forEach(id => {
                     const aulas = dataStore[tId].discs[id].sch;
                     const temAulaNoSem = aulas.some(a => {
-                        const m = a.dtObj.getMonth() + 1;
-                        return ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
+                        const year = document.getElementById('yearSelect').value;
+const cal = CALENDARIOS[year];
+const limiteS1 = cal.s1.fim.getTime();
+const tempoAula = a.dtObj.getTime();
+
+return ehSemestral(tId)
+    ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
+    : true;
                     });
                     if(temAulaNoSem) dS.innerHTML += `<option value="${id}">${dataStore[tId].discs[id].name}</option>`;
                 });
@@ -441,8 +447,14 @@ function renderPivo() {
             if(!tId || !dId) return;
             b.innerHTML = ''; let sR = 0, sE = 0;
             dataStore[tId].discs[dId].sch.forEach(a => {
-                const m = a.dtObj.getMonth() + 1;
-                const filtrar = ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
+                const year = document.getElementById('yearSelect').value;
+const cal = CALENDARIOS[year];
+const limiteS1 = cal.s1.fim.getTime();
+const tempoAula = a.dtObj.getTime();
+
+const filtrar = ehSemestral(tId)
+    ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
+    : true;
                 if(filtrar) {
                     const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
                     if(info.soma) sR++; else sE++;
@@ -473,9 +485,20 @@ function renderPivo() {
                 let mCount = Array(12).fill(0);
                 let temNoSem = false;
                 dataStore[tId].discs[dId].sch.forEach(s => {
-                    const m = s.dtObj.getMonth();
-                    const filtrar = ehSemestral(tId) ? (sem === "1" ? m < 6 : m >= 6) : true;
-                    if(filtrar) { mCount[m]++; temNoSem = true; }
+                    const year = document.getElementById('yearSelect').value;
+const cal = CALENDARIOS[year];
+const limiteS1 = cal.s1.fim.getTime();
+const tempoAula = s.dtObj.getTime();
+
+const filtrar = ehSemestral(tId)
+    ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
+    : true;
+
+if(filtrar) { 
+    const m = s.dtObj.getMonth();
+    mCount[m]++; 
+    temNoSem = true; 
+}
                 });
                 if(temNoSem) {
                     let row = `<tr class="border-b"><td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
