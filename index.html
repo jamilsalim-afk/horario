@@ -425,8 +425,9 @@ function renderPivo() {
                     const aulas = dataStore[tId].discs[id].sch;
                     const temAulaNoSem = aulas.some(a => {
                         if (!ehSemestral(tId)) return true;
-                        const limite = cal["s" + sem];
-                        return a.dtObj >= limite.inicio && a.dtObj <= limite.fim;
+                        // Compara o valor numérico (timestamp) para evitar erros de referência de objeto
+                        const time = a.dtObj.getTime();
+                        return time >= cal["s" + sem].inicio.getTime() && time <= cal["s" + sem].fim.getTime();
                     });
                     if(temAulaNoSem) dS.innerHTML += `<option value="${id}">${dataStore[tId].discs[id].name}</option>`;
                 });
@@ -449,8 +450,8 @@ function renderPivo() {
             dataStore[tId].discs[dId].sch.forEach(a => {
                 let filtrar = true;
                 if (ehSemestral(tId)) {
-                    const limite = cal["s" + sem];
-                    filtrar = a.dtObj >= limite.inicio && a.dtObj <= limite.fim;
+                    const time = a.dtObj.getTime();
+                    filtrar = time >= cal["s" + sem].inicio.getTime() && time <= cal["s" + sem].fim.getTime();
                 }
                 
                 if(filtrar) {
@@ -463,7 +464,7 @@ function renderPivo() {
             document.getElementById('cont-extra').textContent = sE;
             document.getElementById('resultadoBusca').classList.remove('hidden');
         }
-
+        
         document.getElementById('turmaSelectPivo').onchange = (e) => {
             const tId = e.target.value;
             const semS = document.getElementById('semestreSelectPivo');
