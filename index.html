@@ -421,8 +421,9 @@ function renderPivo() {
                 Object.keys(dataStore[tId].discs).sort().forEach(id => {
                     const aulas = dataStore[tId].discs[id].sch;
                     const temAulaNoSem = aulas.some(a => {
-                        const m = a.dtObj.getMonth() + 1;
-                        return ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
+                        const m = a.dtObj.getMonth();
+                        return ehSemestral(tId) ? (sem === "1") ? (tempoAula <= limiteS1) : (tempoAula > limiteS1) : true;
+                        
                     });
                     if(temAulaNoSem) dS.innerHTML += `<option value="${id}">${dataStore[tId].discs[id].name}</option>`;
                 });
@@ -441,8 +442,8 @@ function renderPivo() {
             if(!tId || !dId) return;
             b.innerHTML = ''; let sR = 0, sE = 0;
             dataStore[tId].discs[dId].sch.forEach(a => {
-                const m = a.dtObj.getMonth() + 1;
-                const filtrar = ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
+                const m = a.dtObj.getMonth();
+                const filtrar = ehSemestral(tId) ? (sem === "1") ? (tempoAula <= limiteS1) : (tempoAula > limiteS1) : true;
                 if(filtrar) {
                     const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
                     if(info.soma) sR++; else sE++;
