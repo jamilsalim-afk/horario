@@ -221,7 +221,7 @@
         ];
 
         let dataStore = {};
-        const GIST_URL = "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/56c9d463688529c2b2f765887ef1422e56f9bf51/DADOS_2026_MESTRE";
+        const GIST_URL = "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/02cd1ffd77a42cb20efb6b8844bf79d16b1ee6bb/DADOS_2026_MESTRE";
 
         window.onload = () => {
             document.getElementById('dataRelatorio').textContent = new Date().toLocaleDateString('pt-BR');
@@ -415,18 +415,14 @@ function renderPivo() {
         function atualizarListaDisciplinas() {
             const tId = document.getElementById('turmaSelect').value;
             const sem = document.getElementById('semestreSelect').value;
-            const yearSelected = document.getElementById('yearSelect').value;
-            const cal = CALENDARIOS[yearSelected];
             const dS = document.getElementById('disciplinaSelect');
-            
             dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
             if(dataStore[tId]) {
                 Object.keys(dataStore[tId].discs).sort().forEach(id => {
                     const aulas = dataStore[tId].discs[id].sch;
                     const temAulaNoSem = aulas.some(a => {
-                        if (!ehSemestral(tId)) return true;
-                        const limite = cal["s" + sem];
-                        return a.dtObj >= limite.inicio && a.dtObj <= limite.fim;
+                        const m = a.dtObj.getMonth() + 1;
+                        return ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
                     });
                     if(temAulaNoSem) dS.innerHTML += `<option value="${id}">${dataStore[tId].discs[id].name}</option>`;
                 });
@@ -435,24 +431,18 @@ function renderPivo() {
             renderD();
         }
 
+        document.getElementById('disciplinaSelect').onchange = renderD;
+
         function renderD() {
             const tId = document.getElementById('turmaSelect').value;
             const dId = document.getElementById('disciplinaSelect').value;
             const sem = document.getElementById('semestreSelect').value;
-            const yearSelected = document.getElementById('yearSelect').value;
-            const cal = CALENDARIOS[yearSelected];
             const b = document.getElementById('bodyD');
-            
             if(!tId || !dId) return;
             b.innerHTML = ''; let sR = 0, sE = 0;
-            
             dataStore[tId].discs[dId].sch.forEach(a => {
-                let filtrar = true;
-                if (ehSemestral(tId)) {
-                    const limite = cal["s" + sem];
-                    filtrar = a.dtObj >= limite.inicio && a.dtObj <= limite.fim;
-                }
-                
+                const m = a.dtObj.getMonth() + 1;
+                const filtrar = ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
                 if(filtrar) {
                     const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
                     if(info.soma) sR++; else sE++;
@@ -463,7 +453,7 @@ function renderPivo() {
             document.getElementById('cont-extra').textContent = sE;
             document.getElementById('resultadoBusca').classList.remove('hidden');
         }
-        
+
         document.getElementById('turmaSelectPivo').onchange = (e) => {
             const tId = e.target.value;
             const semS = document.getElementById('semestreSelectPivo');
