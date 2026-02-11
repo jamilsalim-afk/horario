@@ -415,14 +415,18 @@ function renderPivo() {
         function atualizarListaDisciplinas() {
             const tId = document.getElementById('turmaSelect').value;
             const sem = document.getElementById('semestreSelect').value;
+            const yearSelected = document.getElementById('yearSelect').value;
+            const cal = CALENDARIOS[yearSelected];
             const dS = document.getElementById('disciplinaSelect');
+            
             dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
             if(dataStore[tId]) {
                 Object.keys(dataStore[tId].discs).sort().forEach(id => {
                     const aulas = dataStore[tId].discs[id].sch;
                     const temAulaNoSem = aulas.some(a => {
-                        const m = a.dtObj.getMonth() + 1;
-                        return ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
+                        if (!ehSemestral(tId)) return true;
+                        const limite = cal["s" + sem];
+                        return a.dtObj >= limite.inicio && a.dtObj <= limite.fim;
                     });
                     if(temAulaNoSem) dS.innerHTML += `<option value="${id}">${dataStore[tId].discs[id].name}</option>`;
                 });
@@ -431,18 +435,24 @@ function renderPivo() {
             renderD();
         }
 
-        document.getElementById('disciplinaSelect').onchange = renderD;
-
         function renderD() {
             const tId = document.getElementById('turmaSelect').value;
             const dId = document.getElementById('disciplinaSelect').value;
             const sem = document.getElementById('semestreSelect').value;
+            const yearSelected = document.getElementById('yearSelect').value;
+            const cal = CALENDARIOS[yearSelected];
             const b = document.getElementById('bodyD');
+            
             if(!tId || !dId) return;
             b.innerHTML = ''; let sR = 0, sE = 0;
+            
             dataStore[tId].discs[dId].sch.forEach(a => {
-                const m = a.dtObj.getMonth() + 1;
-                const filtrar = ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
+                let filtrar = true;
+                if (ehSemestral(tId)) {
+                    const limite = cal["s" + sem];
+                    filtrar = a.dtObj >= limite.inicio && a.dtObj <= limite.fim;
+                }
+                
                 if(filtrar) {
                     const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
                     if(info.soma) sR++; else sE++;
