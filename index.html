@@ -350,7 +350,14 @@
             "2025": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/b32b06d3468be385d70405c039346e4ad3c35a54/DADOS_2025_MESTRE",
             "2026": "https://gist.githubusercontent.com/jamilsalim-afk/14e5c409f013896a2df85ab1ed57102a/raw/b1d7e569e7cfedae64e01e178797785052ca70bd/DADOS_2026_MESTRE"
         };
-        
+
+        const DISCIPLINAS_OCULTAR = [
+    "ATENDIMENTO INDIVIDUAL",
+    "ESTUDOS INDIVIDUAIS",
+    "PPS/ATENDIMENTO",
+    "RESERVA ENSINO",
+    "REUNIÃO DE SERVIDORES"
+];
         window.onload = () => {
             document.getElementById('dataRelatorio').textContent = new Date().toLocaleDateString('pt-BR');
             carregarDados();
@@ -572,6 +579,11 @@ function renderPivo() {
             if(dataStore[tId]) {
                 Object.keys(dataStore[tId].discs)
     .sort((a, b) => dataStore[tId].discs[a].name.localeCompare(dataStore[tId].discs[b].name)) // Ordenação alfabética pelo nome da disciplina
+    const nomeDisc = dataStore[tId].discs[id].name;
+
+if (DISCIPLINAS_OCULTAR.includes(nomeDisc.toUpperCase())) {
+    return; // pula essa disciplina
+}
     .forEach(id => {
         const aulas = dataStore[tId].discs[id].sch;
                     const temAulaNoSem = aulas.some(a => {
@@ -651,7 +663,10 @@ const filtrar = ehSemestral(tId)
         a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' })
     );
 
-    disciplinas.forEach(disc => {
+    if (DISCIPLINAS_OCULTAR.includes(disc.name.toUpperCase())) {
+    return; // não renderiza no pivô
+}
+            disciplinas.forEach(disc => {
 
         let mCount = Array(12).fill(0);
         let temNoSem = false;
