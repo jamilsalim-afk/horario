@@ -549,7 +549,7 @@ function renderPivo() {
             dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
             if(dataStore[tId]) {
                 Object.keys(dataStore[tId].discs)
-    .sort((a, b) => dataStore[tId].discs[a].name.localeCompare(dataStore[tId].discs[b].name)) // ordenação alfabética
+    .sort((a, b) => dataStore[tId].discs[a].name.localeCompare(dataStore[tId].discs[b].name)) // Ordenação alfabética pelo nome da disciplina
     .forEach(id => {
         const aulas = dataStore[tId].discs[id].sch;
                     const temAulaNoSem = aulas.some(a => {
