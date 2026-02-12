@@ -221,8 +221,11 @@
         ];
 
         let dataStore = {};
-        const GIST_URL = "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/02cd1ffd77a42cb20efb6b8844bf79d16b1ee6bb/DADOS_2026_MESTRE";
-
+        const GIST_URL = {
+            "2025": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/b32b06d3468be385d70405c039346e4ad3c35a54/DADOS_2025_MESTRE",
+            "2026": "https://gist.githubusercontent.com/jamilsalim-afk/14e5c409f013896a2df85ab1ed57102a/raw/b1d7e569e7cfedae64e01e178797785052ca70bd/DADOS_2026_MESTRE",
+        };
+        
         window.onload = () => {
             document.getElementById('dataRelatorio').textContent = new Date().toLocaleDateString('pt-BR');
             carregarDados();
