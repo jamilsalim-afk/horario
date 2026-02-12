@@ -678,11 +678,16 @@ if(filtrar) {
             const data = dataStore[tId].discs[dId];
             const turmaNome = dataStore[tId].name;
             const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            const year = document.getElementById('yearSelect').value;
+            const cal = CALENDARIOS[year];
+            const limiteS1 = cal.s1.fim.getTime();
 
             const aulasFiltradas = data.sch.filter(a => {
-                const m = a.dtObj.getMonth() + 1;
-                return ehSemestral(tId) ? (sem === "1" ? m <= 6 : m > 6) : true;
-            });
+            const tempoAula = a.dtObj.getTime();
+            return ehSemestral(tId)
+            ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
+            : true;
+        });
             
             const profs = [...new Set(aulasFiltradas.map(s => s.prof))].join(", ");
             const somaAulas = aulasFiltradas.filter(s => !s.tag || TRADUCAO[s.tag].soma).length;
