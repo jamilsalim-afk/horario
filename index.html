@@ -583,7 +583,7 @@ function renderPivo() {
 
 if (DISCIPLINAS_OCULTAR.includes(nomeDisc.toUpperCase())) {
     return; // pula essa disciplina
-}
+};
     .forEach(id => {
         const aulas = dataStore[tId].discs[id].sch;
                     const temAulaNoSem = aulas.some(a => {
@@ -665,7 +665,7 @@ const filtrar = ehSemestral(tId)
 
     if (DISCIPLINAS_OCULTAR.includes(disc.name.toUpperCase())) {
     return; // não renderiza no pivô
-}
+};
             disciplinas.forEach(disc => {
 
         let mCount = Array(12).fill(0);
