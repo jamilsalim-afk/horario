@@ -221,9 +221,9 @@
         ];
 
         let dataStore = {};
-        const GIST_URL = {
+        const GIST_URLS = {
             "2025": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/b32b06d3468be385d70405c039346e4ad3c35a54/DADOS_2025_MESTRE",
-            "2026": "https://gist.githubusercontent.com/jamilsalim-afk/14e5c409f013896a2df85ab1ed57102a/raw/b1d7e569e7cfedae64e01e178797785052ca70bd/DADOS_2026_MESTRE",
+            "2026": "https://gist.githubusercontent.com/jamilsalim-afk/14e5c409f013896a2df85ab1ed57102a/raw/b1d7e569e7cfedae64e01e178797785052ca70bd/DADOS_2026_MESTRE"
         };
         
         window.onload = () => {
@@ -249,7 +249,7 @@
         document.getElementById('semestre2').textContent = `${cal.s2.inicio.toLocaleDateString('pt-BR')} a ${cal.s2.fim.toLocaleDateString('pt-BR')}`;
 
         document.getElementById('loading').classList.remove('hidden');
-        const res = await fetch(GIST_URL + "?t=" + new Date().getTime());
+        const res = await fetch(GIST_URLS[yearSelected] + "?t=" + new Date().getTime());
         let csv = await res.text();
         csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
         const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
