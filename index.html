@@ -548,8 +548,10 @@ function renderPivo() {
             const dS = document.getElementById('disciplinaSelect');
             dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
             if(dataStore[tId]) {
-                Object.keys(dataStore[tId].discs).sort().forEach(id => {
-                    const aulas = dataStore[tId].discs[id].sch;
+                Object.keys(dataStore[tId].discs)
+    .sort((a, b) => dataStore[tId].discs[a].name.localeCompare(dataStore[tId].discs[b].name)) // ordenação alfabética
+    .forEach(id => {
+        const aulas = dataStore[tId].discs[id].sch;
                     const temAulaNoSem = aulas.some(a => {
                         const year = document.getElementById('yearSelect').value;
 const cal = CALENDARIOS[year];
