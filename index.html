@@ -28,11 +28,10 @@
         .intervalo-row { background-color: #f3f4f6 !important; color: #6b7280; font-weight: bold; text-transform: uppercase; font-size: 10px; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen text-xs sm:text-sm md:text-base">
+<body class="bg-gray-100 min-h-screen">
 
     <header class="bg-[#15803d] text-white p-6 shadow-lg">
-        <div class="container mx-auto flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <h1 class="text-lg sm:text-xl md:text-2xl font-black italic uppercase tracking-tighter">
+        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
             <div>
                 <h1 class="text-2xl font-black italic uppercase tracking-tighter">INSTITUTO FEDERAL DE RONDÔNIA - IFRO</h1>
                 <p class="text-xs font-bold opacity-80 uppercase">CAMPUS CACOAL</p>
@@ -53,8 +52,7 @@
     </header>
 
     <nav class="bg-white shadow-md sticky top-0 z-50">
-        <div class="container mx-auto flex flex-wrap lg:flex-nowrap overflow-x-auto text-xs sm:text-sm md:text-base">
-            <button class="tab-btn px-3 sm:px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
+        <div class="container mx-auto flex overflow-x-auto">
             <button class="tab-btn px-6 py-4 active" data-tab="tab-disciplina">RELATÓRIO POR DISCIPLINA</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-turma">RELATÓRIO POR TURMA</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-semanal">RELATÓRIO SEMANAL POR PROFESSOR</button>
@@ -68,15 +66,13 @@
 
         <section id="tab-disciplina" class="tab-pane active">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 mb-6">
-
-                    <select id="turmaSelect" class="p-2 sm:p-3 border rounded-lg text-sm sm:text-base font-bold bg-gray-50 w-full"></select>
-                    <select id="semestreSelect" class="p-2 sm:p-3 border rounded-lg text-sm sm:text-base font-bold bg-gray-50 w-full">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <select id="turmaSelect" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
+                    <select id="semestreSelect" class="p-3 border rounded-lg font-bold bg-blue-50 border-blue-200 hidden">
                         <option value="1">1º SEMESTRE</option>
                         <option value="2">2º SEMESTRE</option>
                     </select>
-                    <select id="disciplinaSelect" class="p-2 sm:p-3 border rounded-lg text-sm sm:text-base font-bold bg-gray-50 w-full"
- disabled><option>Selecione a Turma</option></select>
+                    <select id="disciplinaSelect" class="p-3 border rounded-lg bg-gray-50" disabled><option>Selecione a Turma</option></select>
                 </div>
                 <div id="resultadoBusca" class="hidden">
                     <div class="flex flex-wrap gap-4 mb-4 items-center">
@@ -103,15 +99,15 @@
         <section id="tab-turma" class="tab-pane">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
                 <div class="flex gap-4 mb-6">
-                    <select id="turmaSelectPivo" class="p-2 sm:p-3 border rounded-lg text-sm sm:text-base font-bold bg-gray-50 w-full"></select>
-                    <select id="semestreSelectPivo" class="p-2 sm:p-3 border rounded-lg text-sm sm:text-base font-bold bg-gray-50 w-full">
+                    <select id="turmaSelectPivo" class="p-3 border rounded-lg font-bold flex-1 bg-gray-50"></select>
+                    <select id="semestreSelectPivo" class="p-3 border rounded-lg font-bold bg-blue-50 border-blue-200 hidden">
                         <option value="1">1º SEMESTRE</option>
                         <option value="2">2º SEMESTRE</option>
                     </select>
                     <button onclick="exportarPivoPDF()" class="bg-[#15803d] text-white px-8 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF Turma</button>
                 </div>
-                <div class="overflow-x-auto rounded-lg shadow-sm">
-                    <table id="tablePivo" class="min-w-[800px] md:min-w-full">
+                <div class="overflow-x-auto">
+                    <table id="tablePivo" class="min-w-full border text-center">
                         <thead class="bg-[#15803d] text-white">
                             <tr>
                                 <th class="text-left w-64">DISCIPLINA</th>
@@ -128,7 +124,7 @@
         <section id="tab-semanal" class="tab-pane">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <select id="profSelect" class="p-2 sm:p-3 border rounded-lg text-sm sm:text-base font-bold bg-gray-50 w-full"></select>
+                    <select id="profSelect" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
                     <input type="week" id="weekInput" class="p-3 border rounded-lg">
                     <div class="flex gap-2">
                         <button onclick="gerarGrade()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition uppercase text-xs">Ver Grade</button>
@@ -142,7 +138,7 @@
         <section id="tab-semanal-turma" class="tab-pane">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <select id="turmaSelectSemanal" class="p-2 sm:p-3 border rounded-lg text-sm sm:text-base font-bold bg-gray-50 w-full"></select>
+                    <select id="turmaSelectSemanal" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
                     <input type="week" id="weekInputTurma" class="p-3 border rounded-lg">
                     <div class="flex gap-2">
                         <button onclick="gerarGradeTurma()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition uppercase text-xs">Ver Grade Turma</button>
