@@ -57,7 +57,6 @@
             <button class="tab-btn px-6 py-4" data-tab="tab-turma">RELATÓRIO POR TURMA</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-semanal">RELATÓRIO SEMANAL POR PROFESSOR</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-semanal-turma">RELATÓRIO SEMANAL POR TURMA</button>
-            <button class="tab-btn px-6 py-4" data-tab="tab-abaProfessor">RELATÓRIO DISCIPLINAS DO PROFESSOR</button>            
             <button class="tab-btn px-6 py-4" data-tab="tab-info">INFORMAÇÕES DO SISTEMA</button>
         </div>
     </nav>
@@ -135,42 +134,6 @@
                 <div id="gradeRender" class="overflow-x-auto border rounded-lg"></div>
             </div>
         </section>
-
-        <div id="abaProfessor" class="aba" style="display:none;">
-    <h2>Relatório de Disciplinas por Professor</h2>
-
-    <label for="professorSelect">Selecione o Professor:</label>
-    <select id="professorSelect">
-        <option value="">-- Selecione --</option>
-    </select>
-
-    <table id="tabelaProfessor" border="1" cellspacing="0" cellpadding="5">
-        <thead>
-            <tr>
-                <th>Disciplina</th>
-                <th>Janeiro</th>
-                <th>Fevereiro</th>
-                <th>Março</th>
-                <th>Abril</th>
-                <th>Maio</th>
-                <th>Junho</th>
-                <th>Julho</th>
-                <th>Agosto</th>
-                <th>Setembro</th>
-                <th>Outubro</th>
-                <th>Novembro</th>
-                <th>Dezembro</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Linhas geradas pelo JS -->
-        </tbody>
-    </table>
-
-    <button id="exportPDFProfessor">Exportar PDF</button>
-</div>
-
         
         <section id="tab-semanal-turma" class="tab-pane">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
@@ -1060,71 +1023,6 @@ const filtrar = ehSemestral(tId)
                 };
             });
         }
-
-        <script>
-// 1. Preenche o select de professores
-const professores = [...new Set(Object.values(dataStore).flatMap(t => Object.values(t.discs).map(d => d.prof)))];
-const selectProfessor = document.getElementById('professorSelect');
-professores.forEach(p => {
-    const opt = document.createElement('option'); 
-    opt.value = p; 
-    opt.textContent = p;
-    selectProfessor.appendChild(opt);
-});
-
-// 2. Atualiza tabela ao selecionar professor
-selectProfessor.addEventListener('change', () => {
-    const prof = selectProfessor.value;
-    const tbody = document.querySelector('#tabelaProfessor tbody');
-    tbody.innerHTML = '';
-
-    if (!prof) return;
-
-    Object.values(dataStore).forEach(t => {
-        Object.values(t.discs).forEach(d => {
-            if (d.prof !== prof) return;
-
-            const tr = document.createElement('tr');
-            const meses = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
-            let total = 0;
-
-            tr.innerHTML = `<td>${d.nome}</td>` + meses.map(m => {
-                const val = d.schMonth?.[m] || 0; 
-                total += val; 
-                return `<td>${val}</td>`;
-            }).join('') + `<td>${total}</td>`;
-
-            tbody.appendChild(tr);
-        });
-    });
-});
-
-// 3. Exportar PDF usando cabeçalho e rodapé padrão
-document.getElementById('exportPDFProfessor').addEventListener('click', () => {
-    const prof = selectProfessor.value;
-    if (!prof) { alert('Selecione um professor'); return; }
-
-    const rows = [];
-    document.querySelectorAll('#tabelaProfessor tbody tr').forEach(tr => {
-        rows.push(Array.from(tr.querySelectorAll('td')).map(td => td.textContent));
-    });
-    const headers = Array.from(document.querySelectorAll('#tabelaProfessor thead th')).map(th => th.textContent);
-
-    const doc = new jsPDF('p', 'mm', 'a4');
-    gerarCabecalhoPadrao(doc);
-
-    doc.autoTable({
-        head: [headers],
-        body: rows,
-        startY: 42,
-        theme: 'grid',
-        headStyles: { fillColor: [21,128,61] },
-        margin: { left: 14, right: 14 }
-    });
-
-    gerarRodapePadrao(doc);
-    doc.save(`Relatorio_Disciplinas_${prof}.pdf`);
-});
 </script>
 </body>
 </html>
