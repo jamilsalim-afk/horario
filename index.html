@@ -617,9 +617,10 @@ function gerarGradeGeral(){
 
     const [y, w] = week.split('-W').map(Number);
     const start = getStartOfWeek(w, y);
-    const dias = 6;
 
-    // Filtra turmas pelo nível
+    const diasSemana = ["SEGUNDA", "TERÇA", "QUARTA", "QUINTA", "SEXTA", "SÁBADO"];
+
+    // 🔹 Filtrar turmas pelo nível
     const turmasFiltradas = Object.keys(dataStore).filter(tId => {
         const nome = dataStore[tId].name;
         return nivel === "superior"
@@ -627,49 +628,59 @@ function gerarGradeGeral(){
             : !turmaEhSuperior(nome);
     });
 
-    let html = `<table class="tableGS bg-white">
-    <thead>
-        <tr class="bg-[#15803d] text-white">
-            <th style="width:120px;">HORÁRIO</th>`;
+    let html = "";
 
-    turmasFiltradas.forEach(tId=>{
-        html += `<th>${dataStore[tId].name}</th>`;
-    });
+    // 🔹 PARA CADA DIA
+    for(let i=0; i<6; i++){
 
-    html += `</tr></thead><tbody>`;
+        let dataDia = new Date(start);
+        dataDia.setDate(start.getDate() + i);
 
-    GABARITO.forEach(slot=>{
+        html += `
+        <h3 class="bg-[#15803d] text-white p-2 font-bold mt-6">
+            ${diasSemana[i]} - ${dataDia.toLocaleDateString('pt-BR')}
+        </h3>
 
-        if(slot.t === "intervalo"){
-            html += `<tr class="intervalo-row">
-                        <td>${slot.h}</td>
-                        <td colspan="${turmasFiltradas.length}">
+        <table class="tableGS bg-white mb-6">
+        <thead>
+            <tr class="bg-gray-100">
+                <th style="width:120px;">HORÁRIO</th>`;
+
+        turmasFiltradas.forEach(tId=>{
+            html += `<th>${dataStore[tId].name}</th>`;
+        });
+
+        html += `</tr></thead><tbody>`;
+
+        // 🔹 PARA CADA HORÁRIO
+        GABARITO.forEach(slot=>{
+
+            if(slot.t === "intervalo"){
+                html += `
+                <tr class="intervalo-row">
+                    <td>${slot.h}</td>
+                    <td colspan="${turmasFiltradas.length}">
                         ${slot.l}
-                        </td>
-                     </tr>`;
-        } else {
+                    </td>
+                </tr>`;
+            } else {
 
-            html += `<tr>
-                        <td class="bg-gray-100 font-bold border">
-                        ${slot.h}
-                        </td>`;
+                html += `<tr>
+                            <td class="bg-gray-100 font-bold border">
+                                ${slot.h}
+                            </td>`;
 
-            turmasFiltradas.forEach(tId=>{
+                turmasFiltradas.forEach(tId=>{
 
-                let conteudo = "";
+                    let conteudo = "";
 
-                for(let d in dataStore[tId].discs){
-                    dataStore[tId].discs[d].sch.forEach(a=>{
-
-                        const dt = new Date(start);
-                        for(let i=0;i<dias;i++){
-
-                            let diaSemana = new Date(start);
-                            diaSemana.setDate(start.getDate()+i);
+                    for(let d in dataStore[tId].discs){
+                        dataStore[tId].discs[d].sch.forEach(a=>{
 
                             if(
-                                a.dtObj.getDate() === diaSemana.getDate() &&
-                                a.dtObj.getMonth() === diaSemana.getMonth() &&
+                                a.dtObj.getDate() === dataDia.getDate() &&
+                                a.dtObj.getMonth() === dataDia.getMonth() &&
+                                a.dtObj.getFullYear() === dataDia.getFullYear() &&
                                 a.time.startsWith(slot.h.split(' - ')[0])
                             ){
 
@@ -677,27 +688,27 @@ function gerarGradeGeral(){
                                 `${dataStore[tId].discs[d].name} - ${a.prof}`;
 
                                 if(!busca || texto.toUpperCase().includes(busca)){
-                                    conteudo += `<div class="aula-card status-normal">
-                                    ${texto}
-                                    </div>`;
+                                    conteudo = `
+                                        <div class="aula-card status-normal">
+                                            ${texto}
+                                        </div>`;
                                 }
                             }
-                        }
-                    });
-                }
+                        });
+                    }
 
-                html += `<td class="border">${conteudo}</td>`;
-            });
+                    html += `<td class="border">${conteudo}</td>`;
+                });
 
-            html += `</tr>`;
-        }
-    });
+                html += `</tr>`;
+            }
+        });
 
-    html += "</tbody></table>";
+        html += "</tbody></table>";
+    }
 
     document.getElementById("gradeGeralRender").innerHTML = html;
 }
-
         
         function limparResultados() {
             document.getElementById('resultadoBusca').classList.add('hidden');
