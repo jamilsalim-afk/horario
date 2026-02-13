@@ -57,6 +57,7 @@
             <button class="tab-btn px-6 py-4" data-tab="tab-turma">RELATÓRIO POR TURMA</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-semanal">RELATÓRIO SEMANAL POR PROFESSOR</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-semanal-turma">RELATÓRIO SEMANAL POR TURMA</button>
+            <button class="tab-btn px-6 py-4" data-tab="tab-geral">RELATÓRIO GERAL SEMANAL</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-info">INFORMAÇÕES DO SISTEMA</button>
         </div>
     </nav>
@@ -148,6 +149,38 @@
                 <div id="gradeTurmaRender" class="overflow-x-auto border rounded-lg"></div>
             </div>
         </section>
+
+        <section id="tab-geral" class="tab-pane">
+    <div class="bg-white p-6 rounded-xl shadow-sm border">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            
+            <!-- 1. Semana -->
+            <input type="week" id="weekInputGeral" 
+                   class="p-3 border rounded-lg">
+
+            <!-- 2. Nivel (inicialmente oculto) -->
+            <select id="nivelSelect" 
+                    class="p-3 border rounded-lg hidden">
+                <option value="">-- SELECIONE O NÍVEL --</option>
+                <option value="tecnico">TÉCNICO</option>
+                <option value="superior">SUPERIOR</option>
+            </select>
+
+            <!-- 3. Pesquisa (inicialmente oculto) -->
+            <input type="text" id="buscaGeral" 
+                   placeholder="Pesquisar disciplina ou professor"
+                   class="p-3 border rounded-lg hidden">
+
+        </div>
+
+        <div id="gradeGeralRender" 
+             class="overflow-x-auto border rounded-lg"></div>
+
+    </div>
+</section>
+
+        
 
         <section id="tab-info" class="tab-pane">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
@@ -322,6 +355,13 @@
     );
     return mapa[chave] || nome;
 }
+
+        function turmaEhSuperior(nome){
+    return CURSOS_SEMESTRAIS.some(c =>
+        nome.toUpperCase().includes(c)
+    );
+}
+
             
         const CURSOS_SEMESTRAIS = ["GEOGRAFIA", "MATEMÁTICA", "AGRONEGÓCIO", "ZOOTECNIA", "AGRONOMIA"];
         const TRADUCAO = { 
@@ -359,11 +399,30 @@
     "REUNIÃO DE SERVIDORES"
 ];
         window.onload = () => {
-            document.getElementById('dataRelatorio').textContent = new Date().toLocaleDateString('pt-BR');
-            carregarDados();
-            initTabs();
-            document.getElementById('yearSelect').onchange = carregarDados;
-        };
+    document.getElementById('dataRelatorio').textContent = 
+        new Date().toLocaleDateString('pt-BR');
+
+    carregarDados();
+    initTabs();
+    document.getElementById('yearSelect').onchange = carregarDados;
+
+    // 🔹 NOVA ABA - RELATÓRIO GERAL
+    document.getElementById("weekInputGeral").onchange = function(){
+        if(this.value){
+            document.getElementById("nivelSelect").classList.remove("hidden");
+        }
+    };
+
+    document.getElementById("nivelSelect").onchange = function(){
+        if(this.value){
+            document.getElementById("buscaGeral").classList.remove("hidden");
+            gerarGradeGeral();
+        }
+    };
+
+    document.getElementById("buscaGeral").oninput = gerarGradeGeral;
+};
+
 
         function ehSemestral(tId) {
             if(!dataStore[tId]) return false;
@@ -547,6 +606,96 @@ function renderPivo() {
     });
 }
 
+function gerarGradeGeral(){
+
+    const week = document.getElementById("weekInputGeral").value;
+    const nivel = document.getElementById("nivelSelect").value;
+    const busca = document.getElementById("buscaGeral").value.toUpperCase();
+
+    if(!week || !nivel) return;
+
+    const [y, w] = week.split('-W').map(Number);
+    const start = getStartOfWeek(w, y);
+    const dias = 6;
+
+    // Filtra turmas pelo nível
+    const turmasFiltradas = Object.keys(dataStore).filter(tId => {
+        const nome = dataStore[tId].name;
+        return nivel === "superior"
+            ? turmaEhSuperior(nome)
+            : !turmaEhSuperior(nome);
+    });
+
+    let html = `<table class="tableGS bg-white">
+    <thead>
+        <tr class="bg-[#15803d] text-white">
+            <th style="width:120px;">HORÁRIO</th>`;
+
+    turmasFiltradas.forEach(tId=>{
+        html += `<th>${dataStore[tId].name}</th>`;
+    });
+
+    html += `</tr></thead><tbody>`;
+
+    GABARITO.forEach(slot=>{
+
+        if(slot.t === "intervalo"){
+            html += `<tr class="intervalo-row">
+                        <td>${slot.h}</td>
+                        <td colspan="${turmasFiltradas.length}">
+                        ${slot.l}
+                        </td>
+                     </tr>`;
+        } else {
+
+            html += `<tr>
+                        <td class="bg-gray-100 font-bold border">
+                        ${slot.h}
+                        </td>`;
+
+            turmasFiltradas.forEach(tId=>{
+
+                let conteudo = "";
+
+                for(let d in dataStore[tId].discs){
+                    dataStore[tId].discs[d].sch.forEach(a=>{
+
+                        const dt = new Date(start);
+                        for(let i=0;i<dias;i++){
+
+                            let diaSemana = new Date(start);
+                            diaSemana.setDate(start.getDate()+i);
+
+                            if(
+                                a.dtObj.getDate() === diaSemana.getDate() &&
+                                a.dtObj.getMonth() === diaSemana.getMonth() &&
+                                a.time.startsWith(slot.h.split(' - ')[0])
+                            ){
+
+                                const texto = 
+                                `${dataStore[tId].discs[d].name} - ${a.prof}`;
+
+                                if(!busca || texto.toUpperCase().includes(busca)){
+                                    conteudo += `<div class="aula-card status-normal">
+                                    ${texto}
+                                    </div>`;
+                                }
+                            }
+                        }
+                    });
+                }
+
+                html += `<td class="border">${conteudo}</td>`;
+            });
+
+            html += `</tr>`;
+        }
+    });
+
+    html += "</tbody></table>";
+
+    document.getElementById("gradeGeralRender").innerHTML = html;
+}
 
         
         function limparResultados() {
