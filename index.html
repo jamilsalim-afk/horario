@@ -626,10 +626,8 @@ function gerarGradeGeral(){
             : !turmaEhSuperior(nome);
     });
 
-    let html = `<table class="tableGS bg-white">
-    <thead>
-        <tr class="bg-[#15803d] text-white">
-            <th style="width:120px;">HORÁRIO</th>`;
+    let html = `<table class="tableGS bg-white text-[9px]" 
+style="table-layout:fixed; width:100%;">HORÁRIO</th>`;
 
     turmasFiltradas.forEach(tId=>{
         html += `<th>${dataStore[tId].name}</th>`;
