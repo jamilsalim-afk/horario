@@ -134,7 +134,7 @@
                 <div id="gradeRender" class="overflow-x-auto border rounded-lg"></div>
             </div>
         </section>
-
+        
         <section id="tab-semanal-turma" class="tab-pane">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -350,7 +350,14 @@
             "2025": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/b32b06d3468be385d70405c039346e4ad3c35a54/DADOS_2025_MESTRE",
             "2026": "https://gist.githubusercontent.com/jamilsalim-afk/14e5c409f013896a2df85ab1ed57102a/raw/b1d7e569e7cfedae64e01e178797785052ca70bd/DADOS_2026_MESTRE"
         };
-        
+
+        const DISCIPLINAS_OCULTAR = [
+    "ATENDIMENTO INDIVIDUAL",
+    "ESTUDOS INDIVIDUAIS",
+    "PPS/ATENDIMENTO",
+    "RESERVA ENSINO",
+    "REUNIÃO DE SERVIDORES"
+];
         window.onload = () => {
             document.getElementById('dataRelatorio').textContent = new Date().toLocaleDateString('pt-BR');
             carregarDados();
@@ -473,42 +480,74 @@
 }
 
 function renderPivo() {
+
     const tId = document.getElementById('turmaSelectPivo').value;
     const sem = document.getElementById('semestreSelectPivo').value;
+    const b = document.getElementById('bodyPivo');
+
+    if (!tId || !dataStore[tId]) return;
+
+    b.innerHTML = '';
+
     const year = document.getElementById('yearSelect').value;
     const cal = CALENDARIOS[year];
-    const b = document.getElementById('bodyPivo');
-    
-    if(!tId) return;
-    b.innerHTML = '';
     const limiteS1 = cal.s1.fim.getTime();
 
-    for(let dId in dataStore[tId].discs) {
+    // 🔹 TRANSFORMA EM ARRAY
+    const disciplinas = Object.values(dataStore[tId].discs);
+
+    // 🔹 ORDENA ALFABETICAMENTE
+    disciplinas.sort((a, b) =>
+        a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' })
+    );
+
+    disciplinas.forEach(disc => {
+
+        // 🔴 IGNORA DISCIPLINAS ADMINISTRATIVAS
+        if (DISCIPLINAS_OCULTAR.includes(disc.name.toUpperCase())) {
+            return;
+        }
+
         let mCount = Array(12).fill(0);
         let temNoSem = false;
-        
-        dataStore[tId].discs[dId].sch.forEach(s => {
-            let filtrar = true;
+
+        disc.sch.forEach(s => {
+
             const tempoAula = s.dtObj.getTime();
 
-            if(ehSemestral(tId)) {
-                filtrar = (sem === "1") ? (tempoAula <= limiteS1) : (tempoAula > limiteS1);
-            }
-            
-            if(filtrar) { 
-                mCount[s.dtObj.getMonth()]++; 
-                temNoSem = true; 
+            const filtrar = ehSemestral(tId)
+                ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
+                : true;
+
+            if (filtrar) {
+                mCount[s.dtObj.getMonth()]++;
+                temNoSem = true;
             }
         });
 
-        if(temNoSem) {
-            let row = `<tr class="border-b"><td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
-            mCount.forEach(c => row += `<td class="border-r">${c||'-'}</td>`);
-            row += `<td class="bg-green-100 text-green-900 font-black">${mCount.reduce((a,b)=>a+b)}</td></tr>`;
-            b.innerHTML += row;
-        }
-    }
+        if (!temNoSem) return;
+
+        let row = `<tr class="border-b">
+            <td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">
+                ${disc.name}
+            </td>`;
+
+        mCount.forEach(c => {
+            row += `<td class="border-r">${c || '-'}</td>`;
+        });
+
+        const total = mCount.reduce((a, b) => a + b, 0);
+
+        row += `<td class="bg-green-100 text-green-900 font-black">
+                    ${total}
+                </td>
+            </tr>`;
+
+        b.innerHTML += row;
+    });
 }
+
+
         
         function limparResultados() {
             document.getElementById('resultadoBusca').classList.add('hidden');
@@ -543,29 +582,59 @@ function renderPivo() {
         document.getElementById('semestreSelect').onchange = atualizarListaDisciplinas;
 
         function atualizarListaDisciplinas() {
-            const tId = document.getElementById('turmaSelect').value;
-            const sem = document.getElementById('semestreSelect').value;
-            const dS = document.getElementById('disciplinaSelect');
-            dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
-            if(dataStore[tId]) {
-                Object.keys(dataStore[tId].discs).sort().forEach(id => {
-                    const aulas = dataStore[tId].discs[id].sch;
-                    const temAulaNoSem = aulas.some(a => {
-                        const year = document.getElementById('yearSelect').value;
-const cal = CALENDARIOS[year];
-const limiteS1 = cal.s1.fim.getTime();
-const tempoAula = a.dtObj.getTime();
 
-return ehSemestral(tId)
-    ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
-    : true;
-                    });
-                    if(temAulaNoSem) dS.innerHTML += `<option value="${id}">${dataStore[tId].discs[id].name}</option>`;
+    const tId = document.getElementById('turmaSelect').value;
+    const sem = document.getElementById('semestreSelect').value;
+    const dS = document.getElementById('disciplinaSelect');
+
+    dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
+
+    if (dataStore[tId]) {
+
+        Object.keys(dataStore[tId].discs)
+            .sort((a, b) =>
+                dataStore[tId].discs[a].name.localeCompare(
+                    dataStore[tId].discs[b].name,
+                    'pt-BR',
+                    { sensitivity: 'base' }
+                )
+            )
+            .forEach(id => {
+
+                const nomeDisc = dataStore[tId].discs[id].name;
+
+                // 🔴 FILTRO AQUI DENTRO
+                if (DISCIPLINAS_OCULTAR.includes(nomeDisc.toUpperCase())) {
+                    return;
+                }
+
+                const aulas = dataStore[tId].discs[id].sch;
+
+                const temAulaNoSem = aulas.some(a => {
+
+                    const year = document.getElementById('yearSelect').value;
+                    const cal = CALENDARIOS[year];
+                    const limiteS1 = cal.s1.fim.getTime();
+                    const tempoAula = a.dtObj.getTime();
+
+                    return ehSemestral(tId)
+                        ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
+                        : true;
                 });
-                dS.disabled = false;
-            }
-            renderD();
-        }
+
+                if (temAulaNoSem) {
+                    dS.innerHTML += `<option value="${id}">
+                        ${dataStore[tId].discs[id].name}
+                    </option>`;
+                }
+
+            });
+
+        dS.disabled = false;
+    }
+
+    renderD();
+}
 
         document.getElementById('disciplinaSelect').onchange = renderD;
 
@@ -606,38 +675,74 @@ const filtrar = ehSemestral(tId)
         document.getElementById('semestreSelectPivo').onchange = renderPivo;
 
         function renderPivo() {
-            const tId = document.getElementById('turmaSelectPivo').value;
-            const sem = document.getElementById('semestreSelectPivo').value;
-            const b = document.getElementById('bodyPivo');
-            if(!tId) return;
-            b.innerHTML = '';
-            for(let dId in dataStore[tId].discs) {
-                let mCount = Array(12).fill(0);
-                let temNoSem = false;
-                dataStore[tId].discs[dId].sch.forEach(s => {
-                    const year = document.getElementById('yearSelect').value;
-const cal = CALENDARIOS[year];
-const limiteS1 = cal.s1.fim.getTime();
-const tempoAula = s.dtObj.getTime();
 
-const filtrar = ehSemestral(tId)
-    ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
-    : true;
+    const tId = document.getElementById('turmaSelectPivo').value;
+    const sem = document.getElementById('semestreSelectPivo').value;
+    const b = document.getElementById('bodyPivo');
 
-if(filtrar) { 
-    const m = s.dtObj.getMonth();
-    mCount[m]++; 
-    temNoSem = true; 
-}
-                });
-                if(temNoSem) {
-                    let row = `<tr class="border-b"><td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${dataStore[tId].discs[dId].name}</td>`;
-                    mCount.forEach(c => row += `<td class="border-r">${c||'-'}</td>`);
-                    row += `<td class="bg-green-100 text-green-900 font-black">${mCount.reduce((a,b)=>a+b)}</td></tr>`;
-                    b.innerHTML += row;
-                }
-            }
+    if (!tId || !dataStore[tId]) return;
+
+    b.innerHTML = '';
+
+    const year = document.getElementById('yearSelect').value;
+    const cal = CALENDARIOS[year];
+    const limiteS1 = cal.s1.fim.getTime();
+
+    // 🔹 TRANSFORMA EM ARRAY
+    const disciplinas = Object.values(dataStore[tId].discs);
+
+    // 🔹 ORDENA ALFABETICAMENTE
+    disciplinas.sort((a, b) =>
+        a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' })
+    );
+
+    disciplinas.forEach(disc => {
+
+        // 🔴 IGNORA DISCIPLINAS ADMINISTRATIVAS
+        if (DISCIPLINAS_OCULTAR.includes(disc.name.toUpperCase())) {
+            return;
         }
+
+        let mCount = Array(12).fill(0);
+        let temNoSem = false;
+
+        disc.sch.forEach(s => {
+
+            const tempoAula = s.dtObj.getTime();
+
+            const filtrar = ehSemestral(tId)
+                ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
+                : true;
+
+            if (filtrar) {
+                mCount[s.dtObj.getMonth()]++;
+                temNoSem = true;
+            }
+        });
+
+        if (!temNoSem) return;
+
+        let row = `<tr class="border-b">
+            <td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">
+                ${disc.name}
+            </td>`;
+
+        mCount.forEach(c => {
+            row += `<td class="border-r">${c || '-'}</td>`;
+        });
+
+        const total = mCount.reduce((a, b) => a + b, 0);
+
+        row += `<td class="bg-green-100 text-green-900 font-black">
+                    ${total}
+                </td>
+            </tr>`;
+
+        b.innerHTML += row;
+    });
+}
+
+
 
         function gerarGrade() {
             const prof = document.getElementById('profSelect').value;
@@ -918,6 +1023,6 @@ if(filtrar) {
                 };
             });
         }
-    </script>
+</script>
 </body>
 </html>
