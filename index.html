@@ -613,6 +613,16 @@ function gerarGradeGeral(){
 
     const week = document.getElementById("weekInputGeral").value;
     const nivel = document.getElementById("nivelSelect").value;
+    // 🔹 Define quais horários serão exibidos
+let horariosFiltrados = GABARITO;
+
+if(nivel === "tecnico"){
+    horariosFiltrados = GABARITO.filter(slot => {
+        const horaInicio = slot.h.split(' - ')[0];
+        return horaInicio < "18:20";
+    });
+}
+
     const busca = document.getElementById("buscaGeral").value.toUpperCase();
 
     if(!week || !nivel) return;
@@ -655,7 +665,7 @@ function gerarGradeGeral(){
         html += `</tr></thead><tbody>`;
 
         // 🔹 PARA CADA HORÁRIO
-        GABARITO.forEach(slot=>{
+        horariosFiltrados.forEach(slot=>{
 
             if(slot.t === "intervalo"){
                 html += `
