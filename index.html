@@ -536,7 +536,7 @@
                 <td class="border">${a.date}</td>
                 <td class="border uppercase">${a.wd}</td>
                 <td class="border">${a.time}</td>
-                <td class="border font-bold">${getPrimeiroNome(s.prof)}</td>
+                <td class="border font-bold">${getPrimeiroNome(a.prof)}</td>
                 <td class="border font-black">${info.texto}</td>
             </tr>`;
         }
@@ -835,7 +835,7 @@ const filtrar = ehSemestral(tId)
                 if(filtrar) {
                     const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
                     if(info.soma) sR++; else sE++;
-                    b.innerHTML += `<tr class="${info.class}"><td class="border">${a.date}</td><td class="border uppercase">${a.wd}</td><td class="border">${a.time}</td><td class="border font-bold">${a.prof}</td><td class="border font-black">${info.texto}</td></tr>`;
+                    b.innerHTML += `<tr class="${info.class}"><td class="border">${a.date}</td><td class="border uppercase">${a.wd}</td><td class="border">${a.time}</td><td class="border font-bold">${getPrimeiroNome(a.prof)}</td><td class="border font-black">${info.texto}</td></tr>`;
                 }
             });
             document.getElementById('cont-regular').textContent = sR;
