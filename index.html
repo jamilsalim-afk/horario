@@ -366,6 +366,10 @@
     );
 }
 
+        function getPrimeiroNome(nomeCompleto) {
+    if (!nomeCompleto) return "";
+    return nomeCompleto.trim().split(" ")[0];
+}
             
         const CURSOS_SEMESTRAIS = ["GEOGRAFIA", "MATEMÁTICA", "AGRONEGÓCIO", "ZOOTECNIA", "AGRONOMIA"];
         const TRADUCAO = { 
@@ -698,7 +702,7 @@ if(nivel === "tecnico"){
                             ){
 
                                 const texto = 
-                                `${dataStore[tId].discs[d].name} - ${a.prof}`;
+                                `${dataStore[tId].discs[d].name} - ${getPrimeiroNome(a.prof)}`;
 
                                 if(!busca || texto.toUpperCase().includes(busca)){
                                     conteudo = `
