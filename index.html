@@ -955,8 +955,8 @@ const filtrar = ehSemestral(tId)
                                     if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
                                         aulasPorDia[i]++;
                                         cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}">
-                                            <div class="font-black uppercase" style="font-size:9px;">${dataStore[t].name}</div>
-                                            <div class="border-t border-gray-200 mt-1" style="font-size:8px;">${dataStore[t].discs[d].name}</div>
+                                            <div style="font-size:9px;">${dataStore[t].name}</div>
+                                            <div class="border-t border-gray-200 mt-1" style="font-size:8px; font-black uppercase">${dataStore[t].discs[d].name}</div>
                                         </div>`;
                                     }
                                 });
@@ -1038,8 +1038,8 @@ const filtrar = ehSemestral(tId)
                                 dataStore[tId].discs[d].sch.forEach(x => {
                                     if(x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
                                         cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}">
-                                            <div class="font-black uppercase" style="margin-bottom: 2px;">${dataStore[tId].discs[d].name}</div>
-                                            <div class="border-t border-gray-200 pt-1 italic text-[8px]">${x.prof}</div>
+                                            <div style="margin-bottom: 2px;">${dataStore[tId].discs[d].name}</div>
+                                            <div class="border-t border-gray-200 pt-1 italic text-[8px] font-black uppercase">${x.prof}</div>
                                         </div>`;
                                     }
                                 });
