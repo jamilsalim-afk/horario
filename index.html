@@ -60,6 +60,7 @@
             <button class="tab-btn px-6 py-4" data-tab="tab-semanal">RELATÓRIO SEMANAL POR PROFESSOR</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-semanal-turma">RELATÓRIO SEMANAL POR TURMA</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-geral">RELATÓRIO GERAL SEMANAL</button>
+            <button class="tab-btn Px-6 py-4" data-tab="dashboardTab">DASHBOARD</button>
             <button class="tab-btn px-6 py-4" data-tab="tab-info">INFORMAÇÕES DO SISTEMA</button>
         </div>
     </nav>
@@ -182,7 +183,9 @@
     </div>
 </section>
 
-        
+        <div id="dashboardTab" class="tab-pane">
+    <div id="dashboardContent"></div>
+</div>
 
         <section id="tab-info" class="tab-pane">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
@@ -1193,12 +1196,51 @@ const filtrar = ehSemestral(tId)
             doc.save(`Ficha Semanal - ${turmaNome} - ${dataEmissao}.pdf`);
         }
 
+function gerarDashboard() {
+    let totalAulas = 0;
+    let totalTurmas = Object.keys(dataStore).length;
+    let professoresSet = new Set();
+
+    for (let t in dataStore) {
+        for (let d in dataStore[t].discs) {
+            dataStore[t].discs[d].sch.forEach(a => {
+                totalAulas++;
+                professoresSet.add(a.prof);
+            });
+        }
+    }
+
+    const totalProfessores = professoresSet.size;
+
+    document.getElementById('dashboardContent').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:20px;">
+            <div style="padding:20px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;">
+                <div style="font-size:14px;">Total de Aulas</div>
+                <div style="font-size:28px;font-weight:bold;">${totalAulas}</div>
+            </div>
+            <div style="padding:20px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;">
+                <div style="font-size:14px;">Total de Turmas</div>
+                <div style="font-size:28px;font-weight:bold;">${totalTurmas}</div>
+            </div>
+            <div style="padding:20px;background:#fef9c3;border:1px solid #fde68a;border-radius:10px;">
+                <div style="font-size:14px;">Total de Professores</div>
+                <div style="font-size:28px;font-weight:bold;">${totalProfessores}</div>
+            </div>
+        </div>
+    `;
+}
+        
         function initTabs() {
             document.querySelectorAll('.tab-btn').forEach(b => {
                 b.onclick = () => {
-                    document.querySelectorAll('.tab-btn, .tab-pane').forEach(e => e.classList.remove('active'));
-                    b.classList.add('active'); document.getElementById(b.dataset.tab).classList.add('active');
-                };
+    document.querySelectorAll('.tab-btn, .tab-pane').forEach(e => e.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById(b.dataset.tab).classList.add('active');
+
+    if (b.dataset.tab === "dashboardTab") {
+        gerarDashboard();
+    }
+};
             });
         }
 </script>
