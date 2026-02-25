@@ -162,6 +162,11 @@
             <input type="week" id="weekInputGeral" 
                    class="p-3 border rounded-lg">
 
+             <button onclick="gerarGrade()" 
+    style="padding:8px 16px;background:#15803d;color:white;border:none;border-radius:6px;cursor:pointer;margin-left:10px;">
+    Atualizar Grade
+</button>
+
             <!-- 2. Nivel (inicialmente oculto) -->
             <select id="nivelSelect" 
                     class="p-3 border rounded-lg hidden">
@@ -169,11 +174,6 @@
                 <option value="tecnico">TÉCNICO</option>
                 <option value="superior">SUPERIOR</option>
             </select>
-
-            <button onclick="gerarGrade()" 
-    style="padding:8px 16px;background:#15803d;color:white;border:none;border-radius:6px;cursor:pointer;margin-left:10px;">
-    Atualizar Grade
-</button>
             
             <!-- 3. Pesquisa (inicialmente oculto) -->
             <input type="text" id="buscaGeral" 
