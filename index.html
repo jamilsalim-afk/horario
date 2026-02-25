@@ -1270,23 +1270,23 @@ function gerarDashboard() {
         ${rankingHTML}
     `;
 }
+        
 function exportarDashboardPDF() {
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
 
     const year = document.getElementById('yearSelect').value;
-    const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+    const dataEmissao = new Date().toLocaleDateString('pt-BR');
 
     let totalAulas = 0;
     let totalTurmas = Object.keys(dataStore).length;
     let professoresSet = new Set();
     let contadorProfessores = {};
 
-    // Percorre todas as turmas e disciplinas
+    // 🔎 Percorre todos os dados
     for (let t in dataStore) {
         for (let d in dataStore[t].discs) {
-
             dataStore[t].discs[d].sch.forEach(a => {
 
                 totalAulas++;
@@ -1297,55 +1297,63 @@ function exportarDashboardPDF() {
                 }
 
                 contadorProfessores[a.prof]++;
-
             });
         }
     }
 
     const totalProfessores = professoresSet.size;
 
-    // Ordena todos os professores em ordem decrescente
+    // 🔽 Ordena todos em ordem decrescente
     const ranking = Object.entries(contadorProfessores)
         .sort((a, b) => b[1] - a[1]);
 
-    // Cabeçalho institucional (já existente no seu sistema)
+    // 🏛 Cabeçalho institucional
     gerarCabecalhoPadrao(doc);
 
+    // 📌 Título
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text(`DASHBOARD INSTITUCIONAL - ANO ${year}`, 14, 45);
+    doc.text(`DASHBOARD INSTITUCIONAL - ANO LETIVO ${year}`, 105, 48, { align: "center" });
 
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
 
-    doc.text(`Total de Aulas: ${totalAulas}`, 14, 55);
-    doc.text(`Total de Turmas: ${totalTurmas}`, 14, 61);
-    doc.text(`Total de Professores: ${totalProfessores}`, 14, 67);
+    // 📊 Resumo Geral
+    doc.text(`Total de Aulas Ministradas: ${totalAulas}`, 14, 60);
+    doc.text(`Total de Turmas Ativas: ${totalTurmas}`, 14, 66);
+    doc.text(`Total de Professores Envolvidos: ${totalProfessores}`, 14, 72);
+    doc.text(`Data de Emissão: ${dataEmissao}`, 14, 78);
 
+    // 📚 Lista completa
     doc.setFont("helvetica", "bold");
-    doc.text("Professores em ordem decrescente de carga horária:", 14, 78);
+    doc.text("Professores em ordem decrescente de aulas:", 14, 90);
 
     doc.setFont("helvetica", "normal");
 
-    let linhaY = 85;
+    let linhaY = 98;
 
     ranking.forEach((prof, index) => {
 
-        // Quebra automática de página
-        if (linhaY > 280) {
+        // 🔁 Quebra automática de página
+        if (linhaY > 275) {
             doc.addPage();
             gerarCabecalhoPadrao(doc);
-            linhaY = 45;
+            linhaY = 48;
         }
 
-        doc.text(`${index + 1}º - ${prof[0]} (${prof[1]} aulas)`, 18, linhaY);
+        doc.text(
+            `${index + 1}º - ${prof[0]} — ${prof[1]} aulas`,
+            18,
+            linhaY
+        );
+
         linhaY += 6;
     });
 
-    // Rodapé institucional
+    // 🏁 Rodapé institucional (aplica em todas as páginas)
     gerarRodapePadrao(doc);
 
-    doc.save(`Dashboard Institucional - ${year} - ${dataEmissao}.pdf`);
+    doc.save(`Dashboard_Institucional_${year}.pdf`);
 }
         
         function initTabs() {
