@@ -1217,13 +1217,20 @@ function gerarDashboard() {
         for (let d in dataStore[t].discs) {
             dataStore[t].discs[d].sch.forEach(a => {
                 totalAulas++;
-                professoresSet.add(a.prof);
+                if (
+    a.prof &&
+    a.prof.trim() !== "" &&
+    a.prof !== "N/I"
+) {
 
-                if (!contadorProfessores[a.prof]) {
-                    contadorProfessores[a.prof] = 0;
-                }
-                contadorProfessores[a.prof]++;
-            });
+    professoresSet.add(a.prof);
+
+    if (!contadorProfessores[a.prof]) {
+        contadorProfessores[a.prof] = 0;
+    }
+
+    contadorProfessores[a.prof]++;
+}
         }
     }
 
@@ -1295,14 +1302,15 @@ function exportarDashboardPDF() {
     a.prof.trim() !== "" &&
     a.prof !== "N/I"
 ) {
-                professoresSet.add(a.prof);
 
-                if (!contadorProfessores[a.prof]) {
-                    contadorProfessores[a.prof] = 0;
-                }
+    professoresSet.add(a.prof);
 
-                contadorProfessores[a.prof]++;
-            });
+    if (!contadorProfessores[a.prof]) {
+        contadorProfessores[a.prof] = 0;
+    }
+
+    contadorProfessores[a.prof]++;
+}
         }
     }
 
