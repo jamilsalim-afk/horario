@@ -1221,7 +1221,7 @@ function gerarDashboard() {
     // Converter em array e ordenar
     const ranking = Object.entries(contadorProfessores)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 75); // Top 5
+        .slice(0, 90); // Top 5
 
     let rankingHTML = `
         <div style="margin-top:30px;">
