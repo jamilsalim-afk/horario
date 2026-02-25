@@ -1221,11 +1221,11 @@ function gerarDashboard() {
     // Converter em array e ordenar
     const ranking = Object.entries(contadorProfessores)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 10); // Top 5
+        .slice(0, 75); // Top 5
 
     let rankingHTML = `
         <div style="margin-top:30px;">
-            <h3 style="font-weight:bold;margin-bottom:10px;">Top 10 Professores com mais aulas no ano</h3>
+            <h3 style="font-weight:bold;margin-bottom:10px;">Ordem decrescente dos Professores com mais aulas no ano</h3>
             <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
     `;
 
