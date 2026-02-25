@@ -271,9 +271,15 @@
         <div id="dashboardTab" class="tab-pane">
             <div style="margin-top:15px;">
 
-<button onclick="gerarDashboard()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition uppercase text-xs">Atualizar Dashboard</button>
-<button onclick="exportarDashboardPDF()" class="bg-[#15803d] text-white font-bold rounded-lg flex-1 hover:bg-green-800 transition shadow-md uppercase text-xs">Exportar Dashboard PDF</button>
+<button onclick="gerarDashboard()" 
+    style="padding:8px 16px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; text-transform:uppercase; font-size:12px;">
+    Atualizar Dashboard
+</button>
 
+<button onclick="exportarDashboardPDF()" 
+    style="padding:8px 16px; background:#15803d; color:white; border:none; border-radius:8px; cursor:pointer; margin-left:10px; font-weight:bold; text-transform:uppercase; font-size:12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+    Exportar Dashboard PDF
+</button>
                 
 </div>
     <div id="dashboardContent"></div>
