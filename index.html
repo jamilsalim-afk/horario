@@ -32,26 +32,55 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-    <header class="bg-[#15803d] text-white p-6 shadow-lg">
-        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-black italic uppercase tracking-tighter">INSTITUTO FEDERAL DE RONDÔNIA - IFRO</h1>
-                <p class="text-xs font-bold opacity-80 uppercase">CAMPUS CACOAL</p>
-                <p class="text-xs font-bold opacity-80 uppercase">DEPARTAMENTO DE APOIO AO ENSINO</p>
-                <p class="mt-2 text-sm font-black uppercase border-t border-white/20 pt-1">SISTEMA DE GESTÃO PEDAGÓGICA</p>
+<header class="bg-[#15803d] text-white shadow-lg">
+    <div class="container mx-auto px-4 py-4 md:py-6">
+
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+
+            <!-- BLOCO INSTITUCIONAL -->
+            <div class="space-y-1">
+                <h1 class="text-lg sm:text-xl md:text-2xl font-black italic uppercase tracking-tight leading-tight">
+                    INSTITUTO FEDERAL DE RONDÔNIA - IFRO
+                </h1>
+
+                <p class="text-[10px] sm:text-xs font-bold opacity-80 uppercase">
+                    Campus Cacoal
+                </p>
+
+                <p class="text-[10px] sm:text-xs font-bold opacity-80 uppercase">
+                    Departamento de Apoio ao Ensino
+                </p>
+
+                <p class="mt-2 text-xs sm:text-sm font-black uppercase border-t border-white/20 pt-2">
+                    Sistema de Gestão Pedagógica
+                </p>
             </div>
-            <div class="flex items-center gap-4 mt-4 md:mt-0">
-                <div class="flex flex-col">
-                    <label class="text-[10px] font-bold opacity-70">ANO LETIVO</label>
-                    <select id="yearSelect" class="bg-white/20 border border-white/30 p-1 rounded text-white font-bold outline-none cursor-pointer">
+
+            <!-- BLOCO CONTROLES -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full lg:w-auto">
+
+                <div class="flex flex-col w-full sm:w-auto">
+                    <label class="text-[10px] font-bold opacity-70">
+                        Ano Letivo
+                    </label>
+
+                    <select id="yearSelect"
+                        class="bg-white/20 border border-white/30 px-3 py-2 rounded-lg text-white font-bold outline-none cursor-pointer w-full sm:w-32">
                         <option value="2025" class="text-black">2025</option>
                         <option value="2026" class="text-black" selected>2026</option>
                     </select>
                 </div>
-                <div id="dataRelatorio" class="bg-white/10 px-4 py-2 rounded-lg font-mono text-sm border border-white/20">--/--/----</div>
+
+                <div id="dataRelatorio"
+                    class="bg-white/10 px-4 py-2 rounded-lg font-mono text-sm border border-white/20 w-full sm:w-auto text-center">
+                    --/--/----
+                </div>
+
             </div>
+
         </div>
-    </header>
+    </div>
+</header>
 
     <nav class="bg-white shadow-md sticky top-0 z-50">
         <div class="container mx-auto flex overflow-x-auto">
