@@ -162,11 +162,6 @@
             <input type="week" id="weekInputGeral" 
                    class="p-3 border rounded-lg">
 
-             <button onclick="gerarGrade()" 
-    style="padding:8px 16px;background:#15803d;color:white;border:none;border-radius:6px;cursor:pointer;margin-left:10px;">
-    Atualizar Grade
-</button>
-
             <!-- 2. Nivel (inicialmente oculto) -->
             <select id="nivelSelect" 
                     class="p-3 border rounded-lg hidden">
@@ -179,14 +174,17 @@
             <input type="text" id="buscaGeral" 
                    placeholder="Pesquisar disciplina ou professor"
                    class="p-3 border rounded-lg hidden">
-
         </div>
-
         
         <div id="gradeGeralRender" 
              class="overflow-x-auto border rounded-lg"></div>
-
     </div>
+            
+             <button onclick="gerarGrade()" 
+    style="padding:8px 16px;background:#15803d;color:white;border:none;border-radius:6px;cursor:pointer;margin-left:10px;">
+    Atualizar Grade
+</button>
+            
 </section>
 
         <div id="dashboardTab" class="tab-pane">
