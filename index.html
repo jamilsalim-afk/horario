@@ -633,13 +633,13 @@
         if(filtrar) {
             const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
             if(info.soma) sR++; else sE++;
-            b.innerHTML += `<tr class="${info.class}">
-                <td class="border">${a.date}</td>
-                <td class="border uppercase">${a.wd}</td>
-                <td class="border">${a.time}</td>
-                <td class="border font-bold">${getPrimeiroNome(a.prof)}</td>
-                <td class="border font-black">${info.texto}</td>
-            </tr>`;
+            b.innerHTML += `<tr class="${info.class} text-[12px] md:text-[13px]">
+    <td class="border px-2 py-1">${a.date}</td>
+    <td class="border uppercase px-2 py-1">${a.wd}</td>
+    <td class="border px-2 py-1">${a.time}</td>
+    <td class="border font-semibold px-2 py-1">${getPrimeiroNome(a.prof)}</td>
+    <td class="border font-semibold px-2 py-1">${info.texto}</td>
+</tr>`;
         }
     });
     document.getElementById('cont-regular').textContent = sR;
@@ -701,25 +701,25 @@ function renderPivo() {
         if (!temNoSem) return;
 
         let row = `<tr class="border-b">
-            <td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">
+            <td class="text-left font-semibold border-r bg-gray-50 text-[#15803d] uppercase text-[12px] md:text-[13px] px-2 py-1">
                 ${disc.name}
             </td>`;
 
         mCount.forEach(c => {
-            row += `<td class="border-r">${c || '-'}</td>`;
+            row += `<td class="border-r text-[12px] md:text-[13px] px-2 py-1">${c || '-'}</td>`;
         });
 
         const total = mCount.reduce((a, b) => a + b, 0);
 
         // 🔹 NOVA COLUNA SÁBADO
         row += `
-            <td class="bg-yellow-100 text-yellow-900 font-bold border-r">
+            <td class="bg-yellow-100 text-yellow-900 font-semibold border-r text-[12px] md:text-[13px] px-2 py-1">
                 ${aulasSabado || '-'}
             </td>
         `;
 
         row += `
-            <td class="bg-green-100 text-green-900 font-black">
+            <td class="bg-green-100 text-green-900 font-semibold text-[12px] md:text-[13px] px-2 py-1">
                 ${total}
             </td>
         </tr>`;
@@ -772,9 +772,9 @@ if(nivel === "tecnico"){
             ${diasSemana[i]} - ${dataDia.toLocaleDateString('pt-BR')}
         </h3>
 
-        <table class="tableGS bg-white mb-6">
+        <table class="tableGS bg-white mb-6 text-[11px] md:text-[12px]">
         <thead>
-            <tr class="bg-gray-100">
+            <td class="bg-gray-100 font-semibold border px-2 py-1">
                 <th style="width:70px;" class="text-[10px]">H</th>`;
 
         turmasFiltradas.forEach(tId=>{
@@ -828,7 +828,7 @@ if(nivel === "tecnico"){
                         });
                     }
 
-                    html += `<td class="border">${conteudo}</td>`;
+                    html += `<td class="border px-2 py-1">${conteudo}</td>`;
                 });
 
                 html += `</tr>`;
