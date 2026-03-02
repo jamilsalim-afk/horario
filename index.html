@@ -115,6 +115,34 @@
         font-size: 12px !important;
     }
 }
+        /* --- AJUSTE DE PRECISÃO PARA NÃO DESCONFIGURAR DISCIPLINAS --- */
+@media (max-width: 768px) {
+    
+    /* Removemos a largura forçada de todas as tabelas e aplicamos só nas densas */
+    table { 
+        min-width: auto !important; 
+    }
+
+    /* Somente estas tabelas (as que ficam esmagadas) ganham o scroll e largura mínima */
+    #tableGeral, #tablePivo, #tableGS, #tableGSTurma {
+        min-width: 800px !important; /* Aumentei para 800px para garantir leitura no Relatório Geral */
+        display: block;
+        overflow-x: auto;
+    }
+
+    /* A tabela de disciplina (#tableD) volta ao normal para caber na tela */
+    #tableD {
+        min-width: 100% !important;
+        width: 100% !important;
+        display: table; /* Garante que ela se comporte como tabela padrão */
+    }
+
+    /* Ajuste de fonte específico para a tabela de Disciplina no mobile */
+    #tableD td, #tableD th {
+        font-size: 11px !important; /* Um pouco maior que as outras para facilitar leitura */
+        padding: 8px 4px !important;
+    }
+}
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
