@@ -63,7 +63,58 @@
         min-width: 60px; /* Garante que a coluna não fique fina demais */
     }
 }
-        
+        /* --- NOVOS AJUSTES DE RESPONSIVIDADE (MOBILE) --- */
+@media (max-width: 768px) {
+    /* 1. DASHBOARD: Ajusta os cards para não quebrarem o layout */
+    #dashboardContent > div {
+        grid-template-columns: repeat(2, 1fr) !important; /* Em vez de 3, usa 2 colunas no celular */
+        gap: 10px !important;
+    }
+
+    #dashboardContent div[style*="padding:20px"] {
+        padding: 10px !important; /* Reduz o respiro interno dos cards */
+    }
+
+    /* Reduz o tamanho dos números gigantes do dashboard */
+    #dashboardContent div[style*="font-size:28px"] {
+        font-size: 18px !important;
+    }
+    
+    #dashboardContent div[style*="font-size:14px"] {
+        font-size: 11px !important;
+    }
+
+    /* 2. TABELAS (Relatório Geral e Semanal): Resolve o problema das colunas finas */
+    /* Envolvemos as tabelas em um container de scroll */
+    .tab-pane {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 600px !important; /* FORÇA a tabela a ser larga, obrigando o usuário a dar scroll lateral */
+        table-layout: auto !important;
+    }
+
+    /* Ajusta os textos verticais do cabeçalho da grade geral */
+    th div[style*="rotate(-90deg)"], 
+    .vertical-text {
+        font-size: 8px !important;
+        height: 100px !important; /* Aumenta o espaço para o nome da turma não sumir */
+    }
+
+    /* 3. TEXTOS DAS DISCIPLINAS: Evita sobreposição */
+    td, th {
+        font-size: 9px !important;
+        padding: 2px !important;
+        line-height: 1.1 !important;
+    }
+
+    /* Ajusta especificamente os nomes dos professores no ranking */
+    #dashboardContent div[style*="display:flex"] {
+        font-size: 12px !important;
+    }
+}
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
