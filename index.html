@@ -1047,8 +1047,6 @@ const filtrar = ehSemestral(tId)
     });
 }
 
-
-
         function gerarGrade() {
             const prof = document.getElementById('profSelect').value;
             const week = document.getElementById('weekInput').value;
@@ -1320,7 +1318,7 @@ const filtrar = ehSemestral(tId)
             doc.save(`Ficha Semanal - ${turmaNome} - ${dataEmissao}.pdf`);
         }
 
-function gerarDashboard() {
+function calcularIndicadoresDashboard() {
 
     let totalAulasGerais = 0;
     let totalAulasComProfessor = 0;
@@ -1367,6 +1365,32 @@ function gerarDashboard() {
 
     const ranking = Object.entries(contadorProfessores)
         .sort((a, b) => b[1] - a[1]);
+
+    return {
+        totalAulasGerais,
+        totalAulasComProfessor,
+        totalAulasSemProfessor,
+        totalTurmas,
+        totalProfessores,
+        percentualCobertura,
+        ranking
+    };
+}
+        
+function gerarDashboard() {
+
+    // 🔹 Usa a função central de cálculo
+    const indicadores = calcularIndicadoresDashboard();
+
+    const {
+        totalAulasGerais,
+        totalAulasComProfessor,
+        totalAulasSemProfessor,
+        totalTurmas,
+        totalProfessores,
+        percentualCobertura,
+        ranking
+    } = indicadores;
 
     let rankingHTML = `
         <div style="margin-top:30px;">
@@ -1434,51 +1458,18 @@ function exportarDashboardPDF() {
     const year = document.getElementById('yearSelect').value;
     const dataEmissao = new Date().toLocaleDateString('pt-BR');
 
-    let totalAulasGerais = 0;
-    let totalAulasComProfessor = 0;
-    let totalTurmas = Object.keys(dataStore).length;
+    // 🔹 Usa a função central de cálculo (sem duplicação)
+    const indicadores = calcularIndicadoresDashboard();
 
-    let professoresSet = new Set();
-    let contadorProfessores = {};
-
-    for (let t in dataStore) {
-        for (let d in dataStore[t].discs) {
-
-            dataStore[t].discs[d].sch.forEach(a => {
-
-                totalAulasGerais++;
-
-                if (
-                    a.prof &&
-                    a.prof.trim() !== "" &&
-                    a.prof !== "N/I"
-                ) {
-
-                    totalAulasComProfessor++;
-
-                    professoresSet.add(a.prof);
-
-                    if (!contadorProfessores[a.prof]) {
-                        contadorProfessores[a.prof] = 0;
-                    }
-
-                    contadorProfessores[a.prof]++;
-                }
-
-            });
-
-        }
-    }
-
-    const totalProfessores = professoresSet.size;
-    const totalAulasSemProfessor = totalAulasGerais - totalAulasComProfessor;
-
-    const percentualCobertura = totalAulasGerais > 0
-        ? ((totalAulasComProfessor / totalAulasGerais) * 100).toFixed(1)
-        : 0;
-
-    const ranking = Object.entries(contadorProfessores)
-        .sort((a, b) => b[1] - a[1]);
+    const {
+        totalAulasGerais,
+        totalAulasComProfessor,
+        totalAulasSemProfessor,
+        totalTurmas,
+        totalProfessores,
+        percentualCobertura,
+        ranking
+    } = indicadores;
 
     gerarCabecalhoPadrao(doc);
 
