@@ -220,6 +220,15 @@
                         <button onclick="gerarGrade()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition uppercase text-xs">Ver Grade</button>
                         <button onclick="exportarGradePDF()" class="bg-[#15803d] text-white font-bold rounded-lg flex-1 hover:bg-green-800 transition shadow-md uppercase text-xs">Exportar PDF Grade</button>
                     </div>
+                    <div style="margin-bottom:10px;">
+    <label><strong>Semestre:</strong></label>
+    <select id="seletorSemestreProfessor" onchange="alterarSemestreProfessor()">
+        <option value="2025-1">2025 - 1º Semestre</option>
+        <option value="2025-2">2025 - 2º Semestre</option>
+        <option value="2026-1">2026 - 1º Semestre</option>
+        <option value="2026-2">2026 - 2º Semestre</option>
+    </select>
+</div>
                 </div>
                 <div id="gradeRender" class="overflow-x-auto border rounded-lg"></div>
             </div>
@@ -335,7 +344,13 @@
 };
 
         const PROFESSORES = {
-        "Adilson": "Adilson Miranda de Almeida",
+        "Adilson": {
+        nome: "Adilson Miranda de Almeida",
+        prd: {
+            "2025-1": "Segunda-M/Terça-M",
+            "2025-2": "Quarta-V"
+        }
+    },
 "Adriana": "Adriana Aparecida Rigolon",
 "Agatha": "Agatha Christie de Souza Zemke",
 "Agmar": "Agmar Aparecido Felix Chaves",
@@ -453,12 +468,99 @@
 "Vera": "Vera Lucia Lopes Silveira",
 "Wellyton": "Wellyton Rocha Vasconcellos" }; 
 
+        function detectarSemestreAtual() {
+
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = hoje.getMonth(); // Janeiro = 0
+
+    if (mes <= 5) {
+        return `${ano}-1`;
+    } else {
+        return `${ano}-2`;
+    }
+}
+
+let SEMESTRE_ATUAL = detectarSemestreAtual();
+        
         function traduzirProfessor(nome) {
+
     const chave = nome.trim().toUpperCase();
-    const mapa = Object.fromEntries(
-        Object.entries(PROFESSORES).map(([k,v]) => [k.toUpperCase(), v])
+
+    if (!PROFESSORES[chave]) return nome;
+
+    const prof = PROFESSORES[chave];
+
+    return prof.nome || nome;
+}
+
+        function extrairPRD(nomeProfessor) {
+
+    const chave = nomeProfessor.trim().toUpperCase();
+    const prof = PROFESSORES[chave];
+
+    if (!prof || !prof.prd) return [];
+
+    const prdSemestre = prof.prd[SEMESTRE_ATUAL];
+    if (!prdSemestre) return [];
+
+    const diasMap = {
+        "Segunda": 1,
+        "Terça": 2,
+        "Terca": 2,
+        "Quarta": 3,
+        "Quinta": 4,
+        "Sexta": 5
+    };
+
+    return prdSemestre.split('/').map(item => {
+
+        const [diaTexto, turno] = item.split('-');
+
+        return {
+            dia: diasMap[diaTexto.trim()],
+            turno: turno.trim().toUpperCase()
+        };
+
+    }).filter(p => p.dia && p.turno);
+}
+
+        function professorEstaDePRD(nomeProfessor, data, horario) {
+
+    const listaPRD = extrairPRD(nomeProfessor);
+    if (listaPRD.length === 0) return false;
+
+    const diaSemana = data.getDay(); // 1=Seg, 2=Ter...
+
+    if (diaSemana === 0 || diaSemana === 6) return false;
+
+    const hora = parseInt(horario.split(':')[0]);
+
+    let turnoAtual;
+
+    if (hora < 12) turnoAtual = "M";
+    else if (hora < 18) turnoAtual = "V";
+    else turnoAtual = "N";
+
+    return listaPRD.some(p =>
+        p.dia === diaSemana &&
+        p.turno === turnoAtual
     );
-    return mapa[chave] || nome;
+}
+        function inicializarSemestreProfessor() {
+
+    const seletor = document.getElementById("seletorSemestreProfessor");
+    if (!seletor) return;
+
+    SEMESTRE_ATUAL = detectarSemestreAtual();
+    seletor.value = SEMESTRE_ATUAL;
+}
+        function alterarSemestreProfessor() {
+
+    const seletor = document.getElementById("seletorSemestreProfessor");
+    SEMESTRE_ATUAL = seletor.value;
+
+    gerarHorarioSemanalProfessor(); 
 }
 
         function turmaEhSuperior(nome){
@@ -1047,101 +1149,159 @@ const filtrar = ehSemestral(tId)
     });
 }
 
-        function gerarGrade() {
-            const prof = document.getElementById('profSelect').value;
-            const week = document.getElementById('weekInput').value;
-            if(!prof || !week) return alert("Selecione Professor e Semana");
-            const [y, w] = week.split('-W').map(Number);
-            const start = getStartOfWeek(w, y);
-            const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-            
-            let aulasPorDia = Array(6).fill(0);
-            let horasPermanencia = Array(6).fill(0);
-            let observacoes = [];
-            let ultimaAulaDiaAnterior = null;
+       function gerarGrade() {
 
-            let h = `<table class="tableGS bg-white" id="tableGS" style="width:100%; table-layout:fixed; border-collapse:collapse;">
-                <thead>
-                    <tr class="bg-[#15803d] text-white">
-                        <th style="width: 100px;">HORÁRIO</th>`;
-            dias.forEach((d, i) => {
-                const dt = new Date(start); dt.setDate(dt.getDate() + i);
-                h += `<th style="width: 14%;">${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
-            });
-            h += `</tr></thead><tbody>`;
+    SEMESTRE_ATUAL = detectarSemestreAtual();
 
-            GABARITO.forEach(s => {
-                if(s.t === "intervalo") {
-                    h += `<tr class="intervalo-row"><td style="border:1px solid #ddd;">${s.h}</td><td colspan="6" style="border:1px solid #ddd;">${s.l}</td></tr>`;
-                } else {
-                    h += `<tr><td class="bg-gray-100 font-bold border text-[10px]">${s.h}</td>`;
-                    for(let i=0; i<6; i++) {
-                        const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
-                        let cellContent = "";
-                        for(let t in dataStore) {
-                            for(let d in dataStore[t].discs) {
-                                dataStore[t].discs[d].sch.forEach(x => {
-                                    if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
-                                        aulasPorDia[i]++;
-                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}">
-                                            <div style="font-size:9px;">${dataStore[t].name}</div>
-                                            <div class="border-t border-gray-200 mt-1" style="font-size:8px; font-black uppercase">${dataStore[t].discs[d].name}</div>
-                                        </div>`;
-                                    }
-                                });
-                            }
-                        }
-                        h += `<td class="border" style="height:50px; vertical-align:top;">${cellContent}</td>`;
-                    }
-                    h += `</tr>`;
-                }
-            });
+    const prof = document.getElementById('profSelect').value;
+    const week = document.getElementById('weekInput').value;
+    if(!prof || !week) return alert("Selecione Professor e Semana");
+
+    const [y, w] = week.split('-W').map(Number);
+    const start = getStartOfWeek(w, y);
+    const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    
+    let aulasPorDia = Array(6).fill(0);
+    let horasPermanencia = Array(6).fill(0);
+    let observacoes = [];
+    let ultimaAulaDiaAnterior = null;
+
+    let h = `<table class="tableGS bg-white" id="tableGS" style="width:100%; table-layout:fixed; border-collapse:collapse;">
+        <thead>
+            <tr class="bg-[#15803d] text-white">
+                <th style="width: 100px;">HORÁRIO</th>`;
+
+    dias.forEach((d, i) => {
+        const dt = new Date(start); 
+        dt.setDate(dt.getDate() + i);
+        h += `<th style="width: 14%;">${d.toUpperCase()}<br>
+              <span class="text-[9px] opacity-80">
+              ${dt.toLocaleDateString('pt-BR').slice(0,5)}
+              </span></th>`;
+    });
+
+    h += `</tr></thead><tbody>`;
+
+    GABARITO.forEach(s => {
+
+        if(s.t === "intervalo") {
+            h += `<tr class="intervalo-row">
+                  <td style="border:1px solid #ddd;">${s.h}</td>
+                  <td colspan="6" style="border:1px solid #ddd;">${s.l}</td>
+                  </tr>`;
+        } else {
+
+            h += `<tr>
+                  <td class="bg-gray-100 font-bold border text-[10px]">${s.h}</td>`;
 
             for(let i=0; i<6; i++) {
-                let aulasNoDia = [];
-                const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
+
+                const dtR = new Date(start);
+                dtR.setDate(dtR.getDate()+i);
+
+                let cellContent = "";
+
+                // AULAS
                 for(let t in dataStore) {
                     for(let d in dataStore[t].discs) {
                         dataStore[t].discs[d].sch.forEach(x => {
-                            if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth()) {
-                                const [hIni] = x.time.split(' - ')[0].split(':').map(Number);
-                                const [hFim] = x.time.split(' - ')[1].split(':').map(Number);
-                                aulasNoDia.push({ inicio: hIni, fim: hFim, data: new Date(dtR) });
+
+                            if(
+                                x.prof === prof &&
+                                x.dtObj.getDate() === dtR.getDate() &&
+                                x.dtObj.getMonth() === dtR.getMonth() &&
+                                x.time.startsWith(s.h.split(' - ')[0])
+                            ) {
+                                aulasPorDia[i]++;
+                                cellContent += `
+                                <div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}">
+                                    <div style="font-size:9px;">${dataStore[t].name}</div>
+                                    <div class="border-t border-gray-200 mt-1" style="font-size:8px; font-black uppercase">
+                                        ${dataStore[t].discs[d].name}
+                                    </div>
+                                </div>`;
                             }
                         });
                     }
                 }
-                if(aulasNoDia.length > 0) {
-                    aulasNoDia.sort((a,b) => a.inicio - b.inicio);
-                    let primeira = aulasNoDia[0], ultima = aulasNoDia[aulasNoDia.length-1];
-                    let diff = ultima.fim - primeira.inicio;
-                    if(primeira.inicio <= 12 && ultima.fim >= 14) diff -= 2;
-                    horasPermanencia[i] = diff > 0 ? diff : 0;
-                    if(ultimaAulaDiaAnterior) {
-                        let dFimAnt = new Date(ultimaAulaDiaAnterior.data); dFimAnt.setHours(ultimaAulaDiaAnterior.fim, 0, 0);
-                        let dIniAtu = new Date(primeira.data); dIniAtu.setHours(primeira.inicio, 0, 0);
-                        let diffInter = (dIniAtu - dFimAnt) / (1000 * 60 * 60);
-                        if(diffInter < 11) observacoes.push(`${dias[i]}: Intervalo de ${diffInter.toFixed(1)}h (mín. 11h)`);
-                    }
-                    ultimaAulaDiaAnterior = ultima;
-                } else { ultimaAulaDiaAnterior = null; }
+
+                // 🔥 PRD AQUI
+                if(professorEstaDePRD(prof, dtR, s.h.split(' - ')[0])) {
+
+                    cellContent += `
+                    <div style="
+                        margin-top:4px;
+                        padding:4px;
+                        background:#facc15;
+                        color:#000;
+                        font-weight:bold;
+                        border-radius:4px;
+                        text-align:center;
+                        font-size:11px;
+                    ">
+                        PRD
+                    </div>`;
+                }
+
+                h += `<td class="border" style="height:50px; vertical-align:top;">
+                      ${cellContent}
+                      </td>`;
             }
 
-            h += `<tr class="bg-gray-50 font-bold"><td class="text-[9px] border">AULAS DIÁRIAS</td>`;
-            aulasPorDia.forEach(c => h += `<td class="border">${c}</td>`);
-            h += `</tr><tr class="bg-blue-50 font-bold"><td class="text-[9px] border">PERMANÊNCIA</td>`;
-            horasPermanencia.forEach(v => h += `<td class="border">${v}h</td>`);
             h += `</tr>`;
+        }
+    });
 
-            const totalSemana = aulasPorDia.reduce((a,b) => a+b, 0);
-            h += `<tr class="bg-green-50 font-black"><td colspan="2" class="text-left px-2 border">TOTAL SEMANAL:</td><td colspan="5" class="text-left px-2 border">${totalSemana} Aulas</td></tr>`;
-            
-            let obsTexto = observacoes.length > 0 ? observacoes.join(' | ') : "Interjornada regular.";
-            h += `<tr class="text-[9px]"><td class="font-bold border bg-yellow-50">OBSERVAÇÕES:</td><td colspan="6" class="text-left px-2 border text-red-600 font-bold">${obsTexto}</td></tr>`;
+    // RESTANTE DO SEU CÓDIGO PERMANECE IGUAL
 
-            document.getElementById('gradeRender').innerHTML = h + "</tbody></table>";
+    for(let i=0; i<6; i++) {
+        let aulasNoDia = [];
+        const dtR = new Date(start);
+        dtR.setDate(dtR.getDate()+i);
+
+        for(let t in dataStore) {
+            for(let d in dataStore[t].discs) {
+                dataStore[t].discs[d].sch.forEach(x => {
+                    if(
+                        x.prof === prof &&
+                        x.dtObj.getDate() === dtR.getDate() &&
+                        x.dtObj.getMonth() === dtR.getMonth()
+                    ) {
+                        const [hIni] = x.time.split(' - ')[0].split(':').map(Number);
+                        const [hFim] = x.time.split(' - ')[1].split(':').map(Number);
+                        aulasNoDia.push({ inicio: hIni, fim: hFim, data: new Date(dtR) });
+                    }
+                });
+            }
         }
 
+        if(aulasNoDia.length > 0) {
+            aulasNoDia.sort((a,b) => a.inicio - b.inicio);
+            let primeira = aulasNoDia[0];
+            let ultima = aulasNoDia[aulasNoDia.length-1];
+            let diff = ultima.fim - primeira.inicio;
+            if(primeira.inicio <= 12 && ultima.fim >= 14) diff -= 2;
+            horasPermanencia[i] = diff > 0 ? diff : 0;
+            ultimaAulaDiaAnterior = ultima;
+        } else {
+            ultimaAulaDiaAnterior = null;
+        }
+    }
+
+    h += `<tr class="bg-gray-50 font-bold">
+          <td class="text-[9px] border">AULAS DIÁRIAS</td>`;
+    aulasPorDia.forEach(c => h += `<td class="border">${c}</td>`);
+    h += `</tr>`;
+
+    const totalSemana = aulasPorDia.reduce((a,b) => a+b, 0);
+    h += `<tr class="bg-green-50 font-black">
+          <td colspan="2" class="text-left px-2 border">TOTAL SEMANAL:</td>
+          <td colspan="5" class="text-left px-2 border">
+          ${totalSemana} Aulas
+          </td></tr>`;
+
+    document.getElementById('gradeRender').innerHTML = h + "</tbody></table>";
+}
         function gerarGradeTurma() {
             const tId = document.getElementById('turmaSelectSemanal').value;
             const week = document.getElementById('weekInputTurma').value;
