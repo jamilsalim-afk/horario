@@ -1569,14 +1569,16 @@ function exportarSemanaPDF(){
 
     const dias = grade.querySelectorAll("h3");
 
+    let conteudoPDF = `
+    <div style="font-family: Arial; padding:20px;">
+    `;
+
     dias.forEach((diaTitulo, index)=>{
 
         const tabela = diaTitulo.nextElementSibling;
 
-        const container = document.createElement("div");
-
-        container.innerHTML = `
-        <div style="font-family: Arial; padding:20px;">
+        conteudoPDF += `
+        <div style="page-break-after: always;">
 
             <h2 style="text-align:center;">
             INSTITUTO FEDERAL DE RONDÔNIA – IFRO
@@ -1606,21 +1608,22 @@ function exportarSemanaPDF(){
 
         </div>
         `;
-
-        const opt = {
-
-            margin: 0.5,
-            filename: `Relatorio_${diaTitulo.innerText}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
-
-        };
-
-        html2pdf().set(opt).from(container).save();
-
     });
 
+    conteudoPDF += `</div>`;
+
+    const container = document.createElement("div");
+    container.innerHTML = conteudoPDF;
+
+    const opt = {
+        margin: 0.3,
+        filename: "Relatorio_Semanal_IFRO.pdf",
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } // 🔹 horizontal
+    };
+
+    html2pdf().set(opt).from(container).save();
 }
         
         function initTabs() {
