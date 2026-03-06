@@ -8,6 +8,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -1570,63 +1572,67 @@ function exportarSemanaPDF(){
         return;
     }
 
-    const dias = grade.querySelectorAll("h3");
+    const { jsPDF } = window.jspdf;
 
-    let conteudoPDF = `
-    <div style="font-family: Arial; padding:20px;">
-    `;
+    const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4"
+    });
+
+    const dias = grade.querySelectorAll("h3");
 
     dias.forEach((diaTitulo, index)=>{
 
+        if(index > 0){
+            doc.addPage();
+        }
+
+        // 🔹 Cabeçalho institucional
+        gerarCabecalhoPadrao(doc);
+
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(12);
+
+        doc.text(
+            "RELATÓRIO GERAL SEMANAL",
+            148,
+            48,
+            { align:"center" }
+        );
+
+        doc.setFont("helvetica","normal");
+        doc.setFontSize(10);
+
+        doc.text(
+            diaTitulo.innerText,
+            148,
+            55,
+            { align:"center" }
+        );
+
         const tabela = diaTitulo.nextElementSibling;
 
-        conteudoPDF += `
-        <div style="page-break-after: always;">
+        doc.autoTable({
+            html: tabela,
+            startY: 60,
+            theme: "grid",
+            styles: {
+                fontSize:7,
+                cellPadding:2,
+                halign:"center"
+            },
+            headStyles:{
+                fillColor:[21,128,61]
+            }
+        });
 
-            <h2 style="text-align:center;">
-            INSTITUTO FEDERAL DE RONDÔNIA – IFRO
-            </h2>
-
-            <div style="text-align:center; margin-bottom:10px;">
-            CAMPUS CACOAL<br>
-            DEPARTAMENTO DE APOIO AO ENSINO
-            </div>
-
-            <hr>
-
-            <h3 style="text-align:center;">
-            RELATÓRIO GERAL SEMANAL
-            </h3>
-
-            <h3 style="margin-top:20px;">
-            ${diaTitulo.innerText}
-            </h3>
-
-            ${tabela.outerHTML}
-
-            <div style="margin-top:40px;">
-            ___________________________________<br>
-            Coordenação de Ensino
-            </div>
-
-        </div>
-        `;
     });
 
-    conteudoPDF += `</div>`;
+    // 🔹 Rodapé institucional
+    gerarRodapePadrao(doc);
 
-    const container = document.createElement("div");
-    container.innerHTML = conteudoPDF;
-
-    const opt = {
-        margin: 0.3,
-        filename: "Relatorio_Semanal_IFRO.pdf",
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' } // 🔹 horizontal
-    };
-
-    html2pdf().set(opt).from(container).save();
+    doc.save("Relatorio_Geral_Semanal_IFRO.pdf");
 }
         
         function initTabs() {
