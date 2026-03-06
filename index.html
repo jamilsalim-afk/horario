@@ -1588,48 +1588,72 @@ function exportarSemanaPDF(){
             doc.addPage();
         }
 
-        // 🔹 Cabeçalho institucional
         gerarCabecalhoPadrao(doc);
 
         doc.setFont("helvetica","bold");
         doc.setFontSize(12);
 
-        doc.text(
-            "RELATÓRIO GERAL SEMANAL",
-            148,
-            48,
-            { align:"center" }
-        );
+        doc.text("RELATÓRIO GERAL SEMANAL",148,48,{align:"center"});
 
         doc.setFont("helvetica","normal");
         doc.setFontSize(10);
 
-        doc.text(
-            diaTitulo.innerText,
-            148,
-            55,
-            { align:"center" }
-        );
+        doc.text(diaTitulo.innerText,148,55,{align:"center"});
 
         const tabela = diaTitulo.nextElementSibling;
 
+        const numColunas = tabela.querySelectorAll("thead th").length;
+
+        const larguraPagina = 277; // A4 landscape margem
+        const larguraHora = 15;
+        const larguraRestante = larguraPagina - larguraHora;
+        const larguraColuna = larguraRestante / (numColunas-1);
+
+        let columnStyles = {
+            0:{cellWidth:larguraHora}
+        };
+
+        for(let i=1;i<numColunas;i++){
+            columnStyles[i] = {cellWidth:larguraColuna};
+        }
+
         doc.autoTable({
-            html: tabela,
-            startY: 60,
-            theme: "grid",
-            styles: {
-                fontSize:7,
-                cellPadding:2,
-                halign:"center"
+
+            html:tabela,
+
+            startY:60,
+
+            theme:"grid",
+
+            tableWidth:"wrap",
+
+            styles:{
+                fontSize:6,
+                cellPadding:1.2,
+                overflow:"linebreak",
+                halign:"center",
+                valign:"middle"
             },
+
             headStyles:{
-                fillColor:[21,128,61]
+                fillColor:[21,128,61],
+                fontSize:7
+            },
+
+            columnStyles:columnStyles,
+
+            didParseCell:function(data){
+
+                if(data.section==="body"){
+                    data.cell.styles.minCellHeight = 8;
+                }
+
             }
+
         });
 
     });
 
-    // 🔹 Rodapé institucional
     gerarRodapePadrao(doc);
 
     doc.save("Relatorio_Geral_Semanal_IFRO.pdf");
