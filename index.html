@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -277,6 +278,11 @@
                 class="bg-green-700 text-white px-4 py-2 rounded-lg mb-4">
             Atualizar Grade
         </button>
+
+        <button onclick="exportarSemanaPDF()"
+class="bg-blue-700 text-white px-4 py-2 rounded-lg mt-3 ml-2">
+Exportar Semana (PDF)
+</button>
 
     </div>
 
@@ -1550,6 +1556,71 @@ function exportarDashboardPDF() {
     gerarRodapePadrao(doc);
 
     doc.save(`Dashboard_Institucional_${year}.pdf`);
+}
+
+function exportarSemanaPDF(){
+
+    const grade = document.getElementById("gradeGeralRender");
+
+    if(!grade.innerHTML.trim()){
+        alert("Gere a grade antes de exportar.");
+        return;
+    }
+
+    const dias = grade.querySelectorAll("h3");
+
+    dias.forEach((diaTitulo, index)=>{
+
+        const tabela = diaTitulo.nextElementSibling;
+
+        const container = document.createElement("div");
+
+        container.innerHTML = `
+        <div style="font-family: Arial; padding:20px;">
+
+            <h2 style="text-align:center;">
+            INSTITUTO FEDERAL DE RONDÔNIA – IFRO
+            </h2>
+
+            <div style="text-align:center; margin-bottom:10px;">
+            CAMPUS CACOAL<br>
+            DEPARTAMENTO DE APOIO AO ENSINO
+            </div>
+
+            <hr>
+
+            <h3 style="text-align:center;">
+            RELATÓRIO GERAL SEMANAL
+            </h3>
+
+            <h3 style="margin-top:20px;">
+            ${diaTitulo.innerText}
+            </h3>
+
+            ${tabela.outerHTML}
+
+            <div style="margin-top:40px;">
+            ___________________________________<br>
+            Coordenação de Ensino
+            </div>
+
+        </div>
+        `;
+
+        const opt = {
+
+            margin: 0.5,
+            filename: `Relatorio_${diaTitulo.innerText}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+
+        };
+
+        html2pdf().set(opt).from(container).save();
+
+    });
+
 }
         
         function initTabs() {
