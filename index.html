@@ -66,6 +66,28 @@ body { font-family: 'Inter', sans-serif; }
     .p-6 { padding: 10px !important; }
     input, select, button { padding: 6px !important; font-size: 10px !important; }
 }
+        /* Layout do Dashboard */
+.dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
+.card { padding: 15px; border-radius: 10px; border: 1px solid #ddd; }
+.card-title { font-size: 14px; }
+.card-value { font-size: 24px; font-weight: bold; }
+
+/* Ranking */
+.ranking-container { margin-top: 30px; }
+.ranking-title { font-weight: bold; margin-bottom: 10px; }
+.ranking-list { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
+.ranking-item { display: flex; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #e5e7eb; }
+
+/* Responsividade Mobile */
+@media (max-width: 768px) {
+    .dashboard-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .card { padding: 8px; }
+    .card-title { font-size: 10px !important; }
+    .card-value { font-size: 16px !important; }
+    
+    .ranking-title { font-size: 12px; }
+    .ranking-item { font-size: 10px; padding: 6px 8px; }
+}
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
