@@ -12,103 +12,59 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .tab-btn.active { border-bottom: 4px solid #15803d; color: #15803d; font-weight: 800; }
-        .tab-pane { display: none; }
-        .tab-pane.active { display: block; }
-        
-        table { width: 100%; border-collapse: collapse; }
-        th { font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase; padding: 6px 4px !important; }
-        td { font-size: 12px !important; padding: 8px !important; }
-        .tableGS { table-layout: fixed; width: 100%; }
-        .tableGS td, .tableGS th { word-wrap: break-word; vertical-align: middle; text-align: center; border: 1px solid #e5e7eb; }
-        .tableGS th { font-size: 10px !important; padding: 4px !important; }
-        .tableGS td { font-size: 10px !important; padding: 4px !important; }
-        .aula-card { padding: 3px; margin: 1px; border-radius: 4px; line-height: 1.05; border-left: 3px solid #15803d; text-align: center; font-size: 9px; font-weight: 600; }
-        .status-normal { background-color: #f0fdf4; border-color: #15803d; }
-        .status-extra { background-color: #ecfdf5; border-color: #059669; color: #065f46; }
-        .status-reposicao { background-color: #eff6ff; border-color: #2563eb; color: #1e40af; }
-        .status-rec { background-color: #fdf2f8; border-color: #db2777; color: #9d174d; }
-        .status-exame { background-color: #f5f5f5; border-color: #4b5563; color: #1f2937; }
-        .intervalo-row { background-color: #f3f4f6 !important; color: #6b7280; font-weight: bold; text-transform: uppercase; font-size: 10px; }
-        /* Filtros da grade ficam fixos */
-        .filtros-geral{ position: sticky; top: 0; background: white; z-index: 20; padding-bottom: 10px; }
-        /* Apenas a grade rola */
-        .grade-scroll{ max-height: 650px; overflow-y: auto; }
-        .tableGS { width:100%; border-collapse: collapse; }
-        .tableGS th,
-        .tableGS td{ border:1px solid #ccc; padding:4px; font-size:10px; text-align:center; }
-        /* Container para permitir scroll horizontal na tabela em telas menores */
-.table-responsive {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+
+body { font-family: 'Inter', sans-serif; }
+
+/* Abas */
+.tab-btn.active { border-bottom: 4px solid #15803d; color: #15803d; font-weight: 800; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* Tabela e Células */
+.tableGS { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.tableGS th, .tableGS td { 
+    border: 1px solid #e5e7eb; 
+    padding: 4px; 
+    font-size: 10px; 
+    text-align: center; 
+    vertical-align: middle; 
+}
+.tableGS th { background-color: #f9fafb; }
+
+/* Cartões de Aula */
+.aula-card { 
+    padding: 2px; 
+    margin: 1px; 
+    border-radius: 4px; 
+    border-left: 3px solid #15803d; 
+    font-size: 8px; 
+    font-weight: 600; 
+    line-height: 1.1; 
 }
 
-/* Ajustes específicos para Celulares e Tablets */
+/* Status */
+.status-normal { background-color: #f0fdf4; border-color: #15803d; }
+.intervalo-row { background-color: #f3f4f6 !important; color: #6b7280; font-weight: bold; font-size: 10px; }
+
+/* Containers e Scroll */
+.filtros-geral { position: sticky; top: 0; background: white; z-index: 20; padding-bottom: 10px; }
+.grade-scroll { max-height: 650px; overflow-y: auto; }
+.table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Responsividade Mobile */
 @media (max-width: 768px) {
-    /* Impede que o texto das células fique totalmente vertical e muito apertado */
-    table th, table td {
-        min-width: 120px; /* Garante uma largura mínima para leitura */
-        font-size: 12px;  /* Reduz levemente a fonte para caber mais conteúdo */
-        white-space: normal; /* Permite que o texto quebre linha se necessário */
-    }
-
-    /* Ajuste nos cabeçalhos que estão rotacionados na imagem */
-    .vertical-text { 
-        writing-mode: horizontal-tb; /* Volta o texto para horizontal em telas pequenas */
-        transform: none;
-        text-align: center;
-        height: auto;
-    }
+    /* Compactar fontes para o celular */
+    .tableGS th, .tableGS td { font-size: 8px !important; padding: 2px !important; }
     
-    /* Melhora a visualização dos botões e filtros no topo */
-    .filter-container {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
+    /* Forçar largura da grade para permitir scroll horizontal sem quebrar */
+    .tableGS { min-width: 800px !important; table-layout: auto !important; }
     
-    input, select, button {
-        width: 100% !important; /* Faz os campos ocuparem a largura total no celular */
-    }
-}
-/* Ajustes de densidade para dispositivos móveis */
-@media (max-width: 768px) {
-    /* 1. Redução geral de fontes nas tabelas */
-    .tableGS, .tableGS td, .tableGS th {
-        font-size: 9px !important; /* Fonte menor para caber mais dados */
-        padding: 2px !important;
-    }
+    /* Ajuste específico para a Grade Geral (mais colunas = mais largura) */
+    #gradeGeralRender .tableGS { min-width: 1500px !important; }
 
-    /* 2. Compactação dos cartões de aula */
-    .aula-card {
-        font-size: 8px !important;
-        padding: 2px !important;
-        min-height: 30px !important;
-    }
-
-    /* 3. Ajuste do menu/filtros para não ficar enorme */
-    .grid-cols-1.md\:grid-cols-3 {
-        gap: 8px !important;
-    }
-
-    .grid-cols-1 input, .grid-cols-1 select, .grid-cols-1 button {
-        padding: 8px !important; /* Menor altura para os campos */
-        font-size: 11px !important;
-    }
-
-    /* 4. Controle da largura da grade para não ficar gigante */
-    /* Agora a grade terá uma largura mais contida */
-    #gradeGeralRender .tableGS {
-        min-width: 1200px !important; /* Ajustado para ser menos "vasto" */
-    }
-
-    /* 5. Ajuste visual para evitar que o menu ocupe a tela toda */
-    .p-6 {
-        padding: 10px !important; /* Reduz o espaçamento interno do container */
-    }
+    /* Filtros e Inputs mais compactos */
+    .p-6 { padding: 10px !important; }
+    input, select, button { padding: 6px !important; font-size: 10px !important; }
 }
     </style>
 </head>
