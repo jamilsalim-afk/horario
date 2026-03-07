@@ -1386,66 +1386,42 @@ const filtrar = ehSemestral(tId)
         }
 
 function gerarDashboard() {
-
     let totalAulasGerais = 0;
     let totalAulasComProfessor = 0;
     let totalTurmas = Object.keys(dataStore).length;
-
     let professoresSet = new Set();
     let contadorProfessores = {};
 
     for (let t in dataStore) {
         for (let d in dataStore[t].discs) {
-
             dataStore[t].discs[d].sch.forEach(a => {
-
                 totalAulasGerais++;
-
-                if (
-                    a.prof &&
-                    a.prof.trim() !== "" &&
-                    a.prof !== "N/I"
-                ) {
-
+                if (a.prof && a.prof.trim() !== "" && a.prof !== "N/I") {
                     totalAulasComProfessor++;
-
                     professoresSet.add(a.prof);
-
-                    if (!contadorProfessores[a.prof]) {
-                        contadorProfessores[a.prof] = 0;
-                    }
-
+                    if (!contadorProfessores[a.prof]) contadorProfessores[a.prof] = 0;
                     contadorProfessores[a.prof]++;
                 }
-
             });
-
         }
     }
 
     const totalProfessores = professoresSet.size;
     const totalAulasSemProfessor = totalAulasGerais - totalAulasComProfessor;
-
-    const percentualCobertura = totalAulasGerais > 0
-        ? ((totalAulasComProfessor / totalAulasGerais) * 100).toFixed(1)
-        : 0;
-
-    const ranking = Object.entries(contadorProfessores)
-        .sort((a, b) => b[1] - a[1]);
+    const percentualCobertura = totalAulasGerais > 0 ? ((totalAulasComProfessor / totalAulasGerais) * 100).toFixed(1) : 0;
+    const ranking = Object.entries(contadorProfessores).sort((a, b) => b[1] - a[1]);
 
     let rankingHTML = `
-        <div style="margin-top:30px;">
-            <h3 style="font-weight:bold;margin-bottom:10px;">
-                Ordem decrescente dos Professores com mais aulas no ano
-            </h3>
-            <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+        <div class="ranking-container">
+            <h3 class="ranking-title">Ordem decrescente dos Professores com mais aulas no ano</h3>
+            <div class="ranking-list">
     `;
 
     ranking.forEach((prof, index) => {
         rankingHTML += `
-            <div style="display:flex;justify-content:space-between;padding:10px 15px;border-bottom:1px solid #e5e7eb;">
+            <div class="ranking-item">
                 <div>${index + 1}º - ${prof[0]}</div>
-                <div style="font-weight:bold;">${prof[1]} aulas</div>
+                <div class="ranking-value">${prof[1]} aulas</div>
             </div>
         `;
     });
@@ -1453,40 +1429,14 @@ function gerarDashboard() {
     rankingHTML += `</div></div>`;
 
     document.getElementById('dashboardContent').innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:20px;">
-
-            <div style="padding:20px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;">
-                <div style="font-size:14px;">Total Geral de Aulas</div>
-                <div style="font-size:28px;font-weight:bold;">${totalAulasGerais}</div>
-            </div>
-
-            <div style="padding:20px;background:#dcfce7;border:1px solid #86efac;border-radius:10px;">
-                <div style="font-size:14px;">Aulas com Professor</div>
-                <div style="font-size:28px;font-weight:bold;">${totalAulasComProfessor}</div>
-            </div>
-
-            <div style="padding:20px;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;">
-                <div style="font-size:14px;">Aulas sem Professor</div>
-                <div style="font-size:28px;font-weight:bold;">${totalAulasSemProfessor}</div>
-            </div>
-
-            <div style="padding:20px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;">
-                <div style="font-size:14px;">Total de Turmas</div>
-                <div style="font-size:28px;font-weight:bold;">${totalTurmas}</div>
-            </div>
-
-            <div style="padding:20px;background:#fef9c3;border:1px solid #fde68a;border-radius:10px;">
-                <div style="font-size:14px;">Total de Professores</div>
-                <div style="font-size:28px;font-weight:bold;">${totalProfessores}</div>
-            </div>
-
-            <div style="padding:20px;background:#ede9fe;border:1px solid #c4b5fd;border-radius:10px;">
-                <div style="font-size:14px;">Cobertura Docente</div>
-                <div style="font-size:28px;font-weight:bold;">${percentualCobertura}%</div>
-            </div>
-
+        <div class="dashboard-grid">
+            <div class="card card-green"><div class="card-title">Total Geral</div><div class="card-value">${totalAulasGerais}</div></div>
+            <div class="card card-green-light"><div class="card-title">Com Professor</div><div class="card-value">${totalAulasComProfessor}</div></div>
+            <div class="card card-red"><div class="card-title">Sem Professor</div><div class="card-value">${totalAulasSemProfessor}</div></div>
+            <div class="card card-blue"><div class="card-title">Total Turmas</div><div class="card-value">${totalTurmas}</div></div>
+            <div class="card card-yellow"><div class="card-title">Total Profs</div><div class="card-value">${totalProfessores}</div></div>
+            <div class="card card-purple"><div class="card-title">Cobertura</div><div class="card-value">${percentualCobertura}%</div></div>
         </div>
-
         ${rankingHTML}
     `;
 }
