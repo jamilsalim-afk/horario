@@ -15,67 +15,66 @@
 
 body { font-family: 'Inter', sans-serif; }
 
-/* Abas */
+/* --- ABAS --- */
 .tab-btn.active { border-bottom: 4px solid #15803d; color: #15803d; font-weight: 800; }
 .tab-pane { display: none; }
 .tab-pane.active { display: block; }
 
-/* Tabela e Células (Restaurado o comportamento Fixo original) */
-.tableGS { width: 100%; border-collapse: collapse; table-layout: fixed; }
+/* --- TABELAS DE HORÁRIO (Fixas e com Scroll) --- */
+/* O container .table-responsive deve envolver as tabelas no HTML */
+.table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 20px; }
+
+.tableGS { 
+    width: 100%; 
+    border-collapse: collapse; 
+    table-layout: fixed; 
+    min-width: 900px; /* Impede que a tabela encolha no celular */
+}
+
 .tableGS th, .tableGS td { 
     border: 1px solid #e5e7eb; 
-    padding: 4px; 
-    font-size: 10px; 
+    padding: 6px; 
+    font-size: 11px; 
     text-align: center; 
-    vertical-align: middle; 
+    vertical-align: middle;
+    white-space: normal; /* Permite quebra de texto controlada */
 }
-.tableGS th { background-color: #f9fafb; }
+.tableGS th { background-color: #f9fafb; font-weight: 700; text-transform: uppercase; }
 
-/* Cartões de Aula */
+/* --- CARTÕES DE AULA --- */
 .aula-card { 
-    padding: 2px; 
-    margin: 1px; 
+    padding: 4px; 
+    margin: 2px; 
     border-radius: 4px; 
     border-left: 3px solid #15803d; 
-    font-size: 8px; 
+    font-size: 9px; 
     font-weight: 600; 
-    line-height: 1.1; 
+    line-height: 1.1;
+    background: #f0fdf4;
 }
 
-/* Status */
-.status-normal { background-color: #f0fdf4; border-color: #15803d; }
-.intervalo-row { background-color: #f3f4f6 !important; color: #6b7280; font-weight: bold; font-size: 10px; }
-
-/* Containers e Scroll */
-.filtros-geral { position: sticky; top: 0; background: white; z-index: 20; padding-bottom: 10px; }
-.grade-scroll { max-height: 650px; overflow-y: auto; }
-.table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-
-/* --- DASHBOARD (Mantém as otimizações de layout) --- */
+/* --- DASHBOARD (Design moderno e responsivo) --- */
 .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
 .card { padding: 15px; border-radius: 10px; border: 1px solid #ddd; }
-.card-title { font-size: 14px; }
-.card-value { font-size: 24px; font-weight: bold; }
+.card-title { font-size: 14px; color: #374151; }
+.card-value { font-size: 24px; font-weight: bold; margin-top: 5px; }
 
+/* Ranking */
 .ranking-container { margin-top: 30px; }
 .ranking-title { font-weight: bold; margin-bottom: 10px; }
 .ranking-list { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
-.ranking-item { display: flex; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #e5e7eb; }
+.ranking-item { display: flex; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
 
-/* Responsividade Mobile (Apenas para o Dashboard) */
+/* --- RESPONSIVIDADE MOBILE --- */
 @media (max-width: 768px) {
-    /* O dashboard agora se ajusta, mas as tabelas (.tableGS) NÃO são mais afetadas */
-    .dashboard-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .card { padding: 8px; }
-    .card-title { font-size: 10px !important; }
-    .card-value { font-size: 16px !important; }
+    /* Dashboard fica com 2 colunas */
+    .dashboard-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .card { padding: 10px; }
+    .card-title { font-size: 11px; }
+    .card-value { font-size: 18px; }
     
-    .ranking-title { font-size: 12px; }
-    .ranking-item { font-size: 10px; padding: 6px 8px; }
-    
-    /* Filtros e Inputs globais */
-    .p-6 { padding: 10px !important; }
-    input, select, button { padding: 6px !important; font-size: 10px !important; }
+    /* Ajustes Gerais */
+    input, select, button { padding: 8px !important; font-size: 12px !important; }
 }
     </style>
 </head>
