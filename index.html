@@ -692,28 +692,35 @@ Exportar Semana (PDF)
     const b = document.getElementById('bodyD');
     
     if(!tId || !dId) return;
-    b.innerHTML = ''; let sR = 0, sE = 0;
-
+    
+    // Agora limpamos e preparamos a estrutura fixa
+    b.innerHTML = ''; 
+    let sR = 0, sE = 0;
     const limiteS1 = cal.s1.fim.getTime();
 
+    // Criamos o cabeçalho se necessário ou apenas iteramos as linhas
+    // Certifique-se de que o elemento pai (ex: #containerDisciplina) 
+    // tenha a classe 'table-responsive'
+    
     dataStore[tId].discs[dId].sch.forEach(a => {
         let filtrar = true;
         const tempoAula = a.dtObj.getTime();
 
         if(ehSemestral(tId)) {
-            // Se sem "1", pega tudo até o limite do fim do S1. Se "2", pega o que for depois.
             filtrar = (sem === "1") ? (tempoAula <= limiteS1) : (tempoAula > limiteS1);
         }
 
         if(filtrar) {
             const info = TRADUCAO[a.tag] || {texto:"NORMAL", class:"", soma:true};
             if(info.soma) sR++; else sE++;
+            
+            // Adicionamos a classe tableGS nas colunas/linhas conforme definido no CSS
             b.innerHTML += `<tr class="${info.class}">
-                <td class="border">${a.date}</td>
-                <td class="border uppercase">${a.wd}</td>
-                <td class="border">${a.time}</td>
-                <td class="border font-bold">${getPrimeiroNome(a.prof)}</td>
-                <td class="border font-black">${info.texto}</td>
+                <td class="border tableGS-cell">${a.date}</td>
+                <td class="border tableGS-cell uppercase">${a.wd}</td>
+                <td class="border tableGS-cell">${a.time}</td>
+                <td class="border tableGS-cell font-bold">${getPrimeiroNome(a.prof)}</td>
+                <td class="border tableGS-cell font-black">${info.texto}</td>
             </tr>`;
         }
     });
