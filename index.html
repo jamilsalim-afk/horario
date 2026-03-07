@@ -74,6 +74,44 @@
         width: 100% !important; /* Faz os campos ocuparem a largura total no celular */
     }
 }
+        /* Estilos para melhorar a visualização em Celulares e Tablets */
+@media (max-width: 768px) {
+    
+    /* 1. Impede que as tabelas sejam esmagadas */
+    .tableGS {
+        min-width: 800px !important; /* Força uma largura mínima para as grades de Prof e Turma */
+        table-layout: auto !important;
+    }
+
+    /* 2. Ajuste específico para a Grade Geral (Relatório Geral) */
+    /* Como esta grade tem muitas colunas (turmas), ela precisa de muito mais espaço */
+    #gradeGeralRender .tableGS {
+        min-width: 3500px !important; 
+    }
+
+    /* 3. Ajuste dos cabeçalhos das turmas no Relatório Geral */
+    /* Isso impede que o nome da turma fique "em pé" e difícil de ler */
+    #gradeGeralRender th {
+        white-space: nowrap;
+        padding: 10px 5px !important;
+        font-size: 11px !important;
+        min-width: 120px;
+    }
+
+    /* 4. Melhora os cartões de aula para não ficarem tão pequenos */
+    .aula-card {
+        min-height: 45px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        line-height: 1.2;
+    }
+
+    /* 5. Ajuste nos botões de filtro para não ficarem grudados */
+    .grid-cols-1 button, .grid-cols-1 select, .grid-cols-1 input {
+        margin-bottom: 5px;
+    }
+}
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
