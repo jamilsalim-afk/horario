@@ -74,42 +74,40 @@
         width: 100% !important; /* Faz os campos ocuparem a largura total no celular */
     }
 }
-        /* Estilos para melhorar a visualização em Celulares e Tablets */
+/* Ajustes de densidade para dispositivos móveis */
 @media (max-width: 768px) {
-    
-    /* 1. Impede que as tabelas sejam esmagadas */
-    .tableGS {
-        min-width: 800px !important; /* Força uma largura mínima para as grades de Prof e Turma */
-        table-layout: auto !important;
+    /* 1. Redução geral de fontes nas tabelas */
+    .tableGS, .tableGS td, .tableGS th {
+        font-size: 9px !important; /* Fonte menor para caber mais dados */
+        padding: 2px !important;
     }
 
-    /* 2. Ajuste específico para a Grade Geral (Relatório Geral) */
-    /* Como esta grade tem muitas colunas (turmas), ela precisa de muito mais espaço */
-    #gradeGeralRender .tableGS {
-        min-width: 3500px !important; 
-    }
-
-    /* 3. Ajuste dos cabeçalhos das turmas no Relatório Geral */
-    /* Isso impede que o nome da turma fique "em pé" e difícil de ler */
-    #gradeGeralRender th {
-        white-space: nowrap;
-        padding: 10px 5px !important;
-        font-size: 11px !important;
-        min-width: 120px;
-    }
-
-    /* 4. Melhora os cartões de aula para não ficarem tão pequenos */
+    /* 2. Compactação dos cartões de aula */
     .aula-card {
-        min-height: 45px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        line-height: 1.2;
+        font-size: 8px !important;
+        padding: 2px !important;
+        min-height: 30px !important;
     }
 
-    /* 5. Ajuste nos botões de filtro para não ficarem grudados */
-    .grid-cols-1 button, .grid-cols-1 select, .grid-cols-1 input {
-        margin-bottom: 5px;
+    /* 3. Ajuste do menu/filtros para não ficar enorme */
+    .grid-cols-1.md\:grid-cols-3 {
+        gap: 8px !important;
+    }
+
+    .grid-cols-1 input, .grid-cols-1 select, .grid-cols-1 button {
+        padding: 8px !important; /* Menor altura para os campos */
+        font-size: 11px !important;
+    }
+
+    /* 4. Controle da largura da grade para não ficar gigante */
+    /* Agora a grade terá uma largura mais contida */
+    #gradeGeralRender .tableGS {
+        min-width: 1200px !important; /* Ajustado para ser menos "vasto" */
+    }
+
+    /* 5. Ajuste visual para evitar que o menu ocupe a tela toda */
+    .p-6 {
+        padding: 10px !important; /* Reduz o espaçamento interno do container */
     }
 }
     </style>
