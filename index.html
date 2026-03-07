@@ -20,7 +20,7 @@ body { font-family: 'Inter', sans-serif; }
 .tab-pane { display: none; }
 .tab-pane.active { display: block; }
 
-/* Tabela e Células */
+/* Tabela e Células (Restaurado o comportamento Fixo original) */
 .tableGS { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .tableGS th, .tableGS td { 
     border: 1px solid #e5e7eb; 
@@ -51,35 +51,20 @@ body { font-family: 'Inter', sans-serif; }
 .grade-scroll { max-height: 650px; overflow-y: auto; }
 .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-/* Responsividade Mobile */
-@media (max-width: 768px) {
-    /* Compactar fontes para o celular */
-    .tableGS th, .tableGS td { font-size: 8px !important; padding: 2px !important; }
-    
-    /* Forçar largura da grade para permitir scroll horizontal sem quebrar */
-    .tableGS { min-width: 800px !important; table-layout: auto !important; }
-    
-    /* Ajuste específico para a Grade Geral (mais colunas = mais largura) */
-    #gradeGeralRender .tableGS { min-width: 1500px !important; }
-
-    /* Filtros e Inputs mais compactos */
-    .p-6 { padding: 10px !important; }
-    input, select, button { padding: 6px !important; font-size: 10px !important; }
-}
-        /* Layout do Dashboard */
+/* --- DASHBOARD (Mantém as otimizações de layout) --- */
 .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
 .card { padding: 15px; border-radius: 10px; border: 1px solid #ddd; }
 .card-title { font-size: 14px; }
 .card-value { font-size: 24px; font-weight: bold; }
 
-/* Ranking */
 .ranking-container { margin-top: 30px; }
 .ranking-title { font-weight: bold; margin-bottom: 10px; }
 .ranking-list { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
 .ranking-item { display: flex; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #e5e7eb; }
 
-/* Responsividade Mobile */
+/* Responsividade Mobile (Apenas para o Dashboard) */
 @media (max-width: 768px) {
+    /* O dashboard agora se ajusta, mas as tabelas (.tableGS) NÃO são mais afetadas */
     .dashboard-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .card { padding: 8px; }
     .card-title { font-size: 10px !important; }
@@ -87,6 +72,10 @@ body { font-family: 'Inter', sans-serif; }
     
     .ranking-title { font-size: 12px; }
     .ranking-item { font-size: 10px; padding: 6px 8px; }
+    
+    /* Filtros e Inputs globais */
+    .p-6 { padding: 10px !important; }
+    input, select, button { padding: 6px !important; font-size: 10px !important; }
 }
     </style>
 </head>
