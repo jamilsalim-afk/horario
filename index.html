@@ -38,6 +38,42 @@
         .tableGS { width:100%; border-collapse: collapse; }
         .tableGS th,
         .tableGS td{ border:1px solid #ccc; padding:4px; font-size:10px; text-align:center; }
+        /* Container para permitir scroll horizontal na tabela em telas menores */
+.table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Ajustes específicos para Celulares e Tablets */
+@media (max-width: 768px) {
+    /* Impede que o texto das células fique totalmente vertical e muito apertado */
+    table th, table td {
+        min-width: 120px; /* Garante uma largura mínima para leitura */
+        font-size: 12px;  /* Reduz levemente a fonte para caber mais conteúdo */
+        white-space: normal; /* Permite que o texto quebre linha se necessário */
+    }
+
+    /* Ajuste nos cabeçalhos que estão rotacionados na imagem */
+    .vertical-text { 
+        writing-mode: horizontal-tb; /* Volta o texto para horizontal em telas pequenas */
+        transform: none;
+        text-align: center;
+        height: auto;
+    }
+    
+    /* Melhora a visualização dos botões e filtros no topo */
+    .filter-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    input, select, button {
+        width: 100% !important; /* Faz os campos ocuparem a largura total no celular */
+    }
+}
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
