@@ -794,6 +794,9 @@ if(nivel === "tecnico"){
 }
 
     const busca = document.getElementById("buscaGeral").value.toUpperCase();
+    <input type="text" id="buscaGeral" list="listaProfessores" placeholder="Buscar professor...">
+<datalist id="listaProfessores">
+    </datalist>
 
     if(!week || !nivel) return;
 
@@ -866,15 +869,24 @@ if(nivel === "tecnico"){
                                 a.time.startsWith(slot.h.split(' - ')[0])
                             ){
 
-                                const texto = 
-                                `${dataStore[tId].discs[d].name} - ${getPrimeiroNome(a.prof)}`;
+                                const texto = `${dataStore[tId].discs[d].name} - ${a.prof}`; // Use o nome completo ou uma variável única
 
-                                if(!busca || texto.toUpperCase().includes(busca)){
-                                    conteudo = `
-                                        <div class="aula-card status-normal">
-                                            ${texto}
-                                        </div>`;
-                                }
+// Ajuste na lógica de busca
+let match = false;
+if (!busca) {
+    match = true;
+} else {
+    // Busca exata: compare o nome do professor com o valor digitado
+    // Se o usuário digitar "JOSE", ele não trará "JOSE RICARDO"
+    match = a.prof.toUpperCase() === busca || texto.toUpperCase().includes(busca);
+}
+
+if(match){
+    conteudo = `
+        <div class="aula-card status-normal">
+            ${dataStore[tId].discs[d].name} - ${getPrimeiroNome(a.prof)}
+        </div>`;
+}
                             }
                         });
                     }
