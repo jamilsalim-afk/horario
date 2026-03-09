@@ -1610,10 +1610,10 @@ function exportarDashboardPDF() {
         // Imprime o Dia da Semana e Data (o seu H3)
         if(titulosDias[index]) {
             doc.setFontSize(10);
-            doc.text(titulosDias[index].innerText, 148.5, 30, { align: "center" });
+            doc.text(titulosDias[index].innerText, 148.5, 36, { align: "center" });
         }
 
-        doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 33, 283, 33);
+        doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 37, 283, 37);
 
         // Exportação da Tabela
         doc.autoTable({ 
