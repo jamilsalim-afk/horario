@@ -1589,7 +1589,7 @@ function exportarDashboardPDF() {
     const start = getStartOfWeek(w, y);
     const end = new Date(start); 
     end.setDate(end.getDate() + 5);
-    const nomeArquivo = `Horário Semanal - ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}.pdf`;
+    const nomeArquivo = `Horário Semanal - + ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}.pdf`;
 
     // Selecionamos as tabelas
     const tabelas = document.querySelectorAll('.tableGS'); 
