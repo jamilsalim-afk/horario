@@ -35,6 +35,19 @@
         #gradeGeralRender { width: 100%; overflow-x: auto; /* Permite rolar horizontalmente se a tabela for larga */
     -webkit-overflow-scrolling: touch;
 }
+        /* Ajustes específicos para a Grade Geral */
+        #gradeGeralRender .tableGS { font-size: 8px !important; /* Diminuindo a fonte */
+        table-layout: fixed;      /* Força as colunas a respeitarem a largura */
+        width: 100%;
+}
+        #gradeGeralRender .tableGS th, 
+        #gradeGeralRender .tableGS td { padding: 2px !important;  /* Reduzindo o padding interno */
+        line-height: 1.1;         /* Aproximando as linhas */
+        word-wrap: break-word;    /* Garante que o texto quebre dentro da célula */
+}
+
+        /* Otimizando a linha de intervalo */
+        #gradeGeralRender .intervalo-row { height: 20px !important; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -1586,12 +1599,28 @@ function exportarDashboardPDF() {
 
     // Tabela Geral
     doc.autoTable({ 
-        html: '.tableGS', 
-        startY: 40, 
-        theme: 'grid',
-        styles: { fontSize: 6, cellPadding: 1, halign: 'center', valign: 'middle' }, 
-        headStyles: { fillColor: [21, 128, 61] }
-    });
+    html: '.tableGS', 
+    startY: 40, 
+    theme: 'grid',
+    // Orientação paisagem ajuda muito, mas vamos forçar as margens
+    margin: { left: 5, right: 5, top: 10, bottom: 10 },
+    styles: { 
+        fontSize: 6,           // Fonte menor para o PDF
+        cellPadding: 0.8,      // Padding mínimo
+        halign: 'center', 
+        valign: 'middle',
+        overflow: 'linebreak'  // Quebra o texto automaticamente
+    }, 
+    headStyles: { 
+        fillColor: [21, 128, 61],
+        fontSize: 5            // Fonte menor também no cabeçalho
+    },
+    // Definindo uma largura pequena para todas as colunas de turma
+    columnStyles: {
+        0: { cellWidth: 15 }   // Coluna de Horário
+        // As outras colunas se ajustarão automaticamente
+    }
+});
 
     // Rodapé adaptado para largura de 297mm
     const pageCount = doc.internal.getNumberOfPages();
