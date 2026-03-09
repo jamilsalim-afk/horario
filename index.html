@@ -32,6 +32,9 @@
         .filtros-geral{ position: sticky; top: 0; background: white; z-index: 20; padding-bottom: 10px; }
         /* Apenas a grade rola */
         .grade-scroll{ max-height: 650px; overflow-y: auto; }
+        #gradeGeralRender { width: 100%; overflow-x: auto; /* Permite rolar horizontalmente se a tabela for larga */
+    -webkit-overflow-scrolling: touch;
+}
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
