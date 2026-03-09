@@ -1580,45 +1580,56 @@ function exportarDashboardPDF() {
         function exportarGradeGeralPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('l', 'mm', 'a4'); // Paisagem
-    const centro = 148.5;
     const week = document.getElementById("weekInputGeral").value;
     const nivel = document.getElementById("nivelSelect").value;
     
     if(!week || !nivel) return alert("Selecione Semana e Nível primeiro.");
 
-    // Selecionamos todos os containers de dias (assumindo que o seu HTML 
-    // divide a grade geral por dias dentro de uma div ou tabelas separadas)
+    // Cálculo das datas para o nome do arquivo
+    const [y, w] = week.split('-W').map(Number);
+    const start = getStartOfWeek(w, y);
+    const end = new Date(start); 
+    end.setDate(end.getDate() + 5); // Considerando a semana até sábado
+
+    const dataInicio = start.toLocaleDateString('pt-BR');
+    const dataFim = end.toLocaleDateString('pt-BR');
+    const nomeArquivo = `Horário Semanal - ${dataInicio} a ${dataFim}.pdf`;
+
+    // Seleciona as tabelas na tela
     const tabelas = document.querySelectorAll('.tableGS'); 
 
     tabelas.forEach((tabela, index) => {
-        if (index > 0) doc.addPage(); // Adiciona nova folha para cada dia
+        if (index > 0) doc.addPage();
 
-        // Cabeçalho Padrão em cada página
-        doc.setFont("helvetica", "bold"); 
-        doc.setFontSize(14);
-        doc.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", centro, 15, { align: "center" });
-        doc.setFontSize(12); doc.text("CAMPUS CACOAL", centro, 22, { align: "center" });
-        doc.setFontSize(10); doc.setFont("helvetica", "normal");
-        doc.text(`GRADE GERAL: ${nivel.toUpperCase()} | Semana: ${week} | Dia: ${index + 1}`, centro, 30, { align: "center" });
-        doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 35, 283, 35);
+        // 1. Usa o seu cabeçalho padrão
+        gerarCabecalhoPadrao(doc);
 
-        // Tabela do dia específico
+        // 2. Tabela capturando o cabeçalho original (Dias da semana + Datas)
+        // O autoTable captura automaticamente o <thead> da sua tabela HTML
         doc.autoTable({ 
             html: tabela, 
-            startY: 40, 
+            startY: 45, 
             theme: 'grid',
-            styles: { fontSize: 6, cellPadding: 1, halign: 'center', valign: 'middle', overflow: 'linebreak' }, 
-            headStyles: { fillColor: [21, 128, 61] }
+            styles: { 
+                fontSize: 5,           // Fonte pequena para caber na horizontal
+                cellPadding: 0.8,      // Espaçamento compacto
+                halign: 'center', 
+                valign: 'middle', 
+                overflow: 'linebreak' 
+            }, 
+            headStyles: { 
+                fillColor: [21, 128, 61], // Verde padrão IFRO
+                textColor: [255, 255, 255],
+                fontSize: 5,
+                fontStyle: 'bold'
+            }
         });
 
-        // Rodapé em cada página
-        doc.setFontSize(8); doc.setTextColor(100);
-        doc.line(14, 200, 283, 200);
-        doc.text("BR-364, Km 228, Zona Rural, Cacoal - RO", centro, 205, { align: "center" });
-        doc.text(`Página ${index + 1} de ${tabelas.length}`, centro, 209, { align: "center" });
+        // 3. Usa o seu rodapé padrão
+        gerarRodapePadrao(doc);
     });
 
-    doc.save(`Grade_Geral_Completa_${nivel}_${week}.pdf`);
+    doc.save(nomeArquivo);
 }
         
         function initTabs() {
