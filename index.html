@@ -1559,6 +1559,48 @@ function exportarDashboardPDF() {
 
     doc.save(`Dashboard_Institucional_${year}.pdf`);
 }
+
+        function exportarGradeGeralPDF() {
+    const { jsPDF } = window.jspdf;
+    // O parâmetro 'l' define a orientação Landscape (Horizontal)
+    const doc = new jsPDF('l', 'mm', 'a4'); 
+    
+    // Centro da folha A4 em paisagem (297mm / 2 = 148.5)
+    const centro = 148.5;
+    const week = document.getElementById("weekInputGeral").value;
+    const nivel = document.getElementById("nivelSelect").value;
+    
+    if(!week || !nivel) return alert("Selecione Semana e Nível primeiro.");
+
+    // Cabeçalho adaptado para o centro da página em paisagem
+    doc.setFont("helvetica", "bold"); 
+    doc.setFontSize(14);
+    doc.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", centro, 15, { align: "center" });
+    doc.setFontSize(12); doc.text("CAMPUS CACOAL", centro, 22, { align: "center" });
+    doc.setFontSize(10); doc.setFont("helvetica", "normal");
+    doc.text("DEPARTAMENTO DE APOIO AO ENSINO - GRADE GERAL: " + nivel.toUpperCase(), centro, 30, { align: "center" });
+    doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 35, 283, 35);
+
+    // Tabela Geral
+    doc.autoTable({ 
+        html: '.tableGS', 
+        startY: 40, 
+        theme: 'grid',
+        styles: { fontSize: 6, cellPadding: 1, halign: 'center', valign: 'middle' }, 
+        headStyles: { fillColor: [21, 128, 61] }
+    });
+
+    // Rodapé adaptado para largura de 297mm
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i); doc.setFontSize(8); doc.setTextColor(100);
+        doc.line(14, 200, 283, 200); // Linha um pouco mais alta em paisagem
+        doc.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO", centro, 204, { align: "center" });
+        doc.text("Página " + i + " de " + pageCount, centro, 208, { align: "center" });
+    }
+
+    doc.save(`Grade_Geral_${nivel}_${week}.pdf`);
+}
         
         function initTabs() {
             document.querySelectorAll('.tab-btn').forEach(b => {
