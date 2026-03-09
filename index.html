@@ -1589,44 +1589,48 @@ function exportarDashboardPDF() {
     const [y, w] = week.split('-W').map(Number);
     const start = getStartOfWeek(w, y);
     const end = new Date(start); 
-    end.setDate(end.getDate() + 5); // Considerando a semana até sábado
+    end.setDate(end.getDate() + 5);
 
-    const dataInicio = start.toLocaleDateString('pt-BR');
-    const dataFim = end.toLocaleDateString('pt-BR');
-    const nomeArquivo = `Horário Semanal - ${dataInicio} a ${dataFim}.pdf`;
+    const nomeArquivo = `Horário Semanal - ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}.pdf`;
 
-    // Seleciona as tabelas na tela
     const tabelas = document.querySelectorAll('.tableGS'); 
 
     tabelas.forEach((tabela, index) => {
         if (index > 0) doc.addPage();
 
-        // 1. Usa o seu cabeçalho padrão
-        gerarCabecalhoPadrao(doc);
+        // 1. Cabeçalho centralizado manualmente (específico para paisagem/Geral)
+        doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+        doc.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", 148.5, 15, { align: "center" });
+        doc.setFontSize(12); doc.text("CAMPUS CACOAL", 148.5, 22, { align: "center" });
+        doc.setFontSize(10); doc.setFont("helvetica", "normal");
+        doc.text("DEPARTAMENTO DE APOIO AO ENSINO - HORÁRIO SEMANAL: " + nivel.toUpperCase(), 148.5, 30, { align: "center" });
+        doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 35, 283, 35);
 
-        // 2. Tabela capturando o cabeçalho original (Dias da semana + Datas)
-        // O autoTable captura automaticamente o <thead> da sua tabela HTML
+        // 2. Tabela ultra compacta capturando o cabeçalho (thead) da tabela
         doc.autoTable({ 
             html: tabela, 
-            startY: 45, 
+            startY: 40, 
             theme: 'grid',
             styles: { 
-                fontSize: 5,           // Fonte pequena para caber na horizontal
-                cellPadding: 0.8,      // Espaçamento compacto
+                fontSize: 4,           // Letra bem pequena para caber tudo
+                cellPadding: 0.4,      // Espaçamento mínimo
                 halign: 'center', 
                 valign: 'middle', 
                 overflow: 'linebreak' 
             }, 
             headStyles: { 
-                fillColor: [21, 128, 61], // Verde padrão IFRO
-                textColor: [255, 255, 255],
-                fontSize: 5,
-                fontStyle: 'bold'
+                fillColor: [21, 128, 61],
+                fontSize: 4.5,         // Fonte pequena no cabeçalho
+                textColor: [255, 255, 255]
+            },
+            didDrawPage: function(data) {
+                // Força o rodapé em cada página gerada pelo autoTable
+                doc.setFontSize(8); doc.setTextColor(100);
+                doc.line(14, 200, 283, 200);
+                doc.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 3443-9501", 148.5, 205, { align: "center" });
+                doc.text("E-mail: dape.cacoal@ifro.edu.br | Página " + doc.internal.getNumberOfPages(), 148.5, 209, { align: "center" });
             }
         });
-
-        // 3. Usa o seu rodapé padrão
-        gerarRodapePadrao(doc);
     });
 
     doc.save(nomeArquivo);
