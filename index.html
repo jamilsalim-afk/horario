@@ -1577,54 +1577,62 @@ function exportarDashboardPDF() {
     doc.save(`Dashboard_Institucional_${year}.pdf`);
 }
 
-        function exportarGradeGeralPDF() {
+    function exportarGradeGeralPDF() {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('l', 'mm', 'a4'); // Paisagem
+    const doc = new jsPDF('l', 'mm', 'a4');
     const week = document.getElementById("weekInputGeral").value;
     const nivel = document.getElementById("nivelSelect").value;
     
     if(!week || !nivel) return alert("Selecione Semana e Nível primeiro.");
 
-    // Cálculo das datas para o nome do arquivo
     const [y, w] = week.split('-W').map(Number);
     const start = getStartOfWeek(w, y);
     const end = new Date(start); 
     end.setDate(end.getDate() + 5);
-
     const nomeArquivo = `Horário Semanal - ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}.pdf`;
 
+    // Selecionamos as tabelas
     const tabelas = document.querySelectorAll('.tableGS'); 
+    // Selecionamos também os H3 que contêm o dia/data para imprimir acima de cada tabela
+    const titulosDias = document.querySelectorAll('h3');
 
     tabelas.forEach((tabela, index) => {
         if (index > 0) doc.addPage();
 
-        // 1. Cabeçalho centralizado manualmente (específico para paisagem/Geral)
+        // Cabeçalho Padrão
         doc.setFont("helvetica", "bold"); doc.setFontSize(14);
         doc.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", 148.5, 15, { align: "center" });
         doc.setFontSize(12); doc.text("CAMPUS CACOAL", 148.5, 22, { align: "center" });
         doc.setFontSize(10); doc.setFont("helvetica", "normal");
         doc.text("DEPARTAMENTO DE APOIO AO ENSINO - HORÁRIO SEMANAL: " + nivel.toUpperCase(), 148.5, 30, { align: "center" });
         doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 35, 283, 35);
+        
+        // Imprime o Dia da Semana e Data (o seu H3)
+        if(titulosDias[index]) {
+            doc.setFontSize(10);
+            doc.text(titulosDias[index].innerText, 148.5, 30, { align: "center" });
+        }
 
-        // 2. Tabela ultra compacta capturando o cabeçalho (thead) da tabela
+        doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 33, 283, 33);
+
+        // Exportação da Tabela
         doc.autoTable({ 
             html: tabela, 
-            startY: 40, 
+            startY: 38, 
             theme: 'grid',
             styles: { 
-                fontSize: 4,           // Letra bem pequena para caber tudo
-                cellPadding: 0.4,      // Espaçamento mínimo
+                fontSize: 4, // Letra minúscula para caber na horizontal
+                cellPadding: 0.5, 
                 halign: 'center', 
-                valign: 'middle', 
+                valign: 'middle',
                 overflow: 'linebreak' 
             }, 
             headStyles: { 
                 fillColor: [21, 128, 61],
-                fontSize: 4.5,         // Fonte pequena no cabeçalho
+                fontSize: 4.5,
                 textColor: [255, 255, 255]
             },
             didDrawPage: function(data) {
-                // Força o rodapé em cada página gerada pelo autoTable
                 doc.setFontSize(8); doc.setTextColor(100);
                 doc.line(14, 200, 283, 200);
                 doc.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 3443-9501", 148.5, 205, { align: "center" });
