@@ -1589,11 +1589,11 @@ function exportarDashboardPDF() {
     const start = getStartOfWeek(w, y);
     const end = new Date(start); 
     end.setDate(end.getDate() + 5);
-    const nomeArquivo = `Horário Semanal - + ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}.pdf`;
 
-    // Selecionamos as tabelas
+    // Modificação pontual no nome do arquivo:
+    const nomeArquivo = `Horário Semanal - ${nivel.charAt(0).toUpperCase() + nivel.slice(1)} - ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}.pdf`;
+
     const tabelas = document.querySelectorAll('.tableGS'); 
-    // Selecionamos também os H3 que contêm o dia/data para imprimir acima de cada tabela
     const titulosDias = document.querySelectorAll('h3');
 
     tabelas.forEach((tabela, index) => {
@@ -1610,10 +1610,10 @@ function exportarDashboardPDF() {
         // Imprime o Dia da Semana e Data (o seu H3)
         if(titulosDias[index]) {
             doc.setFontSize(10);
-            doc.text(titulosDias[index].innerText, 148.5, 36, { align: "center" });
+            doc.text(titulosDias[index].innerText, 148.5, 42, { align: "center" });
         }
 
-        doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 37, 283, 37);
+        doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 47, 283, 47);
 
         // Exportação da Tabela
         doc.autoTable({ 
