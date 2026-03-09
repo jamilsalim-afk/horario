@@ -779,6 +779,25 @@ function renderPivo() {
     });
 }
 
+        function popularListaProfessores() {
+    let professores = new Set();
+    for (let t in dataStore) {
+        for (let d in dataStore[t].discs) {
+            dataStore[t].discs[d].sch.forEach(a => {
+                if (a.prof && a.prof !== "N/I") professores.add(a.prof);
+            });
+        }
+    }
+    
+    const datalist = document.getElementById('listaProfessores');
+    datalist.innerHTML = "";
+    [...professores].sort().forEach(p => {
+        let option = document.createElement('option');
+        option.value = p;
+        datalist.appendChild(option);
+    });
+}
+        
 function gerarGradeGeral(){
 
     const week = document.getElementById("weekInputGeral").value;
@@ -794,9 +813,16 @@ if(nivel === "tecnico"){
 }
 
     const busca = document.getElementById("buscaGeral").value.toUpperCase();
-    <input type="text" id="buscaGeral" list="listaProfessores" placeholder="Buscar professor...">
-<datalist id="listaProfessores">
-    </datalist>
+    <input type="text" id="buscaGeral" list="listaProfessores" 
+       placeholder="Digite o nome do professor..." 
+       oninput="gerarGradeGeral()" class="border p-2 rounded">
+
+<datalist id="listaProfessores"></datalist>
+
+<script>
+    // Chame esta função ao iniciar a página para popular a lista
+    popularListaProfessores();
+</script>
 
     if(!week || !nivel) return;
 
