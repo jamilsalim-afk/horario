@@ -29,25 +29,19 @@
         .status-exame { background-color: #f5f5f5; border-color: #4b5563; color: #1f2937; }
         .intervalo-row { background-color: #f3f4f6 !important; color: #6b7280; font-weight: bold; text-transform: uppercase; font-size: 10px; }
         /* Filtros da grade ficam fixos */
-        .filtros-geral{ position: sticky; top: 0; background: white; z-index: 20; padding-bottom: 10px; }
-        /* Apenas a grade rola */
-        .grade-scroll{ max-height: 650px; overflow-y: auto; }
-        #gradeGeralRender { width: 100%; overflow-x: auto; /* Permite rolar horizontalmente se a tabela for larga */
-    -webkit-overflow-scrolling: touch;
-}
-        /* Ajustes específicos para a Grade Geral */
-        #gradeGeralRender .tableGS { font-size: 8px !important; /* Diminuindo a fonte */
-        table-layout: fixed;      /* Força as colunas a respeitarem a largura */
-        width: 100%;
-}
-        #gradeGeralRender .tableGS th, 
-        #gradeGeralRender .tableGS td { padding: 2px !important;  /* Reduzindo o padding interno */
-        line-height: 1.1;         /* Aproximando as linhas */
-        word-wrap: break-word;    /* Garante que o texto quebre dentro da célula */
+.filtros-geral{
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 20;
+    padding-bottom: 10px;
 }
 
-        /* Otimizando a linha de intervalo */
-        #gradeGeralRender .intervalo-row { height: 20px !important; }
+/* Apenas a grade rola */
+.grade-scroll{
+    max-height: 650px;
+    overflow-y: auto;
+}
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -294,14 +288,14 @@
         </div>
 
         <button onclick="gerarGradeGeral()"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-md font-bold transition-colors duration-200 mb-4">
-    Atualizar Grade
-</button>
+                class="bg-blue-700 text-white px-4 py-2 rounded-lg mb-4">
+            Atualizar Grade
+        </button>
 
-<button onclick="exportarGradeGeralPDF()" 
-        class="bg-[#15803d] hover:bg-[#166534] text-white px-4 py-2 rounded-lg shadow-md font-bold transition-colors duration-200 mb-4 ml-2">
-    Exportar Geral PDF (Paisagem)
-</button>
+        <button onclick="exportarGradeGeralPDF()"
+                class="bg-green-700 text-white px-4 py-2 rounded-lg mb-4">
+            Exporta Grade PDF
+        </button>
 
     </div>
 
@@ -779,25 +773,6 @@ function renderPivo() {
     });
 }
 
-        function popularListaProfessores() {
-    let professores = new Set();
-    for (let t in dataStore) {
-        for (let d in dataStore[t].discs) {
-            dataStore[t].discs[d].sch.forEach(a => {
-                if (a.prof && a.prof !== "N/I") professores.add(a.prof);
-            });
-        }
-    }
-    
-    const datalist = document.getElementById('listaProfessores');
-    datalist.innerHTML = "";
-    [...professores].sort().forEach(p => {
-        let option = document.createElement('option');
-        option.value = p;
-        datalist.appendChild(option);
-    });
-}
-        
 function gerarGradeGeral(){
 
     const week = document.getElementById("weekInputGeral").value;
@@ -813,11 +788,6 @@ if(nivel === "tecnico"){
 }
 
     const busca = document.getElementById("buscaGeral").value.toUpperCase();
-    <input type="text" id="buscaGeral" list="listaProfessores" 
-       placeholder="Digite o nome do professor..." 
-       oninput="gerarGradeGeral()" class="border p-2 rounded">
-
-<datalist id="listaProfessores"></datalist>
 
     if(!week || !nivel) return;
 
@@ -890,24 +860,15 @@ if(nivel === "tecnico"){
                                 a.time.startsWith(slot.h.split(' - ')[0])
                             ){
 
-                                const texto = `${dataStore[tId].discs[d].name} - ${a.prof}`; // Use o nome completo ou uma variável única
+                                const texto = 
+                                `${dataStore[tId].discs[d].name} - ${getPrimeiroNome(a.prof)}`;
 
-// Ajuste na lógica de busca
-let match = false;
-if (!busca) {
-    match = true;
-} else {
-    // Busca exata: compare o nome do professor com o valor digitado
-    // Se o usuário digitar "JOSE", ele não trará "JOSE RICARDO"
-    match = a.prof.toUpperCase() === busca || texto.toUpperCase().includes(busca);
-}
-
-if(match){
-    conteudo = `
-        <div class="aula-card status-normal">
-            ${dataStore[tId].discs[d].name} - ${getPrimeiroNome(a.prof)}
-        </div>`;
-}
+                                if(!busca || texto.toUpperCase().includes(busca)){
+                                    conteudo = `
+                                        <div class="aula-card status-normal">
+                                            ${texto}
+                                        </div>`;
+                                }
                             }
                         });
                     }
@@ -1289,7 +1250,7 @@ const filtrar = ehSemestral(tId)
             const pageCount = doc.internal.getNumberOfPages();
             for (let i = 1; i <= pageCount; i++) {
                 doc.setPage(i); doc.setFontSize(8); doc.setTextColor(100); doc.line(14, 285, 196, 285);
-                doc.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 3443-9501", 105, 289, { align: "center" });
+                doc.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 2182-9642", 105, 289, { align: "center" });
                 doc.text("E-mail: dape.cacoal@ifro.edu.br | Página " + i + " de " + pageCount, 105, 293, { align: "center" });
             }
         }
@@ -1609,8 +1570,8 @@ function exportarDashboardPDF() {
 
     doc.save(`Dashboard_Institucional_${year}.pdf`);
 }
-
-    function exportarGradeGeralPDF() {
+        
+        function exportarGradeGeralPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('l', 'mm', 'a4');
     const week = document.getElementById("weekInputGeral").value;
@@ -1655,7 +1616,7 @@ function exportarDashboardPDF() {
             theme: 'grid',
             styles: { 
                 fontSize: 4, // Letra minúscula para caber na horizontal
-                cellPadding: 0.6, 
+                cellPadding: 0.9, 
                 halign: 'center', 
                 valign: 'middle',
                 overflow: 'linebreak' 
@@ -1667,16 +1628,16 @@ function exportarDashboardPDF() {
             },
             didDrawPage: function(data) {
                 doc.setFontSize(8); doc.setTextColor(100);
-                doc.line(14, 200, 283, 200);
-                doc.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 3443-9501", 148.5, 205, { align: "center" });
-                doc.text("E-mail: dape.cacoal@ifro.edu.br | Página " + doc.internal.getNumberOfPages(), 148.5, 209, { align: "center" });
+                doc.line(14, 195, 283, 195);
+                doc.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 2182-9642", 148.5, 200, { align: "center" });
+                doc.text("E-mail: dape.cacoal@ifro.edu.br | Página " + doc.internal.getNumberOfPages(), 148.5, 205, { align: "center" });
             }
         });
     });
 
     doc.save(nomeArquivo);
 }
-        
+
         function initTabs() {
             document.querySelectorAll('.tab-btn').forEach(b => {
                 b.onclick = () => {
