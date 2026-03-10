@@ -102,70 +102,14 @@
 
 <nav class="bg-white shadow-md sticky top-0 z-50">
     <div class="container mx-auto flex overflow-x-auto">
-
-        <button class="tab-btn flex-shrink-0
-            px-3 sm:px-4 md:px-6
-            py-2 sm:py-3 md:py-4
-            text-[10px] sm:text-xs md:text-sm lg:text-base
-            font-bold uppercase whitespace-nowrap active"
-            data-tab="tab-disciplina">
-            Relatório por Disciplina
-        </button>
-
-        <button class="tab-btn flex-shrink-0
-            px-3 sm:px-4 md:px-6
-            py-2 sm:py-3 md:py-4
-            text-[10px] sm:text-xs md:text-sm lg:text-base
-            font-bold uppercase whitespace-nowrap"
-            data-tab="tab-turma">
-            Relatório por Turma
-        </button>
-
-        <button class="tab-btn flex-shrink-0
-            px-3 sm:px-4 md:px-6
-            py-2 sm:py-3 md:py-4
-            text-[10px] sm:text-xs md:text-sm lg:text-base
-            font-bold uppercase whitespace-nowrap"
-            data-tab="tab-semanal">
-            Relatório Semanal por Professor
-        </button>
-
-        <button class="tab-btn flex-shrink-0
-            px-3 sm:px-4 md:px-6
-            py-2 sm:py-3 md:py-4
-            text-[10px] sm:text-xs md:text-sm lg:text-base
-            font-bold uppercase whitespace-nowrap"
-            data-tab="tab-semanal-turma">
-            Relatório Semanal por Turma
-        </button>
-
-        <button class="tab-btn flex-shrink-0
-            px-3 sm:px-4 md:px-6
-            py-2 sm:py-3 md:py-4
-            text-[10px] sm:text-xs md:text-sm lg:text-base
-            font-bold uppercase whitespace-nowrap"
-            data-tab="tab-geral">
-            Relatório Geral Semanal
-        </button>
-
-        <button class="tab-btn flex-shrink-0
-            px-3 sm:px-4 md:px-6
-            py-2 sm:py-3 md:py-4
-            text-[10px] sm:text-xs md:text-sm lg:text-base
-            font-bold uppercase whitespace-nowrap"
-            data-tab="dashboardTab">
-            Dashboard
-        </button>
-
-        <button class="tab-btn flex-shrink-0
-            px-3 sm:px-4 md:px-6
-            py-2 sm:py-3 md:py-4
-            text-[10px] sm:text-xs md:text-sm lg:text-base
-            font-bold uppercase whitespace-nowrap"
-            data-tab="tab-info">
-            Informações do Sistema
-        </button>
-
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap active" data-tab="tab-disciplina">Relatório por Disciplina</button>
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap" data-tab="tab-turma">Relatório por Turma</button>
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap" data-tab="tab-semanal">Relatório Semanal por Professor</button>
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap" data-tab="tab-professor">Relatório por Professor</button>
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap" data-tab="tab-semanal-turma">Relatório Semanal por Turma</button>
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap" data-tab="tab-geral">Relatório Geral Semanal</button>
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap" data-tab="dashboardTab">Dashboard</button>
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap" data-tab="tab-info">Informações</button>
     </div>
 </nav>
 
@@ -311,6 +255,26 @@
 </div>
 
 </section>
+
+
+<section id="tab-professor" class="tab-pane">
+    <div class="bg-white p-6 rounded-xl shadow-sm border">
+        <div class="flex gap-4 mb-6">
+            <input list="listaProfessores" id="buscaProfessorRel" oninput="gerarRelatorioProfessor()" class="border p-3 rounded-lg flex-1" placeholder="Digite o nome do professor...">
+            <button onclick="exportarRelatorioProfessorPDF()" class="bg-[#15803d] text-white px-8 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF</button>
+        </div>
+        <table id="tabelaRelatorioProf" class="w-full border-collapse border text-center">
+            <thead class="bg-gray-100 font-bold text-[10px]">
+                <tr><th class="border p-2">Disciplina</th><th class="border p-2">Turma</th>
+                <th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Jun</th>
+                <th>Jul</th><th>Ago</th><th>Set</th><th>Out</th><th>Nov</th><th>Dez</th>
+                <th>Sáb</th><th>Total</th></tr>
+            </thead>
+            <tbody id="bodyRelatorioProf" class="text-[11px]"></tbody>
+        </table>
+    </div>
+</section>
+
 
         <div id="dashboardTab" class="tab-pane">
             <div style="margin-top:15px;">
@@ -498,12 +462,105 @@
 "Vera": "Vera Lucia Lopes Silveira",
 "Wellyton": "Wellyton Rocha Vasconcellos" }; 
 
-        function traduzirProfessor(nome) {
+        // Função auxiliar de formatação
+function formatarNome(nome) {
+    if (!nome) return "";
+    return nome.toLowerCase().replace(/(^|\s)\S/g, (l) => l.toUpperCase());
+}
+
+// Mapa de tradução com nomes formatados
+const MAPA_PROFESSORES = Object.fromEntries(
+    Object.entries(PROFESSORES).map(([k, v]) => [k.toUpperCase().trim(), formatarNome(v)])
+);
+
+function traduzirProfessor(nome) {
+    if (!nome) return "Desconhecido";
     const chave = nome.trim().toUpperCase();
-    const mapa = Object.fromEntries(
-        Object.entries(PROFESSORES).map(([k,v]) => [k.toUpperCase(), v])
-    );
-    return mapa[chave] || nome;
+    return MAPA_PROFESSORES[chave] || formatarNome(nome);
+}
+
+function gerarRelatorioProfessor() {
+    const profInput = document.getElementById("buscaProfessorRel").value.trim().toUpperCase();
+    const b = document.getElementById("bodyRelatorioProf");
+    b.innerHTML = '';
+    if (!profInput) return;
+
+    Object.keys(dataStore).forEach(tId => {
+        Object.values(dataStore[tId].discs).forEach(disc => {
+            const ministra = disc.sch.some(a => traduzirProfessor(a.prof).toUpperCase() === profInput);
+            
+            if (ministra) {
+                let mCount = Array(12).fill(0);
+                let sab = 0;
+                disc.sch.forEach(s => {
+                    if (traduzirProfessor(s.prof).toUpperCase() === profInput) {
+                        mCount[s.dtObj.getMonth()]++;
+                        if (s.dtObj.getDay() === 6) sab++;
+                    }
+                });
+                
+                let row = `<tr><td class="border p-2">${disc.name}</td><td class="border p-2">${dataStore[tId].name}</td>`;
+                mCount.forEach(c => row += `<td class="border p-2">${c || '-'}</td>`);
+                row += `<td class="border p-2 font-bold">${sab || '-'}</td>
+                        <td class="border p-2 font-black">${mCount.reduce((a,b)=>a+b,0)}</td></tr>`;
+                b.innerHTML += row;
+            }
+        });
+    });
+}
+
+function exportarRelatorioProfessorPDF() {
+    const { jsPDF } = window.jspdf;
+    const profNome = document.getElementById('buscaProfessorRel').value;
+    const anoLetivo = document.getElementById('yearSelect').value; // Captura o ano selecionado
+    const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+    
+    if (!profNome) return alert("Selecione um professor na busca!");
+
+    const doc = new jsPDF('l', 'mm', 'a4');
+    const pageWidth = 297; 
+
+    // Função interna de Cabeçalho
+    function drawHeader(d) {
+        d.setFont("helvetica", "bold"); d.setFontSize(14);
+        d.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", pageWidth / 2, 15, { align: "center" });
+        d.setFontSize(12); d.text("CAMPUS CACOAL", pageWidth / 2, 22, { align: "center" });
+        d.setFontSize(10); d.setFont("helvetica", "normal");
+        d.text("DEPARTAMENTO DE APOIO AO ENSINO", pageWidth / 2, 30, { align: "center" });
+        d.text("COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS", pageWidth / 2, 35, { align: "center" });
+        d.setDrawColor(21, 128, 61); d.setLineWidth(0.5); d.line(14, 38, 283, 38);
+    }
+
+    // Função interna de Rodapé
+    function drawFooter(d) {
+        const pageCount = d.internal.getNumberOfPages();
+        d.setFontSize(8); d.setTextColor(100);
+        d.line(14, 195, 283, 195);
+        d.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 2182-9642", pageWidth / 2, 200, { align: "center" });
+        d.text("E-mail: dape.cacoal@ifro.edu.br | Página " + d.internal.getCurrentPageInfo().pageNumber + " de " + pageCount, pageWidth / 2, 205, { align: "center" });
+    }
+
+    drawHeader(doc);
+    
+    // Título com Nome do Professor e Ano
+    doc.setFont("helvetica", "bold"); 
+    doc.setFontSize(14);
+    doc.text(`RELATÓRIO: ${profNome.toUpperCase()} - ANO LETIVO ${anoLetivo}`, pageWidth / 2, 45, { align: "center" });
+
+    doc.autoTable({ 
+        html: '#tabelaRelatorioProf', 
+        startY: 55, 
+        theme: 'grid', 
+        styles: { fontSize: 7, halign: 'center' },
+        headStyles: { fillColor: [21, 128, 61] },
+        didDrawPage: function(data) {
+            drawHeader(doc);
+            drawFooter(doc);
+        }
+    });
+
+    // Nome do arquivo com data de emissão
+    doc.save(`Relatorio_${profNome.replace(/ /g, '_')}_${dataEmissao}.pdf`);
 }
 
         function turmaEhSuperior(nome){
