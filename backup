@@ -28,6 +28,20 @@
         .status-rec { background-color: #fdf2f8; border-color: #db2777; color: #9d174d; }
         .status-exame { background-color: #f5f5f5; border-color: #4b5563; color: #1f2937; }
         .intervalo-row { background-color: #f3f4f6 !important; color: #6b7280; font-weight: bold; text-transform: uppercase; font-size: 10px; }
+        /* Filtros da grade ficam fixos */
+.filtros-geral{
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 20;
+    padding-bottom: 10px;
+}
+
+/* Apenas a grade rola */
+.grade-scroll{
+    max-height: 650px;
+    overflow-y: auto;
+}
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -68,6 +82,10 @@
                         class="bg-white/20 border border-white/30 px-3 py-2 rounded-lg text-white font-bold outline-none cursor-pointer w-full sm:w-32">
                         <option value="2025" class="text-black">2025</option>
                         <option value="2026" class="text-black" selected>2026</option>
+                        <option value="2027" class="text-black">2027</option>
+                        <option value="2028" class="text-black">2028</option>
+                        <option value="2029" class="text-black">2029</option>
+                        <option value="2030" class="text-black">2030</option>
                     </select>
                 </div>
 
@@ -240,32 +258,53 @@
         </section>
 
         <section id="tab-geral" class="tab-pane">
-    <div class="bg-white p-6 rounded-xl shadow-sm border">
-        
+
+<div class="bg-white p-6 rounded-xl shadow-sm border">
+
+    <!-- FILTROS CONGELADOS -->
+    <div class="filtros-geral">
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             
-            <!-- 1. Semana -->
-            <input type="week" id="weekInputGeral" 
+            <!-- Semana -->
+            <input type="week" 
+                   id="weekInputGeral"
                    class="p-3 border rounded-lg">
 
-            <!-- 2. Nivel (inicialmente oculto) -->
-            <select id="nivelSelect" 
+            <!-- Nivel -->
+            <select id="nivelSelect"
                     class="p-3 border rounded-lg hidden">
                 <option value="">-- SELECIONE O NÍVEL --</option>
                 <option value="tecnico">TÉCNICO</option>
                 <option value="superior">SUPERIOR</option>
             </select>
             
-            <!-- 3. Pesquisa (inicialmente oculto) -->
-            <input type="text" id="buscaGeral" 
+            <!-- Pesquisa -->
+            <input type="text"
+                   id="buscaGeral"
                    placeholder="Pesquisar disciplina ou professor"
                    class="p-3 border rounded-lg hidden">
+
         </div>
-        
-        <div id="gradeGeralRender" 
-             class="overflow-x-auto border rounded-lg"></div>
+
+        <button onclick="gerarGradeGeral()"
+                class="bg-green-700 text-white px-4 py-2 rounded-lg mb-4">
+            Atualizar Grade
+        </button>
+
     </div>
-            
+
+    <!-- ÁREA QUE ROLA -->
+    <div class="grade-scroll">
+
+        <div id="gradeGeralRender"
+             class="overflow-x-auto border rounded-lg">
+        </div>
+
+    </div>
+
+</div>
+
 </section>
 
         <div id="dashboardTab" class="tab-pane">
@@ -375,6 +414,7 @@
 "Gian": "Gian Willian Tavares de Souza",
 "Gilson D": "Gilson Divino Araújo da Silva",
 "Gilson P": "Gilson Pedro Ranzula",
+"Guilherme": "Guilherme Raniel da Cruz Santos",
 "Heloisa": "Heloisa Helena Ribeiro de Miranda",
 "Henri": "Henri Francis Ternes de Oliveira",
 "Henrique": "Henrique Silva Sérvio",
@@ -497,7 +537,7 @@
         let dataStore = {};
         const GIST_URLS = {
             "2025": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/b32b06d3468be385d70405c039346e4ad3c35a54/DADOS_2025_MESTRE",
-            "2026": "https://gist.githubusercontent.com/jamilsalim-afk/50b7b241beacfe8a941ee21150545a32/raw/47f8b7e37e8bd8d07b009ccad158acf57c559f2d/DADOS_2026_MESTRE"
+            "2026": "https://gist.githubusercontent.com/jamilsalim-afk/255bab3f99af2c34836684eb21a370fc/raw/b771bbb3d9fb3ff76acb674e97f423e88f777406/DADOS_2026_MESTRE"
         };
 
         const DISCIPLINAS_OCULTAR = [
@@ -773,8 +813,8 @@ if(nivel === "tecnico"){
         </h3>
 
         <table class="tableGS bg-white mb-6">
-        <thead>
-            <tr class="bg-gray-100">
+        <thead class="sticky top-[90px] bg-gray-100 z-10">
+<tr>
                 <th style="width:70px;" class="text-[10px]">H</th>`;
 
         turmasFiltradas.forEach(tId=>{
