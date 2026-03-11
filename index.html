@@ -1,5 +1,1599 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-   
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGP - IFRO Campus Cacoal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .tab-btn.active { border-bottom: 4px solid #15803d; color: #15803d; font-weight: 800; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase; padding: 6px 4px !important; }
+        td { font-size: 12px !important; padding: 8px !important; }
+        .tableGS { table-layout: fixed; width: 100%; }
+        .tableGS td, .tableGS th { word-wrap: break-word; vertical-align: middle; text-align: center; border: 1px solid #e5e7eb; }
+        .tableGS th { font-size: 10px !important; padding: 4px !important; }
+        .tableGS td { font-size: 10px !important; padding: 4px !important; }
+        .aula-card { padding: 3px; margin: 1px; border-radius: 4px; line-height: 1.05; border-left: 3px solid #15803d; text-align: center; font-size: 9px; font-weight: 600; }
+        .status-normal { background-color: #f0fdf4; border-color: #15803d; }
+        .status-extra { background-color: #ecfdf5; border-color: #059669; color: #065f46; }
+        .status-reposicao { background-color: #eff6ff; border-color: #2563eb; color: #1e40af; }
+        .status-rec { background-color: #fdf2f8; border-color: #db2777; color: #9d174d; }
+        .status-exame { background-color: #f5f5f5; border-color: #4b5563; color: #1f2937; }
+        .intervalo-row { background-color: #f3f4f6 !important; color: #6b7280; font-weight: bold; text-transform: uppercase; font-size: 10px; }
+        /* Filtros da grade ficam fixos */
+.filtros-geral{
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 20;
+    padding-bottom: 10px;
+}
+
+/* Apenas a grade rola */
+.grade-scroll{
+    max-height: 650px;
+    overflow-y: auto;
+}
+#dashboardContent > div {
+    display: grid;
+    /* 1 coluna no mobile, 3 colunas em telas maiores */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+}
+
+/* Ajuste fino para cards de info */
+.info-card {
+    padding: 15px !important;
+    border-radius: 8px !important;
+}
+
+.info-card-title {
+    font-size: 12px !important;
+}
+
+.info-card-value {
+    font-size: 20px !important;
+    font-weight: bold;
+}
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<header class="bg-[#15803d] text-white shadow-lg">
+    <div class="container mx-auto px-4 py-4 md:py-6">
+
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+
+            <!-- BLOCO INSTITUCIONAL -->
+            <div class="space-y-1">
+                <h1 class="text-lg sm:text-xl md:text-2xl font-black italic uppercase tracking-tight leading-tight">
+                    INSTITUTO FEDERAL DE RONDÔNIA - IFRO
+                </h1>
+
+                <p class="text-[10px] sm:text-xs font-bold opacity-80 uppercase">
+                    Campus Cacoal
+                </p>
+
+                <p class="text-[10px] sm:text-xs font-bold opacity-80 uppercase">
+                    Departamento de Apoio ao Ensino
+                </p>
+
+                <p class="mt-2 text-xs sm:text-sm font-black uppercase border-t border-white/20 pt-2">
+                    Sistema de Gestão Pedagógica
+                </p>
+            </div>
+
+            <!-- BLOCO CONTROLES -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full lg:w-auto">
+
+                <div class="flex flex-col w-full sm:w-auto">
+                    <label class="text-[10px] font-bold opacity-70">
+                        Ano Letivo
+                    </label>
+
+                    <select id="yearSelect"
+                        class="bg-white/20 border border-white/30 px-3 py-2 rounded-lg text-white font-bold outline-none cursor-pointer w-full sm:w-32">
+                        <option value="2025" class="text-black">2025</option>
+                        <option value="2026" class="text-black" selected>2026</option>
+                        <option value="2027" class="text-black">2027</option>
+                        <option value="2028" class="text-black">2028</option>
+                        <option value="2029" class="text-black">2029</option>
+                        <option value="2030" class="text-black">2030</option>
+                    </select>
+                </div>
+
+                <div id="dataRelatorio"
+                    class="bg-white/10 px-4 py-2 rounded-lg font-mono text-sm border border-white/20 w-full sm:w-auto text-center">
+                    --/--/----
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</header>
+
+<nav class="bg-white shadow-md sticky top-0 z-50">
+    <div class="container mx-auto flex overflow-x-auto">
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap active" data-tab="tab-disciplina">Relatório por Disciplina</button>
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap" data-tab="tab-turma">Relatório por Turma</button>
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap" data-tab="tab-semanal">Relatório Semanal por Professor</button>
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap" data-tab="tab-professor">Relatório por Professor</button>
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap" data-tab="tab-semanal-turma">Relatório Semanal por Turma</button>
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap" data-tab="tab-geral">Relatório Geral Semanal</button>
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap" data-tab="dashboardTab">Dashboard</button>
+        <button class="tab-btn flex-shrink-0 px-6 py-4 text-sm font-bold uppercase whitespace-nowrap" data-tab="tab-info">Informações</button>
+    </div>
+</nav>
+
+    <main class="container mx-auto p-4 md:p-6">
+        <div id="loading" class="text-center py-10 font-bold text-green-700 italic animate-pulse">CARREGANDO DADOS...</div>
+
+        <section id="tab-disciplina" class="tab-pane active">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <select id="turmaSelect" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
+                    <select id="semestreSelect" class="p-3 border rounded-lg font-bold bg-blue-50 border-blue-200 hidden">
+                        <option value="1">1º SEMESTRE</option>
+                        <option value="2">2º SEMESTRE</option>
+                    </select>
+                    <select id="disciplinaSelect" class="p-3 border rounded-lg bg-gray-50" disabled><option>Selecione a Turma</option></select>
+                </div>
+                <div id="resultadoBusca" class="hidden">
+                    <div class="flex flex-wrap gap-4 mb-4 items-center">
+                        <div class="bg-green-100 p-4 rounded-lg border border-green-200 text-center flex-1">
+                            <p class="text-[10px] font-bold text-green-800">AULAS REGULARES</p>
+                            <span id="cont-regular" class="text-2xl font-black text-green-900">0</span>
+                        </div>
+                        <div class="bg-pink-100 p-4 rounded-lg border border-pink-200 text-center flex-1">
+                            <p class="text-[10px] font-bold text-pink-800">RECUPERAÇÃO/EXAME</p>
+                            <span id="cont-extra" class="text-2xl font-black text-pink-900">0</span>
+                        </div>
+                        <button onclick="exportarDisciplinaPDF()" class="bg-[#15803d] text-white px-8 py-4 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF Disciplina</button>
+                    </div>
+                    <table id="tableD" class="min-w-full bg-white border text-center">
+                        <thead class="bg-gray-50">
+                            <tr><th class="border">DATA</th><th class="border">DIA</th><th class="border">HORÁRIO</th><th class="border">PROFESSOR</th><th class="border">STATUS</th></tr>
+                        </thead>
+                        <tbody id="bodyD"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-turma" class="tab-pane">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="flex gap-4 mb-6">
+                    <select id="turmaSelectPivo" class="p-3 border rounded-lg font-bold flex-1 bg-gray-50"></select>
+                    <select id="semestreSelectPivo" class="p-3 border rounded-lg font-bold bg-blue-50 border-blue-200 hidden">
+                        <option value="1">1º SEMESTRE</option>
+                        <option value="2">2º SEMESTRE</option>
+                    </select>
+                    <button onclick="exportarPivoPDF()" class="bg-[#15803d] text-white px-8 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF Turma</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table id="tablePivo" class="min-w-full border text-center">
+                        <thead class="bg-[#15803d] text-white">
+                            <tr>
+                                <th class="text-left w-64">DISCIPLINA</th>
+                                <th>JAN</th><th>FEV</th><th>MAR</th><th>ABR</th><th>MAI</th><th>JUN</th><th>JUL</th><th>AGO</th><th>SET</th><th>OUT</th><th>NOV</th><th>DEZ</th><th>SÁB</th>
+                                <th class="bg-green-600">TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bodyPivo" class="bg-white font-bold"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-semanal" class="tab-pane">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <select id="profSelect" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
+                    <input type="week" id="weekInput" class="p-3 border rounded-lg">
+                    <div class="flex gap-2">
+                        <button onclick="gerarGrade()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition uppercase text-xs">Ver Grade</button>
+                        <button onclick="exportarGradePDF()" class="bg-[#15803d] text-white font-bold rounded-lg flex-1 hover:bg-green-800 transition shadow-md uppercase text-xs">Exportar PDF Grade</button>
+                    </div>
+                </div>
+                <div id="gradeRender" class="overflow-x-auto border rounded-lg"></div>
+            </div>
+        </section>
+        
+        <section id="tab-semanal-turma" class="tab-pane">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <select id="turmaSelectSemanal" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
+                    <input type="week" id="weekInputTurma" class="p-3 border rounded-lg">
+                    <div class="flex gap-2">
+                        <button onclick="gerarGradeTurma()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition uppercase text-xs">Ver Grade Turma</button>
+                        <button onclick="exportarGradeTurmaPDF()" class="bg-[#15803d] text-white font-bold rounded-lg flex-1 hover:bg-green-800 transition shadow-md uppercase text-xs">Exportar PDF Grade</button>
+                    </div>
+                </div>
+                <div id="gradeTurmaRender" class="overflow-x-auto border rounded-lg"></div>
+            </div>
+        </section>
+
+        <section id="tab-geral" class="tab-pane">
+
+<div class="bg-white p-6 rounded-xl shadow-sm border">
+
+    <!-- FILTROS CONGELADOS -->
+    <div class="filtros-geral">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            
+            <!-- Semana -->
+            <input type="week" 
+                   id="weekInputGeral"
+                   class="p-3 border rounded-lg">
+
+            <!-- Nivel -->
+            <select id="nivelSelect"
+                    class="p-3 border rounded-lg hidden">
+                <option value="">-- SELECIONE O NÍVEL --</option>
+                <option value="tecnico">TÉCNICO</option>
+                <option value="superior">SUPERIOR</option>
+            </select>
+            
+            <!-- Pesquisa -->
+            <input list="listaProfessores" id="buscaGeral" oninput="gerarGradeGeral()" class="border p-2" placeholder="Digite o nome do professor...">
+
+<datalist id="listaProfessores">
+    </datalist>
+
+        </div>
+
+        <button onclick="gerarGradeGeral()"
+                class="bg-blue-700 text-white px-4 py-2 rounded-lg mb-4">
+            Atualizar Grade
+        </button>
+
+        <button onclick="exportarGradeGeralPDF()"
+                class="bg-green-700 text-white px-4 py-2 rounded-lg mb-4">
+            Exporta Grade PDF
+        </button>
+
+    </div>
+
+    <!-- ÁREA QUE ROLA -->
+    <div class="grade-scroll">
+
+        <div id="gradeGeralRender"
+             class="overflow-x-auto border rounded-lg">
+        </div>
+
+    </div>
+
+</div>
+
+</section>
+
+
+<section id="tab-professor" class="tab-pane">
+    <div class="bg-white p-6 rounded-xl shadow-sm border">
+        <div class="flex gap-4 mb-6">
+            <input list="listaProfessores" id="buscaProfessorRel" oninput="gerarRelatorioProfessor()" class="border p-3 rounded-lg flex-1" placeholder="Digite o nome do professor...">
+            <button onclick="exportarRelatorioProfessorPDF()" class="bg-[#15803d] text-white px-8 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF</button>
+        </div>
+        <table id="tabelaRelatorioProf" class="w-full border-collapse border text-center">
+            <thead class="bg-gray-100 font-bold text-[10px]">
+                <tr><th class="border p-2">Disciplina</th><th class="border p-2">Turma</th>
+                <th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Jun</th>
+                <th>Jul</th><th>Ago</th><th>Set</th><th>Out</th><th>Nov</th><th>Dez</th>
+                <th>Sáb</th><th>Total</th></tr>
+            </thead>
+            <tbody id="bodyRelatorioProf" class="text-[11px]"></tbody>
+        </table>
+    </div>
+</section>
+
+
+        <div id="dashboardTab" class="tab-pane">
+            <div style="margin-top:15px;">
+
+<button onclick="gerarDashboard()" 
+    style="padding:8px 16px; background:#2563eb; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; text-transform:uppercase; font-size:12px;">
+    Atualizar Dashboard
+</button>
+
+<button onclick="exportarDashboardPDF()" 
+    style="padding:8px 16px; background:#15803d; color:white; border:none; border-radius:8px; cursor:pointer; margin-left:10px; font-weight:bold; text-transform:uppercase; font-size:12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+    Exportar Dashboard PDF
+</button>
+                
+</div>
+    <div id="dashboardContent"></div>
+</div>
+
+        <section id="tab-info" class="tab-pane">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <h3 class="text-[#15803d] font-black border-b-2 border-green-700 pb-2 uppercase text-sm">Estrutura Organizacional</h3>
+                        <div class="space-y-2 text-xs">
+                            <p><strong>INSTITUIÇÃO:</strong> Instituto Federal de Rondônia - IFRO</p>
+                            <p><strong>CAMPUS:</strong> Cacoal</p>
+                            <p><strong>DEPARTAMENTO:</strong> Departamento de Apoio ao Ensino (DAPE)</p>
+                            <p><strong>COORDENAÇÃO:</strong> Coordenação de Desenvolvimento de Ferramentas Pedagógicas</p>
+                        </div>
+                        <h3 class="text-[#15803d] font-black border-b-2 border-green-700 pb-2 pt-4 uppercase text-sm">Contato e Localização</h3>
+                        <div class="space-y-2 text-xs">
+                            <p><strong>ENDEREÇO:</strong> BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO</p>
+                            <p><strong>TELEFONE:</strong> (69) 3443-9501</p>
+                            <p><strong>E-MAIL:</strong> dape.cacoal@ifro.edu.br</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg border border-dashed border-gray-300 text-center">
+                        <h3 class="text-gray-700 font-black mb-4 uppercase text-sm">Calendário Acadêmico - <span id="infoYear">2026</span></h3>
+                        <div class="space-y-4 text-left">
+                            <div class="bg-white p-4 rounded shadow-sm border-l-4 border-blue-500">
+                                <p class="text-[10px] font-bold text-gray-500 uppercase">1º Semestre</p>
+                                <p id="semestre1" class="text-base font-black text-gray-800"></p>
+                            </div>
+                            <div class="bg-white p-4 rounded shadow-sm border-l-4 border-green-500">
+                                <p class="text-[10px] font-bold text-gray-500 uppercase">2º Semestre</p>
+                                <p id="semestre2" class="text-base font-black text-gray-800"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // --- CONFIGURAÇÃO DE DATAS POR ANO (AJUSTE AQUI OS LIMITES REAIS) ---
+        const CALENDARIOS = {
+    "2025": {
+        s1: { inicio: new Date(2025, 1, 1, 0, 0, 0), fim: new Date(2025, 6, 12, 23, 59, 59) }, 
+        s2: { inicio: new Date(2025, 6, 27, 0, 0, 0), fim: new Date(2025, 11, 31, 23, 59, 59) }
+    },
+    "2026": {
+        s1: { inicio: new Date(2026, 1, 9, 0, 0, 0), fim: new Date(2026, 6, 3, 23, 59, 59) },
+        s2: { inicio: new Date(2026, 6, 22, 0, 0, 0), fim: new Date(2026, 11, 11, 23, 59, 59) }
+    }
+};
+
+        const PROFESSORES = {
+        "Adilson": "Adilson Miranda de Almeida",
+"Adriana": "Adriana Aparecida Rigolon",
+"Agatha": "Agatha Christie de Souza Zemke",
+"Agmar": "Agmar Aparecido Felix Chaves",
+"Aguinaldo": "Aguinaldo Pereira",
+"Alberto": "Alberto Ayres Benício",
+"Aline": "Aline da Silva Correa Valério Sakyrabiar",
+"Aline S": "Aline da Silva Aquilau",
+"Ana C": "Ana Caroline Carvalho Miranda",
+"Andreia": "Andreia Maciel da Silva",
+"Angelica": "Angelica Fernandes Estok",
+"Angelita": "Angelita Aparecida Coutinho Picazevicz",
+"Antonio": "Antonio Ferreira Neto",
+"Arilson": "Arilson Ramos",
+"Atila": "Atila Bezerra Mira",
+"Ayrton": "Ayrton Schupp Pinheiro Oliveira",
+"Barbara": "Barbara Ferreira Fadul",
+"Cirlania": "Cirlania Pereira Batista",
+"Claudemir": "Claudemir Miranda Barboza",
+"Claudia": "Claudia Aline Puerari",
+"Coordenador": "Coordenador",
+"Daianne": "Daianne Castilho Silva",
+"Daphne": "Daphne Chiara Antônio",
+"Davys": "Davys Sleman de Negreiros",
+"Debora": "Debora Costa Barroso Corrêa",
+"Dheimy": "Dheimy da Silva Novelli",
+"Dhieisi": "Dhieisi Ebert Bolsanello",
+"Dierlei": "Dierlei dos Santos",
+"Edmilson": "Edmilson Maria de Brito",
+"Edna": "Edna Cristiane da Matta",
+"Edslei": "Edslei Rodrigues de Almeida",
+"Eduardo": "Eduardo Lucas Jorge Serapião",
+"Erick": "Erick Rodrigo de Oliveira Mesquita",
+"Eslei": "Eslei Justiniano dos Reis",
+"Gabriel": "Gabriel Tenório dos Santos",
+"Gean": "Gean Batista de Lima",
+"Genival": "Genival Gomes da Silva Junior",
+"Gian": "Gian Willian Tavares de Souza",
+"Gilson D": "Gilson Divino Araújo da Silva",
+"Gilson P": "Gilson Pedro Ranzula",
+"Guilherme": "Guilherme Raniel da Cruz Santos",
+"Heloisa": "Heloisa Helena Ribeiro de Miranda",
+"Henri": "Henri Francis Ternes de Oliveira",
+"Henrique": "Henrique Silva Sérvio",
+"Ideir": "Ideir Coto",
+"Ingrid": "Ingrid Leticia Menezes Barbosa",
+"Iramaia": "Iramaia Grespan Ferreira",
+"Irlan": "Irlan Cordeiro de Souza",
+"Isis": "Isis Lazzarini Foroni",
+"Jakeline": "Jakeline Melo dos Anjos",
+"Jefferson": "Jefferson Lemes Pinto",
+"Jhonata": "Jhonata Lemos da Silva",
+"Joel M": "Joel Martins Braga Junior",
+"Joelson": "Joelson Barral do Espírito Santo",
+"Jorge": "Jorge da Silva Werneck",
+"Jose A": "Jose de Anchieta Almeida da Silva",
+"Jose N": "Jose Nilson Rosa Baraldi Molis",
+"Jose V": "Jose Vechiatto",
+"Josimar": "Josimar Monteiro Santos",
+"Julia S": "Julia de Souza Lopes Basso",
+"Juliana F": "Juliana Ferraz Huback Rodrigues",
+"Juliana M": "Juliana Maria Freitas de Assis Holanda",
+"Juliane": "Juliane Lima Araújo",
+"Juliano A": "Juliano Alves de Deus",
+"Juliano C": "Juliano Cristhian Silva",
+"Julio": "Julio Eduardo Neves dos Santos",
+"Junia": "Junia de Souza Lopes",
+"Jussara": "Jussara Maria Oliveira de Araújo",
+"Larissa": "Larissa Cristina Torrezani Starling Reinicke",
+"Leia": "Leia Marcia dos Santos Kempim",
+"Leonardo": "Leonardo dos Santos Franca Shockness",
+"Lilian A": "Lilian Andrea dos Santos",
+"Lilian B": "Lilian Barbosa da Silva",
+"Lilian C": "Lilian Catiúscia Eifler Firme da Silva",
+"Luciana": "Luciana Alves Ranzula",
+"Magno": "Magno Batista Amorim",
+"Maily": "Maily Marques Pereira",
+"Marcilei": "Marcilei Serafim Germano",
+"Marcio": "Marcio Adolfo de Almeida",
+"Marco A": "Marco Aurélio Nunes de Barros",
+"Marco R": "Marco Rodrigo de Souza",
+"Marcos": "Marcos - Prof PVH",
+"Marcos G": "Marcos Grutzmacher",
+"Maria A": "Maria Angélica Petrini",
+"Maria C": "Maria Cristiana de Freitas da Costa",
+"Messias": "Messias José dos Santos Silva",
+"Nathali": "Nathali Fernanda Machado Silva",
+"Nephi": "Nephi Moraes de Barros",
+"Nirvani": "Nirvani Schroeder Henrique",
+"Paula": "Paula Michelli da Silva Franco Belmont",
+"Paulo": "Paulo Fernando Campagnolli",
+"Professor": "Professor Contratado",
+"Rafael A": "Rafael Ayres Romanholo",
+"Rafael C": "Rafael Carlos Bispo",
+"Raquel": "Raquel Pereira da Silva",
+"Rivaldo": "Rivaldo José de Souza Silva",
+"Rodolfo": "Rodolfo Gustavo Teixeira Ribas",
+"Rogerio": "Rogerio Giovani Soares Ferreira",
+"Saiane": "Saiane Barros de Souza",
+"Saiara": "Saiara Gerlaine Silva Toledo",
+"Samanta": "Samanta Margarida Milani",
+"Sergio": "Sergio Nunes de Jesus",
+"Shelly": "Shelly Braum",
+"Sirlei": "Sirlei Soares dos Santos",
+"Sirley": "Sirley Leite Freitas",
+"Substituto": "Substituto",
+"Substituto_a1": "Substituto_a1",
+"Substituto_a2": "Substituto_a2",
+"Substituto_a3": "Substituto_a3",
+"Substituto_a4": "Substituto_a4",
+"Substituto_a5": "Substituto_a5",
+"Substituto_a6": "Substituto_a6",
+"Thiago": "Thiago Jose Sampaio Kaiser",
+"Tiago": "Tiago Roberto Silva Santos",
+"Uberlando": "Uberlando Tiburtino Leite",
+"Uirande": "Uirande Oliveira Costa",
+"Vera": "Vera Lucia Lopes Silveira",
+"Wellyton": "Wellyton Rocha Vasconcellos" }; 
+
+        // Função auxiliar de formatação
+function formatarNome(nome) {
+    if (!nome) return "";
+    return nome.toLowerCase().replace(/(^|\s)\S/g, (l) => l.toUpperCase());
+}
+
+// Mapa de tradução com nomes formatados
+const MAPA_PROFESSORES = Object.fromEntries(
+    Object.entries(PROFESSORES).map(([k, v]) => [k.toUpperCase().trim(), formatarNome(v)])
+);
+
+function traduzirProfessor(nome) {
+    if (!nome) return "Desconhecido";
+    const chave = nome.trim().toUpperCase();
+    return MAPA_PROFESSORES[chave] || formatarNome(nome);
+}
+
+function gerarRelatorioProfessor() {
+    const profInput = document.getElementById("buscaProfessorRel").value.trim().toUpperCase();
+    const b = document.getElementById("bodyRelatorioProf");
+    b.innerHTML = '';
+    if (!profInput) return;
+
+    Object.keys(dataStore).forEach(tId => {
+        Object.values(dataStore[tId].discs).forEach(disc => {
+            const ministra = disc.sch.some(a => traduzirProfessor(a.prof).toUpperCase() === profInput);
+            
+            if (ministra) {
+                let mCount = Array(12).fill(0);
+                let sab = 0;
+                disc.sch.forEach(s => {
+                    if (traduzirProfessor(s.prof).toUpperCase() === profInput) {
+                        mCount[s.dtObj.getMonth()]++;
+                        if (s.dtObj.getDay() === 6) sab++;
+                    }
+                });
+                
+                let row = `<tr><td class="border p-2">${disc.name}</td><td class="border p-2">${dataStore[tId].name}</td>`;
+                mCount.forEach(c => row += `<td class="border p-2">${c || '-'}</td>`);
+                row += `<td class="border p-2 font-bold">${sab || '-'}</td>
+                        <td class="border p-2 font-black">${mCount.reduce((a,b)=>a+b,0)}</td></tr>`;
+                b.innerHTML += row;
+            }
+        });
+    });
+}
+
+function exportarRelatorioProfessorPDF() {
+    const { jsPDF } = window.jspdf;
+    const profNome = document.getElementById('buscaProfessorRel').value;
+    const anoLetivo = document.getElementById('yearSelect').value; // Captura o ano selecionado
+    const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+    
+    if (!profNome) return alert("Selecione um professor na busca!");
+
+    const doc = new jsPDF('l', 'mm', 'a4');
+    const pageWidth = 297; 
+
+    // Função interna de Cabeçalho
+    function drawHeader(d) {
+        d.setFont("helvetica", "bold"); d.setFontSize(14);
+        d.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", pageWidth / 2, 15, { align: "center" });
+        d.setFontSize(12); d.text("CAMPUS CACOAL", pageWidth / 2, 22, { align: "center" });
+        d.setFontSize(10); d.setFont("helvetica", "normal");
+        d.text("DEPARTAMENTO DE APOIO AO ENSINO", pageWidth / 2, 30, { align: "center" });
+        d.text("COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS", pageWidth / 2, 35, { align: "center" });
+        d.setDrawColor(21, 128, 61); d.setLineWidth(0.5); d.line(14, 38, 283, 38);
+    }
+
+    // Função interna de Rodapé
+    function drawFooter(d) {
+        const pageCount = d.internal.getNumberOfPages();
+        d.setFontSize(8); d.setTextColor(100);
+        d.line(14, 195, 283, 195);
+        d.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 2182-9642", pageWidth / 2, 200, { align: "center" });
+        d.text("E-mail: dape.cacoal@ifro.edu.br | Página " + d.internal.getCurrentPageInfo().pageNumber + " de " + pageCount, pageWidth / 2, 205, { align: "center" });
+    }
+
+    drawHeader(doc);
+    
+    // Título com Nome do Professor e Ano
+    doc.setFont("helvetica", "bold"); 
+    doc.setFontSize(14);
+    doc.text(`RELATÓRIO: ${profNome.toUpperCase()} - ANO LETIVO ${anoLetivo}`, pageWidth / 2, 45, { align: "center" });
+
+    doc.autoTable({ 
+        html: '#tabelaRelatorioProf', 
+        startY: 55, 
+        theme: 'grid', 
+        styles: { fontSize: 7, halign: 'center' },
+        headStyles: { fillColor: [21, 128, 61] },
+        didDrawPage: function(data) {
+            drawHeader(doc);
+            drawFooter(doc);
+        }
+    });
+
+    // Nome do arquivo com data de emissão
+    doc.save(`Relatorio_${profNome.replace(/ /g, '_')}_${dataEmissao}.pdf`);
+}
+
+        function turmaEhSuperior(nome){
+    return CURSOS_SEMESTRAIS.some(c =>
+        nome.toUpperCase().includes(c)
+    );
+}
+
+        function getPrimeiroNome(nomeCompleto) {
+    if (!nomeCompleto) return "";
+    return nomeCompleto.trim().split(" ")[0];
+}
+            
+        const CURSOS_SEMESTRAIS = ["GEOGRAFIA", "MATEMÁTICA", "AGRONEGÓCIO", "ZOOTECNIA", "AGRONOMIA"];
+        const TRADUCAO = { 
+            "+": { texto: "EXTRA", class: "status-extra", soma: true },
+            "R": { texto: "REPOSIÇÃO", class: "status-reposicao", soma: true },
+            "REC": { texto: "RECUPERAÇÃO", class: "status-rec", soma: false },
+            "EX": { texto: "EXAME", class: "status-exame", soma: false }
+        };
+
+        const GABARITO = [
+            {h:"07:30 - 08:20", t:"aula"}, {h:"08:20 - 09:10", t:"aula"}, 
+            {h:"09:10 - 09:30", t:"intervalo", l:"INTERVALO MATUTINO"},
+            {h:"09:30 - 10:20", t:"aula"}, {h:"10:20 - 11:10", t:"aula"}, {h:"11:10 - 12:00", t:"aula"},
+            {h:"12:00 - 13:50", t:"intervalo", l:"ALMOÇO"},
+            {h:"13:50 - 14:40", t:"aula"}, {h:"14:40 - 15:30", t:"aula"},
+            {h:"15:30 - 15:50", t:"intervalo", l:"INTERVALO VESPERTINO"},
+            {h:"15:50 - 16:40", t:"aula"}, {h:"16:40 - 17:30", t:"aula"}, {h:"17:30 - 18:20", t:"aula"},
+            {h:"18:20 - 19:00", t:"intervalo", l:"JANTAR"},
+            {h:"19:00 - 19:50", t:"aula"}, {h:"19:50 - 20:40", t:"aula"},
+            {h:"20:40 - 20:50", t:"intervalo", l:"INTERVALO NOTURNO"},
+            {h:"20:50 - 21:40", t:"aula"}, {h:"21:40 - 22:30", t:"aula"}
+        ];
+
+        let dataStore = {};
+        const GIST_URLS = {
+            "2025": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/b32b06d3468be385d70405c039346e4ad3c35a54/DADOS_2025_MESTRE",
+            "2026": "https://gist.githubusercontent.com/jamilsalim-afk/255bab3f99af2c34836684eb21a370fc/raw/b771bbb3d9fb3ff76acb674e97f423e88f777406/DADOS_2026_MESTRE"
+        };
+
+        const DISCIPLINAS_OCULTAR = [
+    "ATENDIMENTO INDIVIDUAL",
+    "ESTUDOS INDIVIDUAIS",
+    "PPS/ATENDIMENTO",
+    "RESERVA ENSINO",
+    "REUNIÃO DE SERVIDORES"
+];
+        window.onload = () => {
+    document.getElementById('dataRelatorio').textContent = 
+        new Date().toLocaleDateString('pt-BR');
+
+    carregarDados();
+    initTabs();
+    document.getElementById('yearSelect').onchange = carregarDados;
+    popularFiltroProfessores();
+
+    // 🔹 NOVA ABA - RELATÓRIO GERAL
+    document.getElementById("weekInputGeral").onchange = function(){
+        if(this.value){
+            document.getElementById("nivelSelect").classList.remove("hidden");
+        }
+    };
+
+    document.getElementById("nivelSelect").onchange = function(){
+        if(this.value){
+            document.getElementById("buscaGeral").classList.remove("hidden");
+            gerarGradeGeral();
+        }
+    };
+
+    document.getElementById("buscaGeral").oninput = gerarGradeGeral;
+};
+
+
+        function ehSemestral(tId) {
+            if(!dataStore[tId]) return false;
+            const nome = dataStore[tId].name.toUpperCase();
+            return CURSOS_SEMESTRAIS.some(c => nome.includes(c));
+        }
+
+        async function carregarDados() {
+    try {
+        const yearSelected = document.getElementById('yearSelect').value;
+        const cal = CALENDARIOS[yearSelected];
+        
+        document.getElementById('infoYear').textContent = yearSelected;
+        document.getElementById('semestre1').textContent = `${cal.s1.inicio.toLocaleDateString('pt-BR')} a ${cal.s1.fim.toLocaleDateString('pt-BR')}`;
+        document.getElementById('semestre2').textContent = `${cal.s2.inicio.toLocaleDateString('pt-BR')} a ${cal.s2.fim.toLocaleDateString('pt-BR')}`;
+
+        document.getElementById('loading').classList.remove('hidden');
+        const res = await fetch(GIST_URLS[yearSelected] + "?t=" + new Date().getTime());
+        let csv = await res.text();
+        csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
+        const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
+        const headers = lines[0].split(';').map(h => h.trim());
+        const turmas = headers.slice(2);
+        dataStore = {};
+        let lastDate = "";
+
+        lines.slice(1).forEach(line => {
+            const cols = line.split(';').map(c => c?.trim());
+            if (cols[0] && cols[0].length > 0) { lastDate = cols[0].replace(/\./g, '/'); }
+
+            if (!cols[1] || !lastDate || !lastDate.includes(`/${yearSelected}`)) return;
+
+            turmas.forEach((tNome, idx) => {
+                const cell = cols[idx + 2];
+                if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
+                
+                const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const tagM = cell.match(/\[(.*?)\]/);
+                const tag = tagM ? tagM[1].toUpperCase() : null;
+                const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
+                
+                let disc, prof;
+                if (cleanT.includes(' - ')) {
+                    const partes = cleanT.split(' - ');
+                    prof = partes.pop().trim();
+                    disc = partes.join(' - ').trim();
+                } else { disc = cleanT; prof = "N/I"; }
+                
+                if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
+                const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (!dataStore[tId].discs[dId]) dataStore[tId].discs[dId] = { name: disc, sch: [] };
+                
+                // CRIAÇÃO DA DATA COM OFFSET DE MEIO-DIA (SEGURANÇA)
+                const p = lastDate.split('/');
+                const dt = new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]), 12, 0, 0);
+                
+                dataStore[tId].discs[dId].sch.push({ 
+    date: lastDate, 
+    dtObj: dt, 
+    wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }), 
+    time: cols[1], 
+    prof: traduzirProfessor(prof), 
+    tag: tag 
+});
+            });
+        });
+        document.getElementById('loading').classList.add('hidden');
+        popularSelects();
+        limparResultados();
+    } catch (e) { 
+        console.error(e);
+        document.getElementById('loading').innerHTML = "Erro ao sincronizar."; 
+    }
+}
+
+        // LÓGICA DE RENDERIZAÇÃO COM FILTRO CRONOLÓGICO POR DIA/MÊS
+function renderD() {
+    // 1. Captura de elementos e valores iniciais (Fora do loop para performance)
+    const tId = document.getElementById('turmaSelect').value;
+    const dId = document.getElementById('disciplinaSelect').value;
+    const sem = document.getElementById('semestreSelect').value;
+    const year = document.getElementById('yearSelect').value;
+    const b = document.getElementById('bodyD');
+    
+    // Verificação de segurança
+    if (!tId || !dId) return;
+
+    // 2. Preparação do Calendário e Limites
+    const cal = CALENDARIOS[year];
+    const limiteS1 = cal.s1.fim.getTime();
+    
+    // 3. Reset de variáveis de contagem e visualização
+    b.innerHTML = ''; 
+    let sR = 0, sE = 0;
+
+    // 4. Processamento dos dados
+    dataStore[tId].discs[dId].sch.forEach(a => {
+        const tempoAula = a.dtObj.getTime();
+
+        // Lógica de filtro: Se for semestral, filtra por data; se não, mostra tudo.
+        const filtrar = ehSemestral(tId) 
+            ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
+            : true;
+
+        if (filtrar) {
+            const info = TRADUCAO[a.tag] || { texto: "NORMAL", class: "", soma: true };
+            
+            // Incrementa contadores
+            if (info.soma) sR++; else sE++;
+
+            // Renderiza a linha na tabela
+            b.innerHTML += `
+                <tr class="${info.class}">
+                    <td class="border">${a.date}</td>
+                    <td class="border uppercase">${a.wd}</td>
+                    <td class="border">${a.time}</td>
+                    <td class="border font-bold">${getPrimeiroNome(a.prof)}</td>
+                    <td class="border font-black">${info.texto}</td>
+                </tr>`;
+        }
+    });
+
+    // 5. Atualização da interface (DOM)
+    document.getElementById('cont-regular').textContent = sR;
+    document.getElementById('cont-extra').textContent = sE;
+    document.getElementById('resultadoBusca').classList.remove('hidden');
+}
+
+// Listeners para o funcionamento do Pivo
+document.getElementById('turmaSelectPivo').onchange = (e) => {
+    const tId = e.target.value;
+    const semS = document.getElementById('semestreSelectPivo');
+    
+    // Exibe ou oculta o seletor de semestre conforme o tipo de turma
+    if (ehSemestral(tId)) {
+        semS.classList.remove('hidden');
+    } else {
+        semS.classList.add('hidden');
+    }
+    renderPivo();
+};
+
+document.getElementById('semestreSelectPivo').onchange = renderPivo;
+
+function gerarGradeGeral() {
+    const week = document.getElementById("weekInputGeral").value;
+    const nivel = document.getElementById("nivelSelect").value;
+    const buscaProf = document.getElementById("buscaGeral").value; // Agora pega o valor do Select
+
+    let horariosFiltrados = GABARITO;
+    if (nivel === "tecnico") {
+        horariosFiltrados = GABARITO.filter(slot => {
+            const horaInicio = slot.h.split(' - ')[0];
+            return horaInicio < "18:20";
+        });
+    }
+
+    if (!week || !nivel) return;
+
+    const [y, w] = week.split('-W').map(Number);
+    const start = getStartOfWeek(w, y);
+    const diasSemana = ["SEGUNDA", "TERÇA", "QUARTA", "QUINTA", "SEXTA", "SÁBADO"];
+
+    const turmasFiltradas = Object.keys(dataStore).filter(tId => {
+        const nome = dataStore[tId].name;
+        return nivel === "superior" ? turmaEhSuperior(nome) : !turmaEhSuperior(nome);
+    });
+
+    let html = "";
+
+    for (let i = 0; i < 6; i++) {
+        let dataDia = new Date(start);
+        dataDia.setDate(start.getDate() + i);
+
+        html += `
+        <h3 class="bg-[#15803d] text-white p-2 font-bold mt-6">
+            ${diasSemana[i]} - ${dataDia.toLocaleDateString('pt-BR')}
+        </h3>
+        <table class="tableGS bg-white mb-6">
+        <thead class="sticky top-[90px] bg-gray-100 z-10">
+            <tr><th style="width:70px;" class="text-[10px]">H</th>`;
+
+        turmasFiltradas.forEach(tId => { html += `<th>${dataStore[tId].name}</th>`; });
+        html += `</tr></thead><tbody>`;
+
+        horariosFiltrados.forEach(slot => {
+            if (slot.t === "intervalo") {
+                html += `<tr class="intervalo-row"><td>${slot.h}</td><td colspan="${turmasFiltradas.length}">${slot.l}</td></tr>`;
+            } else {
+                html += `<tr><td class="bg-gray-100 font-bold border">${slot.h}</td>`;
+
+                turmasFiltradas.forEach(tId => {
+                    let conteudo = "";
+
+                    for (let d in dataStore[tId].discs) {
+                        dataStore[tId].discs[d].sch.forEach(a => {
+    if (
+        a.dtObj.getDate() === dataDia.getDate() &&
+        a.dtObj.getMonth() === dataDia.getMonth() &&
+        a.dtObj.getFullYear() === dataDia.getFullYear() &&
+        a.time.startsWith(slot.h.split(' - ')[0])
+    ) {
+        // 🔹 TRADUÇÃO: Pegamos o nome completo do professor da aula
+        const nomeCompletoAula = traduzirProfessor(a.prof);
+
+        // 🔹 FILTRO: Compara com o nome selecionado no <select>
+        if (!buscaProf || nomeCompletoAula === buscaProf) {
+            conteudo = `
+                <div class="aula-card status-normal">
+                    <div class="font-bold text-[11px]">${dataStore[tId].discs[d].name}</div>
+                    <div class="text-[10px] text-blue-800">${getPrimeiroNome(a.prof)}</div>
+                </div>`;
+        }
+    }
+});
+                    }
+                    html += `<td class="border">${conteudo}</td>`;
+                });
+                html += `</tr>`;
+            }
+        });
+        html += "</tbody></table>";
+    }
+    document.getElementById("gradeGeralRender").innerHTML = html;
+}
+
+        function popularFiltroProfessores() {
+    const dataList = document.getElementById("listaProfessores");
+    if (!dataList) return;
+
+    // Obtém os nomes completos do objeto PROFESSORES
+    const nomesCompletos = Object.values(PROFESSORES).sort();
+
+    // Limpa a lista existente
+    dataList.innerHTML = '';
+    
+    // Adiciona cada nome como uma opção do datalist
+    nomesCompletos.forEach(nome => {
+        const option = document.createElement('option');
+        option.value = nome;
+        dataList.appendChild(option);
+    });
+}
+        
+        function limparResultados() {
+            document.getElementById('resultadoBusca').classList.add('hidden');
+            document.getElementById('bodyPivo').innerHTML = '';
+            document.getElementById('gradeRender').innerHTML = '';
+            document.getElementById('gradeTurmaRender').innerHTML = '';
+            document.getElementById('disciplinaSelect').disabled = true;
+            document.getElementById('disciplinaSelect').innerHTML = '<option>Selecione a Turma</option>';
+            document.getElementById('semestreSelect').classList.add('hidden');
+            document.getElementById('semestreSelectPivo').classList.add('hidden');
+        }
+
+        function popularSelects() {
+            const t1 = document.getElementById('turmaSelect');
+            const t2 = document.getElementById('turmaSelectPivo');
+            const t3 = document.getElementById('turmaSelectSemanal');
+            const ps = document.getElementById('profSelect');
+            const profs = new Set();
+            const optionsHtml = '<option value="">-- SELECIONE A TURMA --</option>' + Object.keys(dataStore).sort().map(id => `<option value="${id}">${dataStore[id].name}</option>`).join('');
+            t1.innerHTML = optionsHtml; t2.innerHTML = optionsHtml; t3.innerHTML = optionsHtml;
+            for(let t in dataStore) for(let d in dataStore[t].discs) dataStore[t].discs[d].sch.forEach(x => { if(x.prof && x.prof !== "N/I") profs.add(x.prof); });
+            ps.innerHTML = '<option value="">-- PROFESSOR --</option>' + Array.from(profs).sort().map(p => `<option value="${p}">${p}</option>`).join('');
+        }
+
+        document.getElementById('turmaSelect').onchange = (e) => {
+            const tId = e.target.value;
+            const semS = document.getElementById('semestreSelect');
+            if(ehSemestral(tId)) semS.classList.remove('hidden'); else semS.classList.add('hidden');
+            atualizarListaDisciplinas();
+        };
+
+        document.getElementById('semestreSelect').onchange = atualizarListaDisciplinas;
+
+        function atualizarListaDisciplinas() {
+
+    const tId = document.getElementById('turmaSelect').value;
+    const sem = document.getElementById('semestreSelect').value;
+    const dS = document.getElementById('disciplinaSelect');
+
+    dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
+
+    if (dataStore[tId]) {
+
+        Object.keys(dataStore[tId].discs)
+            .sort((a, b) =>
+                dataStore[tId].discs[a].name.localeCompare(
+                    dataStore[tId].discs[b].name,
+                    'pt-BR',
+                    { sensitivity: 'base' }
+                )
+            )
+            .forEach(id => {
+
+                const nomeDisc = dataStore[tId].discs[id].name;
+
+                // 🔴 FILTRO AQUI DENTRO
+                if (DISCIPLINAS_OCULTAR.includes(nomeDisc.toUpperCase())) {
+                    return;
+                }
+
+                const aulas = dataStore[tId].discs[id].sch;
+
+                const temAulaNoSem = aulas.some(a => {
+
+                    const year = document.getElementById('yearSelect').value;
+                    const cal = CALENDARIOS[year];
+                    const limiteS1 = cal.s1.fim.getTime();
+                    const tempoAula = a.dtObj.getTime();
+
+                    return ehSemestral(tId)
+                        ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
+                        : true;
+                });
+
+                if (temAulaNoSem) {
+                    dS.innerHTML += `<option value="${id}">
+                        ${dataStore[tId].discs[id].name}
+                    </option>`;
+                }
+
+            });
+
+        dS.disabled = false;
+    }
+
+    renderD();
+}
+
+        document.getElementById('disciplinaSelect').onchange = renderD;
+
+function renderPivo() {
+    const tId = document.getElementById('turmaSelectPivo').value;
+    const sem = document.getElementById('semestreSelectPivo').value;
+    const b = document.getElementById('bodyPivo');
+
+    if (!tId || !dataStore[tId]) return;
+
+    b.innerHTML = '';
+
+    const year = document.getElementById('yearSelect').value;
+    const cal = CALENDARIOS[year];
+    const limiteS1 = cal.s1.fim.getTime();
+
+    const disciplinas = Object.values(dataStore[tId].discs);
+
+    // Ordenação Alfabética
+    disciplinas.sort((a, b) =>
+        a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' })
+    );
+
+    disciplinas.forEach(disc => {
+        if (DISCIPLINAS_OCULTAR.includes(disc.name.toUpperCase())) {
+            return;
+        }
+
+        let mCount = Array(12).fill(0);
+        let aulasSabado = 0; 
+        let temNoSem = false;
+
+        disc.sch.forEach(s => {
+            const tempoAula = s.dtObj.getTime();
+            const filtrar = ehSemestral(tId)
+                ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
+                : true;
+
+            if (filtrar) {
+                mCount[s.dtObj.getMonth()]++;
+                if (s.dtObj.getDay() === 6) { aulasSabado++; }
+                temNoSem = true;
+            }
+        });
+
+        if (!temNoSem) return;
+
+        // Construção da linha da tabela
+        let row = `<tr class="border-b">
+            <td class="text-left font-black border-r bg-gray-50 text-[#15803d] uppercase">${disc.name}</td>`;
+
+        mCount.forEach(c => {
+            row += `<td class="border-r">${c || '-'}</td>`;
+        });
+
+        const total = mCount.reduce((a, b) => a + b, 0);
+
+        row += `
+            <td class="bg-yellow-100 text-yellow-900 font-bold border-r">${aulasSabado || '-'}</td>
+            <td class="bg-green-100 text-green-900 font-black">${total}</td>
+        </tr>`;
+
+        b.innerHTML += row;
+    });
+}
+
+        function gerarGrade() {
+            const prof = document.getElementById('profSelect').value;
+            const week = document.getElementById('weekInput').value;
+            if(!prof || !week) return alert("Selecione Professor e Semana");
+            const [y, w] = week.split('-W').map(Number);
+            const start = getStartOfWeek(w, y);
+            const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+            
+            let aulasPorDia = Array(6).fill(0);
+            let horasPermanencia = Array(6).fill(0);
+            let observacoes = [];
+            let ultimaAulaDiaAnterior = null;
+
+            let h = `<table class="tableGS bg-white" id="tableGS" style="width:100%; table-layout:fixed; border-collapse:collapse;">
+                <thead>
+                    <tr class="bg-[#15803d] text-white">
+                        <th style="width: 100px;">HORÁRIO</th>`;
+            dias.forEach((d, i) => {
+                const dt = new Date(start); dt.setDate(dt.getDate() + i);
+                h += `<th style="width: 14%;">${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
+            });
+            h += `</tr></thead><tbody>`;
+
+            GABARITO.forEach(s => {
+                if(s.t === "intervalo") {
+                    h += `<tr class="intervalo-row"><td style="border:1px solid #ddd;">${s.h}</td><td colspan="6" style="border:1px solid #ddd;">${s.l}</td></tr>`;
+                } else {
+                    h += `<tr><td class="bg-gray-100 font-bold border text-[10px]">${s.h}</td>`;
+                    for(let i=0; i<6; i++) {
+                        const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
+                        let cellContent = "";
+                        for(let t in dataStore) {
+                            for(let d in dataStore[t].discs) {
+                                dataStore[t].discs[d].sch.forEach(x => {
+                                    if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
+                                        aulasPorDia[i]++;
+                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}">
+                                            <div style="font-size:9px;">${dataStore[t].name}</div>
+                                            <div class="border-t border-gray-200 mt-1" style="font-size:8px; font-black uppercase">${dataStore[t].discs[d].name}</div>
+                                        </div>`;
+                                    }
+                                });
+                            }
+                        }
+                        h += `<td class="border" style="height:50px; vertical-align:top;">${cellContent}</td>`;
+                    }
+                    h += `</tr>`;
+                }
+            });
+
+            for(let i=0; i<6; i++) {
+                let aulasNoDia = [];
+                const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
+                for(let t in dataStore) {
+                    for(let d in dataStore[t].discs) {
+                        dataStore[t].discs[d].sch.forEach(x => {
+                            if(x.prof === prof && x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth()) {
+                                const [hIni] = x.time.split(' - ')[0].split(':').map(Number);
+                                const [hFim] = x.time.split(' - ')[1].split(':').map(Number);
+                                aulasNoDia.push({ inicio: hIni, fim: hFim, data: new Date(dtR) });
+                            }
+                        });
+                    }
+                }
+                if(aulasNoDia.length > 0) {
+                    aulasNoDia.sort((a,b) => a.inicio - b.inicio);
+                    let primeira = aulasNoDia[0], ultima = aulasNoDia[aulasNoDia.length-1];
+                    let diff = ultima.fim - primeira.inicio;
+                    if(primeira.inicio <= 12 && ultima.fim >= 14) diff -= 2;
+                    horasPermanencia[i] = diff > 0 ? diff : 0;
+                    if(ultimaAulaDiaAnterior) {
+                        let dFimAnt = new Date(ultimaAulaDiaAnterior.data); dFimAnt.setHours(ultimaAulaDiaAnterior.fim, 0, 0);
+                        let dIniAtu = new Date(primeira.data); dIniAtu.setHours(primeira.inicio, 0, 0);
+                        let diffInter = (dIniAtu - dFimAnt) / (1000 * 60 * 60);
+                        if(diffInter < 11) observacoes.push(`${dias[i]}: Intervalo de ${diffInter.toFixed(1)}h (mín. 11h)`);
+                    }
+                    ultimaAulaDiaAnterior = ultima;
+                } else { ultimaAulaDiaAnterior = null; }
+            }
+
+            h += `<tr class="bg-gray-50 font-bold"><td class="text-[9px] border">AULAS DIÁRIAS</td>`;
+            aulasPorDia.forEach(c => h += `<td class="border">${c}</td>`);
+            h += `</tr><tr class="bg-blue-50 font-bold"><td class="text-[9px] border">PERMANÊNCIA</td>`;
+            horasPermanencia.forEach(v => h += `<td class="border">${v}h</td>`);
+            h += `</tr>`;
+
+            const totalSemana = aulasPorDia.reduce((a,b) => a+b, 0);
+            h += `<tr class="bg-green-50 font-black"><td colspan="2" class="text-left px-2 border">TOTAL SEMANAL:</td><td colspan="5" class="text-left px-2 border">${totalSemana} Aulas</td></tr>`;
+            
+            let obsTexto = observacoes.length > 0 ? observacoes.join(' | ') : "Interjornada regular.";
+            h += `<tr class="text-[9px]"><td class="font-bold border bg-yellow-50">OBSERVAÇÕES:</td><td colspan="6" class="text-left px-2 border text-red-600 font-bold">${obsTexto}</td></tr>`;
+
+            document.getElementById('gradeRender').innerHTML = h + "</tbody></table>";
+        }
+
+        function gerarGradeTurma() {
+            const tId = document.getElementById('turmaSelectSemanal').value;
+            const week = document.getElementById('weekInputTurma').value;
+            if(!tId || !week) return alert("Selecione Turma e Semana");
+            const [y, w] = week.split('-W').map(Number);
+            const start = getStartOfWeek(w, y);
+            const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+            let h = `<table class="tableGS bg-white" id="tableGSTurma"><thead><tr class="bg-[#15803d] text-white"><th style="width: 80px;">HORÁRIO</th>`;
+            dias.forEach((d, i) => {
+                const dt = new Date(start); dt.setDate(dt.getDate() + i);
+                h += `<th>${d.toUpperCase()}<br><span class="text-[9px] opacity-80">${dt.toLocaleDateString('pt-BR').slice(0,5)}</span></th>`;
+            });
+            h += `</tr></thead><tbody>`;
+            GABARITO.forEach(s => {
+                if(s.t === "intervalo") h += `<tr class="intervalo-row"><td>${s.h}</td><td colspan="6">${s.l}</td></tr>`;
+                else {
+                    h += `<tr><td class="bg-gray-100 font-bold border text-[10px]">${s.h}</td>`;
+                    for(let i=0; i<6; i++) {
+                        const dtR = new Date(start); dtR.setDate(dtR.getDate()+i);
+                        let cellContent = "";
+                        if(dataStore[tId]) {
+                            for(let d in dataStore[tId].discs) {
+                                dataStore[tId].discs[d].sch.forEach(x => {
+                                    if(x.dtObj.getDate() === dtR.getDate() && x.dtObj.getMonth() === dtR.getMonth() && x.time.startsWith(s.h.split(' - ')[0])) {
+                                        cellContent += `<div class="aula-card ${TRADUCAO[x.tag]?.class || 'status-normal'}">
+                                            <div class="font-black uppercase" style="margin-bottom: 2px;">${dataStore[tId].discs[d].name}</div>
+                                            <div class="border-t border-gray-200 pt-1 italic text-[8px]">${x.prof}</div>
+                                        </div>`;
+                                    }
+                                });
+                            }
+                        }
+                        h += `<td class="border">${cellContent}</td>`;
+                    }
+                    h += `</tr>`;
+                }
+            });
+            document.getElementById('gradeTurmaRender').innerHTML = h + "</tbody></table>";
+        }
+
+        function getStartOfWeek(w, y) {
+            const s = new Date(y, 0, 1 + (w - 1) * 7);
+            const d = s.getDay();
+            if (d <= 4) s.setDate(s.getDate() - s.getDay() + 1); else s.setDate(s.getDate() + 8 - s.getDay());
+            return s;
+        }
+
+        function gerarCabecalhoPadrao(doc) {
+            doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+            doc.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", 105, 15, { align: "center" });
+            doc.setFontSize(12); doc.text("CAMPUS CACOAL", 105, 22, { align: "center" });
+            doc.setFontSize(10); doc.setFont("helvetica", "normal");
+            doc.text("DEPARTAMENTO DE APOIO AO ENSINO", 105, 30, { align: "center" });
+            doc.text("COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS", 105, 35, { align: "center" });
+            doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 38, 196, 38);
+        }
+
+        function gerarRodapePadrao(doc) {
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i); doc.setFontSize(8); doc.setTextColor(100); doc.line(14, 285, 196, 285);
+                doc.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 2182-9642", 105, 289, { align: "center" });
+                doc.text("E-mail: dape.cacoal@ifro.edu.br | Página " + i + " de " + pageCount, 105, 293, { align: "center" });
+            }
+        }
+
+        function exportarDisciplinaPDF() {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
+            const tId = document.getElementById('turmaSelect').value;
+            const dId = document.getElementById('disciplinaSelect').value;
+            const sem = document.getElementById('semestreSelect').value;
+            const data = dataStore[tId].discs[dId];
+            const turmaNome = dataStore[tId].name;
+            const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            const year = document.getElementById('yearSelect').value;
+            const cal = CALENDARIOS[year];
+            const limiteS1 = cal.s1.fim.getTime();
+
+            const aulasFiltradas = data.sch.filter(a => {
+            const tempoAula = a.dtObj.getTime();
+            return ehSemestral(tId)
+            ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
+            : true;
+        });
+            
+            const profs = [...new Set(aulasFiltradas.map(s => s.prof))].join(", ");
+            const somaAulas = aulasFiltradas.filter(s => !s.tag || TRADUCAO[s.tag].soma).length;
+            
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+            doc.text(`DISCIPLINA: ${data.name} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
+            doc.text(`PROFESSORES: ${profs}`, 14, 51);
+            doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
+            doc.autoTable({ html: '#tableD', startY: 62, theme: 'grid', styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            gerarRodapePadrao(doc);
+            doc.save(`${data.name} - ${turmaNome} - ${dataEmissao}.pdf`);
+        }
+
+        function exportarPivoPDF() {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
+            const tId = document.getElementById('turmaSelectPivo').value;
+            const sem = document.getElementById('semestreSelectPivo').value;
+            const turmaNome = dataStore[tId].name;
+            const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+            doc.text(`RELATÓRIO ANUAL DA TURMA: ${turmaNome} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
+            doc.autoTable({ html: '#tablePivo', startY: 50, theme: 'grid', styles: { fontSize: 7, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
+            gerarRodapePadrao(doc);
+            doc.save(`${turmaNome} - ${dataEmissao}.pdf`);
+        }
+
+        function exportarGradePDF() {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
+            const prof = document.getElementById('profSelect').value;
+            const week = document.getElementById('weekInput').value;
+            const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            if(!prof || !week) return alert("Selecione Professor e Semana");
+            
+            const [y, w] = week.split('-W').map(Number);
+            const start = getStartOfWeek(w, y);
+            const end = new Date(start); end.setDate(end.getDate() + 5);
+            
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+            doc.text(`PROFESSOR(A): ${prof}`, 14, 45);
+            doc.text(`Semana: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')} - Semana ${w}`, 14, 51);
+            
+            doc.autoTable({ 
+                html: '#tableGS', 
+                startY: 56, 
+                theme: 'grid', 
+                styles: { fontSize: 7, cellPadding: 1.5, halign: 'center', valign: 'middle', overflow: 'linebreak' }, 
+                headStyles: { fillColor: [21, 128, 61] },
+                columnStyles: { 0: { cellWidth: 25 }, 1: { cellWidth: 26 }, 2: { cellWidth: 26 }, 3: { cellWidth: 26 }, 4: { cellWidth: 26 }, 5: { cellWidth: 26 }, 6: { cellWidth: 26 } },
+                didParseCell: function(data) {
+                    if (data.row.index >= data.table.body.length - 4) {
+                        data.cell.styles.fillColor = [250, 250, 250];
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                }
+            });
+            gerarRodapePadrao(doc);
+            doc.save(`Ficha Semanal - ${prof} - ${dataEmissao}.pdf`);
+        }
+
+        function exportarGradeTurmaPDF() {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
+            const tId = document.getElementById('turmaSelectSemanal').value;
+            const week = document.getElementById('weekInputTurma').value;
+            const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            if(!tId || !week) return alert("Selecione Turma e Semana");
+            
+            const turmaNome = dataStore[tId].name;
+            const [y, w] = week.split('-W').map(Number);
+            const start = getStartOfWeek(w, y);
+            const end = new Date(start); end.setDate(end.getDate() + 5);
+            
+            gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
+            doc.text(`TURMA: ${turmaNome}`, 14, 45);
+            doc.text(`Semana: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')} - Semana ${w}`, 14, 51);
+            
+            doc.autoTable({ 
+                html: '#tableGSTurma', 
+                startY: 56, 
+                theme: 'grid', 
+                styles: { fontSize: 7, cellPadding: 2, halign: 'center', valign: 'middle', overflow: 'linebreak' }, 
+                headStyles: { fillColor: [21, 128, 61] },
+                columnStyles: { 0: { cellWidth: 22 }, 1: { cellWidth: 27.3 }, 2: { cellWidth: 27.3 }, 3: { cellWidth: 27.3 }, 4: { cellWidth: 27.3 }, 5: { cellWidth: 27.3 }, 6: { cellWidth: 27.3 } }
+            });
+            gerarRodapePadrao(doc);
+            doc.save(`Ficha Semanal - ${turmaNome} - ${dataEmissao}.pdf`);
+        }
+
+function gerarDashboard() {
+
+    let totalAulasGerais = 0;
+    let totalAulasComProfessor = 0;
+    let totalTurmas = Object.keys(dataStore).length;
+
+    let professoresSet = new Set();
+    let contadorProfessores = {};
+
+    for (let t in dataStore) {
+        for (let d in dataStore[t].discs) {
+
+            dataStore[t].discs[d].sch.forEach(a => {
+
+                totalAulasGerais++;
+
+                if (
+                    a.prof &&
+                    a.prof.trim() !== "" &&
+                    a.prof !== "N/I"
+                ) {
+
+                    totalAulasComProfessor++;
+
+                    professoresSet.add(a.prof);
+
+                    if (!contadorProfessores[a.prof]) {
+                        contadorProfessores[a.prof] = 0;
+                    }
+
+                    contadorProfessores[a.prof]++;
+                }
+
+            });
+
+        }
+    }
+
+    const totalProfessores = professoresSet.size;
+    const totalAulasSemProfessor = totalAulasGerais - totalAulasComProfessor;
+
+    const percentualCobertura = totalAulasGerais > 0
+        ? ((totalAulasComProfessor / totalAulasGerais) * 100).toFixed(1)
+        : 0;
+
+    const ranking = Object.entries(contadorProfessores)
+        .sort((a, b) => b[1] - a[1]);
+
+    let rankingHTML = `
+        <div style="margin-top:30px;">
+            <h3 style="font-weight:bold;margin-bottom:10px;">
+                Ordem decrescente dos Professores com mais aulas no ano
+            </h3>
+            <div style="border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+    `;
+
+    ranking.forEach((prof, index) => {
+        rankingHTML += `
+            <div style="display:flex;justify-content:space-between;padding:10px 15px;border-bottom:1px solid #e5e7eb;">
+                <div>${index + 1}º - ${prof[0]}</div>
+                <div style="font-weight:bold;">${prof[1]} aulas</div>
+            </div>
+        `;
+    });
+
+    rankingHTML += `</div></div>`;
+
+    document.getElementById('dashboardContent').innerHTML = `
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top:20px;">
+            ${gerarCard("Total Geral", totalAulasGerais, "#f0fdf4", "#bbf7d0")}
+            ${gerarCard("Com Professor", totalAulasComProfessor, "#dcfce7", "#86efac")}
+            ${gerarCard("Sem Professor", totalAulasSemProfessor, "#fee2e2", "#fca5a5")}
+            ${gerarCard("Total Turmas", totalTurmas, "#eff6ff", "#bfdbfe")}
+            ${gerarCard("Total Profs", totalProfessores, "#fef9c3", "#fde68a")}
+            ${gerarCard("Cobertura", percentualCobertura + "%", "#ede9fe", "#c4b5fd")}
+        </div>
+        ${rankingHTML}
+    `;
+}
+
+// Função auxiliar para evitar repetição e manter o padrão
+function gerarCard(titulo, valor, bg, border) {
+    return `
+        <div class="info-card" style="padding:15px; background:${bg}; border:1px solid ${border}; border-radius:8px; text-align:center;">
+            <div class="info-card-title" style="font-size:11px; color:#374151;">${titulo}</div>
+            <div class="info-card-value" style="font-size:18px; font-weight:bold;">${valor}</div>
+        </div>
+    `;
+}
+        
+function exportarDashboardPDF() {
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+
+    const year = document.getElementById('yearSelect').value;
+    const dataEmissao = new Date().toLocaleDateString('pt-BR');
+
+    let totalAulasGerais = 0;
+    let totalAulasComProfessor = 0;
+    let totalTurmas = Object.keys(dataStore).length;
+
+    let professoresSet = new Set();
+    let contadorProfessores = {};
+
+    for (let t in dataStore) {
+        for (let d in dataStore[t].discs) {
+
+            dataStore[t].discs[d].sch.forEach(a => {
+
+                totalAulasGerais++;
+
+                if (
+                    a.prof &&
+                    a.prof.trim() !== "" &&
+                    a.prof !== "N/I"
+                ) {
+
+                    totalAulasComProfessor++;
+
+                    professoresSet.add(a.prof);
+
+                    if (!contadorProfessores[a.prof]) {
+                        contadorProfessores[a.prof] = 0;
+                    }
+
+                    contadorProfessores[a.prof]++;
+                }
+
+            });
+
+        }
+    }
+
+    const totalProfessores = professoresSet.size;
+    const totalAulasSemProfessor = totalAulasGerais - totalAulasComProfessor;
+
+    const percentualCobertura = totalAulasGerais > 0
+        ? ((totalAulasComProfessor / totalAulasGerais) * 100).toFixed(1)
+        : 0;
+
+    const ranking = Object.entries(contadorProfessores)
+        .sort((a, b) => b[1] - a[1]);
+
+    gerarCabecalhoPadrao(doc);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`DASHBOARD INSTITUCIONAL - ANO LETIVO ${year}`, 105, 48, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+
+    doc.text(`Total Geral de Aulas: ${totalAulasGerais}`, 14, 60);
+    doc.text(`Aulas com Professor: ${totalAulasComProfessor}`, 14, 66);
+    doc.text(`Aulas sem Professor: ${totalAulasSemProfessor}`, 14, 72);
+    doc.text(`Cobertura Docente: ${percentualCobertura}%`, 14, 78);
+    doc.text(`Total de Turmas: ${totalTurmas}`, 14, 84);
+    doc.text(`Total de Professores: ${totalProfessores}`, 14, 90);
+    doc.text(`Data de Emissão: ${dataEmissao}`, 14, 96);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Professores em ordem decrescente de aulas:", 14, 108);
+
+    doc.setFont("helvetica", "normal");
+
+    let linhaY = 116;
+
+    ranking.forEach((prof, index) => {
+
+        if (linhaY > 275) {
+            doc.addPage();
+            gerarCabecalhoPadrao(doc);
+            linhaY = 48;
+        }
+
+        doc.text(
+            `${index + 1}º - ${prof[0]} — ${prof[1]} aulas`,
+            18,
+            linhaY
+        );
+
+        linhaY += 6;
+    });
+
+    gerarRodapePadrao(doc);
+
+    doc.save(`Dashboard_Institucional_${year}.pdf`);
+}
+        
+        function exportarGradeGeralPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('l', 'mm', 'a4');
+    const week = document.getElementById("weekInputGeral").value;
+    const nivel = document.getElementById("nivelSelect").value;
+    
+    if(!week || !nivel) return alert("Selecione Semana e Nível primeiro.");
+
+    const [y, w] = week.split('-W').map(Number);
+    const start = getStartOfWeek(w, y);
+    const end = new Date(start); 
+    end.setDate(end.getDate() + 5);
+
+    // Modificação pontual no nome do arquivo:
+    const nomeArquivo = `Horário Semanal - ${nivel.charAt(0).toUpperCase() + nivel.slice(1)} - ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')}.pdf`;
+
+    const tabelas = document.querySelectorAll('.tableGS'); 
+    const titulosDias = document.querySelectorAll('h3');
+
+    tabelas.forEach((tabela, index) => {
+        if (index > 0) doc.addPage();
+
+        // Cabeçalho Padrão
+        doc.setFont("helvetica", "bold"); doc.setFontSize(14);
+        doc.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", 148.5, 15, { align: "center" });
+        doc.setFontSize(12); doc.text("CAMPUS CACOAL", 148.5, 22, { align: "center" });
+        doc.setFontSize(10); doc.setFont("helvetica", "normal");
+        doc.text("DEPARTAMENTO DE APOIO AO ENSINO - HORÁRIO SEMANAL: " + nivel.toUpperCase(), 148.5, 30, { align: "center" });
+        doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 35, 283, 35);
+        
+        // Imprime o Dia da Semana e Data (o seu H3)
+        if(titulosDias[index]) {
+            doc.setFontSize(10);
+            doc.text(titulosDias[index].innerText, 148.5, 42, { align: "center" });
+        }
+
+        doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 47, 283, 47);
+
+        // Exportação da Tabela
+        doc.autoTable({ 
+            html: tabela, 
+            startY: 50, 
+            theme: 'grid',
+            styles: { 
+                fontSize: 4, // Letra minúscula para caber na horizontal
+                cellPadding: 0.9, 
+                halign: 'center', 
+                valign: 'middle',
+                overflow: 'linebreak' 
+            }, 
+            headStyles: { 
+                fillColor: [21, 128, 61],
+                fontSize: 4.5,
+                textColor: [255, 255, 255]
+            },
+            didDrawPage: function(data) {
+                doc.setFontSize(8); doc.setTextColor(100);
+                doc.line(14, 195, 283, 195);
+                doc.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 2182-9642", 148.5, 200, { align: "center" });
+                doc.text("E-mail: dape.cacoal@ifro.edu.br | Página " + doc.internal.getNumberOfPages(), 148.5, 205, { align: "center" });
+            }
+        });
+    });
+
+    doc.save(nomeArquivo);
+}
+
+        function initTabs() {
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.onclick = () => {
+    document.querySelectorAll('.tab-btn, .tab-pane').forEach(e => e.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById(b.dataset.tab).classList.add('active');
+
+    if (b.dataset.tab === "dashboardTab") {
+        gerarDashboard();
+    }
+};
+            });
+        }
+</script>
+</body>
 </html>
