@@ -135,10 +135,25 @@
     </div>
 </nav>
 
-<button onclick="gerarHorario()">Gerar Horário 2026</button>
+<h2>Gerador Inteligente de Horários</h2>
+
+<input type="file" id="disciplinas">
+<input type="file" id="professores">
+<input type="file" id="turmas">
+
+<br><br>
+
+<button onclick="carregarArquivos()">Carregar Dados</button>
+<button onclick="gerarHorario()">Gerar Horário</button>
+
+<hr>
 
 <div id="resultado"></div>
-  
+
+<script src="gerador/gerador_ultra.js"></script>
+<script src="app.js"></script>
+
+      
     <main class="container mx-auto p-4 md:p-6">
         <div id="loading" class="text-center py-10 font-bold text-green-700 italic animate-pulse">CARREGANDO DADOS...</div>
 
