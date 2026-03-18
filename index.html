@@ -1653,6 +1653,19 @@ const FERIAS_INTEGRADO = [
 ];
 
         // ==========================================
+// 🔷 FÉRIAS DO SUPERIOR
+// ==========================================
+const FERIAS_SUPERIOR = [
+    {
+        inicio: "2026-07-01",
+        fim: "2026-07-20"
+    },
+    {
+        inicio: "2026-12-10",
+        fim: "2027-01-31"
+    }
+];
+        // ==========================================
 // 🔷 VERIFICA SE ESTÁ EM FÉRIAS (INTEGRADO)
 // ==========================================
 function estaEmFeriasIntegrado(data) {
@@ -1660,6 +1673,18 @@ function estaEmFeriasIntegrado(data) {
     const d = data.toISOString().split('T')[0];
 
     return FERIAS_INTEGRADO.some(f => {
+        return d >= f.inicio && d <= f.fim;
+    });
+}
+        
+        // ==========================================
+// 🔷 VERIFICA SE ESTÁ EM FÉRIAS (SUPERIOR)
+// ==========================================
+function estaEmFeriasSuperior(data) {
+
+    const d = data.toISOString().split('T')[0];
+
+    return FERIAS_SUPERIOR.some(f => {
         return d >= f.inicio && d <= f.fim;
     });
 }
@@ -1809,10 +1834,16 @@ function gerarFuturoComBase() {
             const turma = dataStore[tId];
 
             const ehIntegrado = !ehSemestral(tId);
-            const tipo = ehIntegrado ? "integrado" : "superior";
+const tipo = ehIntegrado ? "integrado" : "superior";
 
-            // 🔹 BLOQUEIA FÉRIAS DO INTEGRADO
+// ==========================================
+// 🔷 BLOQUEIO DE FÉRIAS
+// ==========================================
 if (ehIntegrado && estaEmFeriasIntegrado(dataAtual)) {
+    return;
+}
+
+if (!ehIntegrado && estaEmFeriasSuperior(dataAtual)) {
     return;
 }
 
