@@ -1944,12 +1944,6 @@ function gerarFuturoComBase() {
         const dataStr = dataAtual.toISOString().split('T')[0];
         const diaSemana = dataAtual.getDay();
 
-        // PULA FERIADO
-        if (FERIADOS.includes(dataStr)) {
-            dataAtual.setDate(dataAtual.getDate() + 1);
-            continue;
-        }
-
         Object.keys(dataStore).forEach(tId => {
 
             const turma = dataStore[tId];
