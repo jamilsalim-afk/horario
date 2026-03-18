@@ -774,72 +774,105 @@ function exportarRelatorioProfessorPDF() {
 
         // LÓGICA DE RENDERIZAÇÃO COM FILTRO CRONOLÓGICO POR DIA/MÊS
 function renderD() {
-    // 1. Captura de elementos e valores iniciais (Fora do loop para performance)
+
+    // ==========================================
+    // 🔷 CAPTURA DE ELEMENTOS
+    // ==========================================
     const tId = document.getElementById('turmaSelect').value;
     const dId = document.getElementById('disciplinaSelect').value;
     const sem = document.getElementById('semestreSelect').value;
     const year = document.getElementById('yearSelect').value;
     const b = document.getElementById('bodyD');
-    
-    // Verificação de segurança
+
     if (!tId || !dId) return;
 
-    // 2. Preparação do Calendário e Limites
+    // ==========================================
+    // 🔷 PREPARAÇÃO DO CALENDÁRIO
+    // ==========================================
     const cal = CALENDARIOS[year];
-    const limiteS1 = cal.s1.fim.getTime();
-    
-    // 3. Reset de variáveis de contagem e visualização
-    b.innerHTML = ''; 
+    const limiteS1 = cal?.s1?.fim?.getTime?.();
+
+    // ==========================================
+    // 🔷 RESET
+    // ==========================================
+    b.innerHTML = '';
     let sR = 0, sE = 0;
 
-    // 4. Processamento dos dados
-    dataStore[tId].discs[dId].sch.forEach(a => {
-        const tempoAula = a.dtObj.getTime();
+    // ==========================================
+    // 🔷 SEGURANÇA DE DADOS
+    // ==========================================
+    const turma = dataStore?.[tId];
+    const disc = turma?.discs?.[dId];
 
-        // Lógica de filtro: Se for semestral, filtra por data; se não, mostra tudo.
-        const filtrar = ehSemestral(tId) 
-            ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
-            : true;
+    if (!turma || !disc || !Array.isArray(disc.sch)) {
+        b.innerHTML = `<tr><td colspan="5">Sem aulas registradas</td></tr>`;
+        document.getElementById('cont-regular').textContent = 0;
+        document.getElementById('cont-extra').textContent = 0;
+        document.getElementById('resultadoBusca').classList.remove('hidden');
+        return;
+    }
 
-        if (filtrar) {
-            const info = TRADUCAO[a.tag] || { texto: "NORMAL", class: "", soma: true };
-            
-            // Incrementa contadores
-            if (info.soma) sR++; else sE++;
+    // ==========================================
+    // 🔷 PROCESSAMENTO
+    // ==========================================
+    disc.sch.forEach(a => {
 
-            // Renderiza a linha na tabela
-            b.innerHTML += `
-                <tr class="${info.class}">
-                    <td class="border">${a.date}</td>
-                    <td class="border uppercase">${a.wd}</td>
-                    <td class="border">${a.time}</td>
-                    <td class="border font-bold">${getPrimeiroNome(a.prof)}</td>
-                    <td class="border font-black">${info.texto}</td>
-                </tr>`;
+        // segurança extra
+        if (!a || !a.dtObj) return;
+
+        const tempoAula = new Date(a.dtObj).getTime();
+
+        // filtro por semestre (somente para cursos semestrais)
+        let filtrar = true;
+
+        if (ehSemestral(tId) && limiteS1) {
+            filtrar = (sem === "1")
+                ? tempoAula <= limiteS1
+                : tempoAula > limiteS1;
         }
+
+        if (!filtrar) return;
+
+        // tradução de status
+        const info = TRADUCAO?.[a.tag] || {
+            texto: "NORMAL",
+            class: "",
+            soma: true
+        };
+
+        // contadores
+        if (info.soma) {
+            sR++;
+        } else {
+            sE++;
+        }
+
+        // renderização
+        b.innerHTML += `
+            <tr class="${info.class}">
+                <td class="border">${a.date || '-'}</td>
+                <td class="border uppercase">${a.wd || '-'}</td>
+                <td class="border">${a.time || '-'}</td>
+                <td class="border font-bold">${getPrimeiroNome?.(a.prof) || '-'}</td>
+                <td class="border font-black">${info.texto}</td>
+            </tr>
+        `;
     });
 
-    // 5. Atualização da interface (DOM)
+    // ==========================================
+    // 🔷 SE NÃO GEROU NADA
+    // ==========================================
+    if (b.innerHTML === '') {
+        b.innerHTML = `<tr><td colspan="5">Sem aulas no período selecionado</td></tr>`;
+    }
+
+    // ==========================================
+    // 🔷 ATUALIZAÇÃO FINAL
+    // ==========================================
     document.getElementById('cont-regular').textContent = sR;
     document.getElementById('cont-extra').textContent = sE;
     document.getElementById('resultadoBusca').classList.remove('hidden');
 }
-
-// Listeners para o funcionamento do Pivo
-document.getElementById('turmaSelectPivo').onchange = (e) => {
-    const tId = e.target.value;
-    const semS = document.getElementById('semestreSelectPivo');
-    
-    // Exibe ou oculta o seletor de semestre conforme o tipo de turma
-    if (ehSemestral(tId)) {
-        semS.classList.remove('hidden');
-    } else {
-        semS.classList.add('hidden');
-    }
-    renderPivo();
-};
-
-document.getElementById('semestreSelectPivo').onchange = renderPivo;
 
 function gerarGradeGeral() {
     const week = document.getElementById("weekInputGeral").value;
@@ -1255,36 +1288,114 @@ function renderPivo() {
         }
 
         function exportarDisciplinaPDF() {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
-            const tId = document.getElementById('turmaSelect').value;
-            const dId = document.getElementById('disciplinaSelect').value;
-            const sem = document.getElementById('semestreSelect').value;
-            const data = dataStore[tId].discs[dId];
-            const turmaNome = dataStore[tId].name;
-            const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-            const year = document.getElementById('yearSelect').value;
-            const cal = CALENDARIOS[year];
-            const limiteS1 = cal.s1.fim.getTime();
 
-            const aulasFiltradas = data.sch.filter(a => {
-            const tempoAula = a.dtObj.getTime();
-            return ehSemestral(tId)
-            ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
-            : true;
-        });
-            
-            const profs = [...new Set(aulasFiltradas.map(s => s.prof))].join(", ");
-            const somaAulas = aulasFiltradas.filter(s => !s.tag || TRADUCAO[s.tag].soma).length;
-            
-            gerarCabecalhoPadrao(doc);
-            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-            doc.text(`DISCIPLINA: ${data.name} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
-            doc.text(`PROFESSORES: ${profs}`, 14, 51);
-            doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
-            doc.autoTable({ html: '#tableD', startY: 62, theme: 'grid', styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
-            gerarRodapePadrao(doc);
-            doc.save(`${data.name} - ${turmaNome} - ${dataEmissao}.pdf`);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+
+    // ==========================================
+    // 🔷 CAPTURA DE DADOS
+    // ==========================================
+    const tId = document.getElementById('turmaSelect').value;
+    const dId = document.getElementById('disciplinaSelect').value;
+    const sem = document.getElementById('semestreSelect').value;
+    const year = document.getElementById('yearSelect').value;
+
+    const turma = dataStore?.[tId];
+    const disc = turma?.discs?.[dId];
+
+    if (!turma || !disc || !Array.isArray(disc.sch)) {
+        alert("Sem dados para exportar.");
+        return;
+    }
+
+    const turmaNome = turma.name || '';
+    const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+
+    // ==========================================
+    // 🔷 CALENDÁRIO
+    // ==========================================
+    const cal = CALENDARIOS?.[year];
+    const limiteS1 = cal?.s1?.fim ? new Date(cal.s1.fim).getTime() : null;
+
+    // ==========================================
+    // 🔷 FILTRO DE AULAS (CORRIGIDO)
+    // ==========================================
+    const aulasFiltradas = disc.sch.filter(a => {
+
+        if (!a || !a.dtObj) return false;
+
+        const tempoAula = new Date(a.dtObj).getTime();
+
+        if (ehSemestral(tId) && limiteS1) {
+            return (sem === "1")
+                ? tempoAula <= limiteS1
+                : tempoAula > limiteS1;
         }
+
+        return true;
+    });
+
+    // ==========================================
+    // 🔷 SE NÃO HOUVER AULAS
+    // ==========================================
+    if (aulasFiltradas.length === 0) {
+        alert("Nenhuma aula encontrada para exportação.");
+        return;
+    }
+
+    // ==========================================
+    // 🔷 PROFESSORES
+    // ==========================================
+    const profs = [...new Set(
+        aulasFiltradas.map(a => a.prof).filter(Boolean)
+    )].join(", ");
+
+    // ==========================================
+    // 🔷 CONTAGEM DE AULAS
+    // ==========================================
+    const somaAulas = aulasFiltradas.filter(a => {
+        const info = TRADUCAO?.[a.tag];
+        return !a.tag || (info && info.soma);
+    }).length;
+
+    // ==========================================
+    // 🔷 CABEÇALHO
+    // ==========================================
+    gerarCabecalhoPadrao(doc);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+
+    doc.text(
+        `DISCIPLINA: ${disc.name || '-'} ${ehSemestral(tId) ? '(' + sem + 'º SEMESTRE)' : ''}`,
+        14,
+        45
+    );
+
+    doc.text(`PROFESSORES: ${profs || '-'}`, 14, 51);
+    doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
+
+    // ==========================================
+    // 🔷 TABELA (RENDER SEGURO)
+    // ==========================================
+    doc.autoTable({
+        html: '#tableD',
+        startY: 62,
+        theme: 'grid',
+        styles: { fontSize: 9, halign: 'center' },
+        headStyles: { fillColor: [21, 128, 61] }
+    });
+
+    // ==========================================
+    // 🔷 RODAPÉ
+    // ==========================================
+    gerarRodapePadrao(doc);
+
+    // ==========================================
+    // 🔷 EXPORTAÇÃO
+    // ==========================================
+    doc.save(`${disc.name} - ${turmaNome} - ${dataEmissao}.pdf`);
+}
 
         function exportarPivoPDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
