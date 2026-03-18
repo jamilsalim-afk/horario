@@ -621,7 +621,7 @@ function exportarRelatorioProfessorPDF() {
         let dataStore = {};
         const GIST_URLS = {
             "2025": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/b32b06d3468be385d70405c039346e4ad3c35a54/DADOS_2025_MESTRE",
-            "2026": "https://gist.githubusercontent.com/jamilsalim-afk/793aa8c9f80f2cb21e8db0d706d68159/raw/6ee9f1f52706fe39f9f073e00f186d401ec0de70/TESTE_2026"
+            "2026": "https://gist.githubusercontent.com/jamilsalim-afk/793aa8c9f80f2cb21e8db0d706d68159/raw/308865fa78471ecca109eb3707ea8ab26fc6dbbc/TESTE_2026"
         };
 
         const DISCIPLINAS_OCULTAR = [
@@ -1827,7 +1827,8 @@ function estaEmFeriasSuperior(data) {
 
 let BASE_HORARIOS = {
     integrado: {},
-    superior: {}
+    superior_s1: {},
+    superior_s2: {}
 };
 
         
@@ -1842,7 +1843,7 @@ function ehFeriado(data, tipo) {
         return FERIADOS_INTEGRADO.includes(d);
     }
 
-    if (tipo === "superior") {
+    if (tipo.startsWith("superior")) {
         return FERIADOS_SUPERIOR.includes(d);
     }
 
@@ -1859,7 +1860,15 @@ function processarLinhaBase(dataStr, horario, cell, tNome) {
 
     const partes = dataStr.split("_");
 
-    const tipo = partes[1] === "INT" ? "integrado" : "superior";
+    let tipo = "";
+    let semestre = "";
+
+    if (partes[1] === "INT") {
+        tipo = "integrado";
+    } else if (partes[1] === "SUP") {
+        semestre = partes[2]; // S1 ou S2
+        tipo = `superior_${semestre.toLowerCase()}`;
+    }
 
     const mapaDias = {
         "SEG": 1,
@@ -1869,7 +1878,9 @@ function processarLinhaBase(dataStr, horario, cell, tNome) {
         "SEX": 5
     };
 
-    const diaSemana = mapaDias[partes[2]];
+    const diaIndex = partes[1] === "INT" ? 2 : 3;
+    const diaSemana = mapaDias[partes[diaIndex]];
+
     if (diaSemana === undefined) return true;
 
     let disc, prof;
@@ -1949,7 +1960,15 @@ function gerarFuturoComBase() {
             const turma = dataStore[tId];
 
             const ehIntegrado = !ehSemestral(tId);
-const tipo = ehIntegrado ? "integrado" : "superior";
+let tipo = "integrado";
+
+if (!ehIntegrado) {
+    if (dataAtual >= cal.s1.inicio && dataAtual <= cal.s1.fim) {
+        tipo = "superior_s1";
+    } else {
+        tipo = "superior_s2";
+    }
+}
 
             // ==========================================
 // 🔷 BLOQUEIO DE FERIADO POR TIPO
