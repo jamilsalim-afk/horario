@@ -288,6 +288,10 @@
         class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
     Exportar TODOS os Professores (PDF)
 </button>
+             <button onclick="exportarTodosProfessoresMensalPDF()" 
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+    Exportar TODOS os Professores (PDF)
+</button>
         </div>
         <table id="tabelaRelatorioProf" class="w-full border-collapse border text-center">
             <thead class="bg-gray-100 font-bold text-[10px]">
@@ -2325,6 +2329,110 @@ if (diaSemana === 6) {
         await new Promise(r => setTimeout(r, 300));
     }
 }
+async function exportarTodosProfessoresMensalPDF() {
+
+    const { jsPDF } = window.jspdf;
+
+    const professores = {};
+
+    // ==========================================
+    // 🔷 AGRUPAR POR PROFESSOR → DISCIPLINA → TURMA
+    // ==========================================
+    Object.entries(dataStore).forEach(([tId, turma]) => {
+
+        Object.entries(turma.discs).forEach(([dId, disc]) => {
+
+            if (!disc.sch) return;
+
+            disc.sch.forEach(a => {
+
+                if (!a.prof || !a.dtObj) return;
+
+                const prof = a.prof;
+                const chave = `${disc.name}||${turma.name}`;
+
+                if (!professores[prof]) professores[prof] = {};
+                if (!professores[prof][chave]) {
+                    professores[prof][chave] = {
+                        disciplina: disc.name,
+                        turma: turma.name,
+                        meses: Array(12).fill(0),
+                        sabado: 0,
+                        total: 0
+                    };
+                }
+
+                const obj = professores[prof][chave];
+
+                const data = new Date(a.dtObj);
+                const mes = data.getMonth(); // 0-11
+
+                const info = TRADUCAO?.[a.tag] || { soma: true };
+
+                if (info.soma) {
+                    obj.meses[mes]++;
+                    obj.total++;
+                }
+
+                if (a.tag === "SÁBADO LETIVO") {
+                    obj.sabado++;
+                }
+
+            });
+
+        });
+
+    });
+
+    // ==========================================
+    // 🔷 GERAR PDF POR PROFESSOR
+    // ==========================================
+    for (const prof in professores) {
+
+        const doc = new jsPDF('p', 'mm', 'a4');
+
+        gerarCabecalhoPadrao(doc);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text(`PROFESSOR: ${prof}`, 14, 45);
+
+        const linhas = [];
+
+        Object.values(professores[prof]).forEach(item => {
+
+            linhas.push([
+                item.disciplina,
+                item.turma,
+                ...item.meses.map(v => v === 0 ? '-' : v),
+                item.sabado || '-',
+                item.total
+            ]);
+        });
+
+        doc.autoTable({
+            startY: 50,
+            head: [[
+                "DISCIPLINA", "TURMA",
+                "JAN","FEV","MAR","ABR","MAI","JUN",
+                "JUL","AGO","SET","OUT","NOV","DEZ",
+                "SÁB","TOTAL"
+            ]],
+            body: linhas,
+            theme: 'grid',
+            styles: { fontSize: 8, halign: 'center' },
+            headStyles: { fillColor: [21, 128, 61] }
+        });
+
+        gerarRodapePadrao(doc);
+
+        const nomeArquivo = `Relatorio - ${prof.replace(/\s/g, '_')}.pdf`;
+        doc.save(nomeArquivo);
+
+        await new Promise(r => setTimeout(r, 300));
+    }
+}
+        
 </script>
 </body>
 </html>
