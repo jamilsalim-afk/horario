@@ -1994,7 +1994,7 @@ if (!ehIntegrado && estaEmFeriasSuperior(dataAtual)) {
     return;
 }
 
-            const baseTurma = BASE_HORARIOS[tipo][tId];
+            const baseTurma = BASE_HORARIOS[tipo]?.[tId];
             if (!baseTurma) return;
 
             Object.keys(baseTurma).forEach(dId => {
