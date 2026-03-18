@@ -282,17 +282,24 @@
 <section id="tab-professor" class="tab-pane">
     <div class="bg-white p-6 rounded-xl shadow-sm border">
         <div class="flex gap-4 mb-6">
-            <input list="listaProfessores" id="buscaProfessorRel" oninput="gerarRelatorioProfessor()" class="border p-3 rounded-lg flex-1" placeholder="Digite o nome do professor...">
-            <button onclick="exportarRelatorioProfessorPDF()" class="bg-[#15803d] text-white px-8 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF</button>
-        </div>
-        <div class="flex gap-4 mb-6">
-        <button onclick="exportarTodosProfessoresPDF()" 
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-    Exportar TODOS os Professores (PDF)
+            <!-- 🔥 BOTÃO PRINCIPAL -->
+<button onclick="exportarRelatorioProfessorPDF()" 
+    class="bg-[#15803d] text-white px-10 py-3 rounded-xl font-bold text-base 
+           hover:bg-green-800 transition shadow-lg uppercase">
+    Exportar PDF
 </button>
-             <button onclick="exportarTodosProfessoresMensalPDF()" 
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-    Exportar TODOS os Professores Mensal (PDF)
+
+<!-- 🔷 BOTÕES SECUNDÁRIOS -->
+<button onclick="exportarTodosProfessoresPDF()" 
+    class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm 
+           hover:bg-blue-700 transition shadow-md">
+    Exportar TODOS os Professores
+</button>
+
+<button onclick="exportarTodosProfessoresMensalPDF()" 
+    class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm 
+           hover:bg-indigo-700 transition shadow-md">
+    Exportar TODOS (Mensal)
 </button>
         </div>
         <table id="tabelaRelatorioProf" class="w-full border-collapse border text-center">
