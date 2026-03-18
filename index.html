@@ -1794,21 +1794,24 @@ function gerarFuturoComBase() {
 
                 baseAulas.forEach(base => {
 
-                    // DIA NORMAL
+                    // GARANTE DISCIPLINA
+                    if (!dataStore[tId].discs[dId]) {
+                        dataStore[tId].discs[dId] = {
+                            name: base.name,
+                            sch: []
+                        };
+                    }
+
+                    const disc = dataStore[tId].discs[dId];
+
+                    // =========================
+                    // AULA NORMAL
+                    // =========================
                     if (base.diaSemana === diaSemana) {
 
-                        if (!dataStore[tId].discs[dId]) {
-                            dataStore[tId].discs[dId] = {
-                                name: base.name,
-                                sch: []
-                            };
-                        }
-
-                        const disc = dataStore[tId].discs[dId];
-
-                        // EVITA DUPLICAR
                         const existe = disc.sch.some(a =>
-                            a.dtObj.toDateString() === dataAtual.toDateString()
+                            a.dtObj.toDateString() === dataAtual.toDateString() &&
+                            a.time === base.time // 🔥 AGORA DIFERENCIA HORÁRIOS
                         );
 
                         if (!existe) {
@@ -1823,7 +1826,9 @@ function gerarFuturoComBase() {
                         }
                     }
 
-                    // SÁBADO LETIVO
+                    // =========================
+                    // SÁBADO LETIVO (CORRIGIDO)
+                    // =========================
                     if (diaSemana === 6) {
 
                         const sabado = SABADOS_LETIVOS.find(s => s.data === dataStr);
@@ -1832,10 +1837,9 @@ function gerarFuturoComBase() {
 
                             if (sabado.referencia === base.diaSemana) {
 
-                                const disc = dataStore[tId].discs[dId];
-
                                 const existe = disc.sch.some(a =>
-                                    a.dtObj.toDateString() === dataAtual.toDateString()
+                                    a.dtObj.toDateString() === dataAtual.toDateString() &&
+                                    a.time === base.time // 🔥 ESSA LINHA RESOLVE TUDO
                                 );
 
                                 if (!existe) {
