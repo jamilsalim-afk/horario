@@ -1638,7 +1638,33 @@ function exportarDashboardPDF() {
 // 🔷 CONFIGURAÇÕES GERAIS
 // =====================================================
 
-const FERIADOS = ["2026-02-16","2026-02-17","2026-02-18","2026-04-03","2026-04-20","2026-04-21","2026-05-01","2026-06-04","2026-06-05"];
+// ==========================================
+// 🔷 FÉRIAS DO INTEGRADO
+// ==========================================
+const FERIAS_INTEGRADO = [
+    {
+        inicio: "2026-07-01",
+        fim: "2026-07-31"
+    },
+    {
+        inicio: "2026-12-20",
+        fim: "2027-01-31"
+    }
+];
+
+        // ==========================================
+// 🔷 VERIFICA SE ESTÁ EM FÉRIAS (INTEGRADO)
+// ==========================================
+function estaEmFeriasIntegrado(data) {
+
+    const d = data.toISOString().split('T')[0];
+
+    return FERIAS_INTEGRADO.some(f => {
+        return d >= f.inicio && d <= f.fim;
+    });
+}
+        
+        const FERIADOS = ["2026-02-16","2026-02-17","2026-02-18","2026-04-03","2026-04-20","2026-04-21","2026-05-01","2026-06-04","2026-06-05"];
 
 const SABADOS_LETIVOS = [
     {
@@ -1784,6 +1810,11 @@ function gerarFuturoComBase() {
 
             const ehIntegrado = !ehSemestral(tId);
             const tipo = ehIntegrado ? "integrado" : "superior";
+
+            // 🔹 BLOQUEIA FÉRIAS DO INTEGRADO
+if (ehIntegrado && estaEmFeriasIntegrado(dataAtual)) {
+    return;
+}
 
             const baseTurma = BASE_HORARIOS[tipo][tId];
             if (!baseTurma) return;
