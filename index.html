@@ -1897,13 +1897,19 @@ function processarLinhaBase(dataStr, horario, cell, tNome) {
     const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
     const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-    if (!BASE_HORARIOS[tipo][tId]) {
-        BASE_HORARIOS[tipo][tId] = {};
-    }
+    // 🔥 GARANTE O NÍVEL SUPERIOR
+if (!BASE_HORARIOS[tipo]) {
+    BASE_HORARIOS[tipo] = {};
+}
 
-    if (!BASE_HORARIOS[tipo][tId][dId]) {
-        BASE_HORARIOS[tipo][tId][dId] = [];
-    }
+// 🔥 AGORA SIM É SEGURO
+if (!BASE_HORARIOS[tipo][tId]) {
+    BASE_HORARIOS[tipo][tId] = {};
+}
+
+if (!BASE_HORARIOS[tipo][tId][dId]) {
+    BASE_HORARIOS[tipo][tId][dId] = [];
+}
 
     BASE_HORARIOS[tipo][tId][dId].push({
         name: disc,
