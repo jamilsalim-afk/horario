@@ -2013,32 +2013,36 @@ if (!ehIntegrado && estaEmFeriasSuperior(dataAtual)) {
                     // =========================
                     // SÁBADO LETIVO (CORRIGIDO)
                     // =========================
-                    if (diaSemana === 6) {
+                    // =========================
+if (diaSemana === 6) {
 
-                        const sabado = SABADOS_LETIVOS.find(s => s.data === dataStr);
+    const sabados = SABADOS_LETIVOS.filter(s => s.data === dataStr);
 
-                        if (sabado && sabado.tipo === tipo) {
+    sabados.forEach(sabado => {
 
-                            if (sabado.referencia === base.diaSemana) {
+        if (sabado.tipo !== tipo) return;
 
-                                const existe = disc.sch.some(a =>
-                                    a.dtObj.toDateString() === dataAtual.toDateString() &&
-                                    a.time === base.time // 🔥 ESSA LINHA RESOLVE TUDO
-                                );
+        if (sabado.referencia === base.diaSemana) {
 
-                                if (!existe) {
-                                    disc.sch.push({
-                                        date: dataAtual.toLocaleDateString('pt-BR'),
-                                        dtObj: new Date(dataAtual),
-                                        wd: "sábado letivo",
-                                        time: base.time,
-                                        prof: base.prof,
-                                        tag: "SÁBADO LETIVO"
-                                    });
-                                }
-                            }
-                        }
-                    }
+            const existe = disc.sch.some(a =>
+                a.dtObj.toDateString() === dataAtual.toDateString() &&
+                a.time === base.time
+            );
+
+            if (!existe) {
+                disc.sch.push({
+                    date: dataAtual.toLocaleDateString('pt-BR'),
+                    dtObj: new Date(dataAtual),
+                    wd: "sábado letivo",
+                    time: base.time,
+                    prof: base.prof,
+                    tag: "SÁBADO LETIVO"
+                });
+            }
+        }
+
+    });
+}
 
                 });
 
