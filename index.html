@@ -1638,16 +1638,28 @@ function exportarDashboardPDF() {
 // 🔷 CONFIGURAÇÕES GERAIS
 // =====================================================
 
-const FERIADOS = [
-    "2026-04-21",
-    "2026-05-01"
-];
+const FERIADOS = ["2026-02-16","2026-02-17","2026-02-18","2026-04-03","2026-04-20","2026-04-21","2026-05-01","2026-06-04","2026-06-05"];
 
 const SABADOS_LETIVOS = [
     {
-        data: "2026-03-14",
+        data: "2026-03-07",
         tipo: "integrado",
         referencia: 1 // segunda
+    },
+     {
+        data: "2026-03-14",
+        tipo: "integrado",
+        referencia: 2 // segunda
+    },
+     {
+        data: "2026-03-21",
+        tipo: "integrado",
+        referencia: 4 // segunda
+    },
+     {
+        data: "2026-03-28",
+        tipo: "integrado",
+        referencia: 5 // segunda
     },
     {
         data: "2026-04-18",
