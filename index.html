@@ -602,7 +602,8 @@ function exportarRelatorioProfessorPDF() {
             "+": { texto: "EXTRA", class: "status-extra", soma: true },
             "R": { texto: "REPOSIÇÃO", class: "status-reposicao", soma: true },
             "REC": { texto: "RECUPERAÇÃO", class: "status-rec", soma: false },
-            "EX": { texto: "EXAME", class: "status-exame", soma: false }
+            "EX": { texto: "EXAME", class: "status-exame", soma: false },
+            "SÁBADO LETIVO": { texto: "SÁBADO LETIVO", class: "bg-blue-100", soma: true}
         };
 
         const GABARITO = [
@@ -1354,9 +1355,9 @@ function renderPivo() {
     // 🔷 CONTAGEM DE AULAS
     // ==========================================
     const somaAulas = aulasFiltradas.filter(a => {
-        const info = TRADUCAO?.[a.tag];
-        return !a.tag || (info && info.soma);
-    }).length;
+    const info = TRADUCAO?.[a.tag];
+    return !a.tag || (info ? info.soma : true);
+}).length;
 
     // ==========================================
     // 🔷 CABEÇALHO
