@@ -284,6 +284,10 @@
         <div class="flex gap-4 mb-6">
             <input list="listaProfessores" id="buscaProfessorRel" oninput="gerarRelatorioProfessor()" class="border p-3 rounded-lg flex-1" placeholder="Digite o nome do professor...">
             <button onclick="exportarRelatorioProfessorPDF()" class="bg-[#15803d] text-white px-8 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF</button>
+            <button onclick="exportarTodosProfessoresPDF()" 
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+    Exportar TODOS os Professores (PDF)
+</button>
         </div>
         <table id="tabelaRelatorioProf" class="w-full border-collapse border text-center">
             <thead class="bg-gray-100 font-bold text-[10px]">
@@ -2189,6 +2193,136 @@ if (diaSemana === 6) {
         });
 
         dataAtual.setDate(dataAtual.getDate() + 1);
+    }
+}
+
+        async function exportarTodosProfessoresPDF() {
+
+    const { jsPDF } = window.jspdf;
+
+    const year = document.getElementById('yearSelect').value;
+    const cal = CALENDARIOS?.[year];
+    const limiteS1 = cal?.s1?.fim ? new Date(cal.s1.fim).getTime() : null;
+
+    const professores = {};
+
+    // ==========================================
+    // 🔷 AGRUPAR DADOS POR PROFESSOR
+    // ==========================================
+    Object.entries(dataStore).forEach(([tId, turma]) => {
+
+        Object.entries(turma.discs).forEach(([dId, disc]) => {
+
+            if (!disc.sch) return;
+
+            disc.sch.forEach(a => {
+
+                if (!a.prof || !a.dtObj) return;
+
+                const nomeProf = a.prof;
+
+                if (!professores[nomeProf]) {
+                    professores[nomeProf] = [];
+                }
+
+                professores[nomeProf].push({
+                    turma: turma.name,
+                    disciplina: disc.name,
+                    data: a.date,
+                    dtObj: new Date(a.dtObj),
+                    mes: new Date(a.dtObj).toLocaleString('pt-BR', { month: 'long' }),
+                    tag: a.tag,
+                    tId
+                });
+
+            });
+
+        });
+
+    });
+
+    // ==========================================
+    // 🔷 GERAR UM PDF POR PROFESSOR
+    // ==========================================
+    for (const prof in professores) {
+
+        const doc = new jsPDF('p', 'mm', 'a4');
+
+        const aulas = professores[prof];
+
+        // ordenar por data
+        aulas.sort((a, b) => a.dtObj - b.dtObj);
+
+        // ==========================================
+        // 🔷 CABEÇALHO
+        // ==========================================
+        gerarCabecalhoPadrao(doc);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text(`PROFESSOR: ${prof}`, 14, 45);
+
+        // ==========================================
+        // 🔷 AGRUPAR POR DISCIPLINA + TURMA
+        // ==========================================
+        const grupos = {};
+
+        aulas.forEach(a => {
+            const chave = `${a.disciplina} | ${a.turma}`;
+
+            if (!grupos[chave]) grupos[chave] = [];
+
+            grupos[chave].push(a);
+        });
+
+        let y = 52;
+
+        for (const chave in grupos) {
+
+            const lista = grupos[chave];
+
+            doc.setFontSize(10);
+            doc.text(chave, 14, y);
+            y += 2;
+
+            const tabela = lista.map(a => {
+
+                const info = TRADUCAO?.[a.tag] || { texto: "NORMAL", soma: true };
+
+                return [
+                    a.data,
+                    a.mes,
+                    info.texto
+                ];
+            });
+
+            doc.autoTable({
+                startY: y,
+                head: [["Data", "Mês", "Tipo"]],
+                body: tabela,
+                theme: 'grid',
+                styles: { fontSize: 8, halign: 'center' }
+            });
+
+            y = doc.lastAutoTable.finalY + 6;
+
+            // quebra de página automática
+            if (y > 270) {
+                doc.addPage();
+                y = 20;
+            }
+        }
+
+        gerarRodapePadrao(doc);
+
+        // ==========================================
+        // 🔷 SALVAR PDF
+        // ==========================================
+        const nomeArquivo = `Relatorio - ${prof.replace(/\s/g, '_')}.pdf`;
+        doc.save(nomeArquivo);
+
+        // pequeno delay para não travar navegador
+        await new Promise(r => setTimeout(r, 300));
     }
 }
 </script>
