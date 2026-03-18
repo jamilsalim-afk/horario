@@ -1689,9 +1689,11 @@ function estaEmFeriasSuperior(data) {
     });
 }
         
-        const FERIADOS = ["2026-02-16","2026-02-17","2026-02-18","2026-04-03","2026-04-20","2026-04-21","2026-05-01","2026-06-04","2026-06-05"];
+        const FERIADOS_INTEGRADO = ["2026-02-16","2026-02-17","2026-02-18","2026-04-03","2026-04-20","2026-04-21","2026-05-01","2026-06-04","2026-06-05"];
 
-const SABADOS_LETIVOS = [
+        const FERIADOS_SUPERIO = ["2026-02-16","2026-02-17","2026-02-18","2026-04-03","2026-04-20","2026-04-21","2026-05-01","2026-06-04","2026-06-05"];
+
+        const SABADOS_LETIVOS = [
     {
         data: "2026-03-07",
         tipo: "integrado",
@@ -1728,6 +1730,25 @@ let BASE_HORARIOS = {
     superior: {}
 };
 
+        
+        // ==========================================
+// 🔷 VERIFICA FERIADO POR TIPO
+// ==========================================
+function ehFeriado(data, tipo) {
+
+    const d = data.toISOString().split('T')[0];
+
+    if (tipo === "integrado") {
+        return FERIADOS_INTEGRADO.includes(d);
+    }
+
+    if (tipo === "superior") {
+        return FERIADOS_SUPERIOR.includes(d);
+    }
+
+    return false;
+}
+        
 // =====================================================
 // 🔷 FUNÇÃO: PROCESSAR LINHAS BASE
 // =====================================================
@@ -1835,6 +1856,13 @@ function gerarFuturoComBase() {
 
             const ehIntegrado = !ehSemestral(tId);
 const tipo = ehIntegrado ? "integrado" : "superior";
+
+            // ==========================================
+// 🔷 BLOQUEIO DE FERIADO POR TIPO
+// ==========================================
+if (ehFeriado(dataAtual, tipo)) {
+    return;
+}
 
 // ==========================================
 // 🔷 BLOQUEIO DE FÉRIAS
