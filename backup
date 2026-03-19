@@ -283,7 +283,25 @@
     <div class="bg-white p-6 rounded-xl shadow-sm border">
         <div class="flex gap-4 mb-6">
             <input list="listaProfessores" id="buscaProfessorRel" oninput="gerarRelatorioProfessor()" class="border p-3 rounded-lg flex-1" placeholder="Digite o nome do professor...">
-            <button onclick="exportarRelatorioProfessorPDF()" class="bg-[#15803d] text-white px-8 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF</button>
+            <!-- 🔥 BOTÃO PRINCIPAL -->
+<button onclick="exportarRelatorioProfessorPDF()" 
+    class="bg-[#15803d] text-white px-10 py-3 rounded-xl font-bold text-base 
+           hover:bg-green-800 transition shadow-lg uppercase">
+    Exportar PDF
+</button>
+
+<!-- 🔷 BOTÕES SECUNDÁRIOS -->
+<button onclick="exportarTodosProfessoresPDF()" 
+    class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm 
+           hover:bg-blue-700 transition shadow-md">
+    Exportar TODOS os Professores
+</button>
+
+<button onclick="exportarTodosProfessoresMensalPDF()" 
+    class="bg-indigo-600 text-white px-5 py-2 rounded-lg text-sm 
+           hover:bg-indigo-700 transition shadow-md">
+    Exportar TODOS (Mensal)
+</button>
         </div>
         <table id="tabelaRelatorioProf" class="w-full border-collapse border text-center">
             <thead class="bg-gray-100 font-bold text-[10px]">
@@ -455,6 +473,7 @@
 "Nephi": "Nephi Moraes de Barros",
 "Nirvani": "Nirvani Schroeder Henrique",
 "Paula": "Paula Michelli da Silva Franco Belmont",
+"Paulla": "Paulla Vieira Rodrigues",
 "Paulo": "Paulo Fernando Campagnolli",
 "Professor": "Professor Contratado",
 "Rafael A": "Rafael Ayres Romanholo",
@@ -601,7 +620,8 @@ function exportarRelatorioProfessorPDF() {
             "+": { texto: "EXTRA", class: "status-extra", soma: true },
             "R": { texto: "REPOSIÇÃO", class: "status-reposicao", soma: true },
             "REC": { texto: "RECUPERAÇÃO", class: "status-rec", soma: false },
-            "EX": { texto: "EXAME", class: "status-exame", soma: false }
+            "EX": { texto: "EXAME", class: "status-exame", soma: false },
+            "SÁBADO LETIVO": { texto: "SÁBADO LETIVO", class: "bg-blue-100", soma: true}
         };
 
         const GABARITO = [
@@ -621,7 +641,7 @@ function exportarRelatorioProfessorPDF() {
         let dataStore = {};
         const GIST_URLS = {
             "2025": "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/b32b06d3468be385d70405c039346e4ad3c35a54/DADOS_2025_MESTRE",
-            "2026": "https://gist.githubusercontent.com/jamilsalim-afk/255bab3f99af2c34836684eb21a370fc/raw/b771bbb3d9fb3ff76acb674e97f423e88f777406/DADOS_2026_MESTRE"
+            "2026": "https://gist.githubusercontent.com/jamilsalim-afk/793aa8c9f80f2cb21e8db0d706d68159/raw/26a9e085fad29dc361f0873d8ea10f3b52b5863c/TESTE_2026"
         };
 
         const DISCIPLINAS_OCULTAR = [
@@ -677,55 +697,94 @@ function exportarRelatorioProfessorPDF() {
         const res = await fetch(GIST_URLS[yearSelected] + "?t=" + new Date().getTime());
         let csv = await res.text();
         csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
+
         const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
         const headers = lines[0].split(';').map(h => h.trim());
         const turmas = headers.slice(2);
+
         dataStore = {};
+        BASE_HORARIOS = { integrado: {}, superior: {} }; // 🔹 NOVO: reset base
+
         let lastDate = "";
 
         lines.slice(1).forEach(line => {
             const cols = line.split(';').map(c => c?.trim());
-            if (cols[0] && cols[0].length > 0) { lastDate = cols[0].replace(/\./g, '/'); }
 
-            if (!cols[1] || !lastDate || !lastDate.includes(`/${yearSelected}`)) return;
+            if (cols[0] && cols[0].length > 0) { 
+                lastDate = cols[0].replace(/\./g, '/'); 
+            }
+
+            if (!cols[1] || !lastDate) return;
 
             turmas.forEach((tNome, idx) => {
+
                 const cell = cols[idx + 2];
                 if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
-                
+
+                // =====================================================
+                // 🔹 NOVO: PROCESSAR LINHA BASE
+                // =====================================================
+                if (processarLinhaBase(cols[0], cols[1], cell, tNome)) {
+                    return;
+                }
+
+                // 🔹 IGNORA linhas BASE no fluxo normal
+                if (cols[0].startsWith("BASE_")) return;
+
+                // 🔹 FILTRO DE ANO (mantido)
+                if (!lastDate.includes(`/${yearSelected}`)) return;
+
                 const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+
                 const tagM = cell.match(/\[(.*?)\]/);
                 const tag = tagM ? tagM[1].toUpperCase() : null;
                 const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
-                
+
                 let disc, prof;
+
                 if (cleanT.includes(' - ')) {
                     const partes = cleanT.split(' - ');
                     prof = partes.pop().trim();
                     disc = partes.join(' - ').trim();
-                } else { disc = cleanT; prof = "N/I"; }
-                
+                } else { 
+                    disc = cleanT; 
+                    prof = "N/I"; 
+                }
+
                 if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
+
                 const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
-                if (!dataStore[tId].discs[dId]) dataStore[tId].discs[dId] = { name: disc, sch: [] };
-                
-                // CRIAÇÃO DA DATA COM OFFSET DE MEIO-DIA (SEGURANÇA)
+
+                if (!dataStore[tId].discs[dId]) {
+                    dataStore[tId].discs[dId] = { name: disc, sch: [] };
+                }
+
+                // 🔹 DATA SEGURA
                 const p = lastDate.split('/');
                 const dt = new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]), 12, 0, 0);
-                
+
                 dataStore[tId].discs[dId].sch.push({ 
-    date: lastDate, 
-    dtObj: dt, 
-    wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }), 
-    time: cols[1], 
-    prof: traduzirProfessor(prof), 
-    tag: tag 
-});
+                    date: lastDate, 
+                    dtObj: dt, 
+                    wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }), 
+                    time: cols[1], 
+                    prof: traduzirProfessor(prof), 
+                    tag: tag 
+                });
+
             });
         });
+
         document.getElementById('loading').classList.add('hidden');
+
+        // =====================================================
+        // 🔹 NOVO: GERAR FUTURO AQUI (POSIÇÃO CORRETA)
+        // =====================================================
+        gerarFuturoComBase();
+
         popularSelects();
         limparResultados();
+
     } catch (e) { 
         console.error(e);
         document.getElementById('loading').innerHTML = "Erro ao sincronizar."; 
@@ -734,72 +793,105 @@ function exportarRelatorioProfessorPDF() {
 
         // LÓGICA DE RENDERIZAÇÃO COM FILTRO CRONOLÓGICO POR DIA/MÊS
 function renderD() {
-    // 1. Captura de elementos e valores iniciais (Fora do loop para performance)
+
+    // ==========================================
+    // 🔷 CAPTURA DE ELEMENTOS
+    // ==========================================
     const tId = document.getElementById('turmaSelect').value;
     const dId = document.getElementById('disciplinaSelect').value;
     const sem = document.getElementById('semestreSelect').value;
     const year = document.getElementById('yearSelect').value;
     const b = document.getElementById('bodyD');
-    
-    // Verificação de segurança
+
     if (!tId || !dId) return;
 
-    // 2. Preparação do Calendário e Limites
+    // ==========================================
+    // 🔷 PREPARAÇÃO DO CALENDÁRIO
+    // ==========================================
     const cal = CALENDARIOS[year];
-    const limiteS1 = cal.s1.fim.getTime();
-    
-    // 3. Reset de variáveis de contagem e visualização
-    b.innerHTML = ''; 
+    const limiteS1 = cal?.s1?.fim?.getTime?.();
+
+    // ==========================================
+    // 🔷 RESET
+    // ==========================================
+    b.innerHTML = '';
     let sR = 0, sE = 0;
 
-    // 4. Processamento dos dados
-    dataStore[tId].discs[dId].sch.forEach(a => {
-        const tempoAula = a.dtObj.getTime();
+    // ==========================================
+    // 🔷 SEGURANÇA DE DADOS
+    // ==========================================
+    const turma = dataStore?.[tId];
+    const disc = turma?.discs?.[dId];
 
-        // Lógica de filtro: Se for semestral, filtra por data; se não, mostra tudo.
-        const filtrar = ehSemestral(tId) 
-            ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
-            : true;
+    if (!turma || !disc || !Array.isArray(disc.sch)) {
+        b.innerHTML = `<tr><td colspan="5">Sem aulas registradas</td></tr>`;
+        document.getElementById('cont-regular').textContent = 0;
+        document.getElementById('cont-extra').textContent = 0;
+        document.getElementById('resultadoBusca').classList.remove('hidden');
+        return;
+    }
 
-        if (filtrar) {
-            const info = TRADUCAO[a.tag] || { texto: "NORMAL", class: "", soma: true };
-            
-            // Incrementa contadores
-            if (info.soma) sR++; else sE++;
+    // ==========================================
+    // 🔷 PROCESSAMENTO
+    // ==========================================
+    disc.sch.forEach(a => {
 
-            // Renderiza a linha na tabela
-            b.innerHTML += `
-                <tr class="${info.class}">
-                    <td class="border">${a.date}</td>
-                    <td class="border uppercase">${a.wd}</td>
-                    <td class="border">${a.time}</td>
-                    <td class="border font-bold">${getPrimeiroNome(a.prof)}</td>
-                    <td class="border font-black">${info.texto}</td>
-                </tr>`;
+        // segurança extra
+        if (!a || !a.dtObj) return;
+
+        const tempoAula = new Date(a.dtObj).getTime();
+
+        // filtro por semestre (somente para cursos semestrais)
+        let filtrar = true;
+
+        if (ehSemestral(tId) && limiteS1) {
+            filtrar = (sem === "1")
+                ? tempoAula <= limiteS1
+                : tempoAula > limiteS1;
         }
+
+        if (!filtrar) return;
+
+        // tradução de status
+        const info = TRADUCAO?.[a.tag] || {
+            texto: "NORMAL",
+            class: "",
+            soma: true
+        };
+
+        // contadores
+        if (info.soma) {
+            sR++;
+        } else {
+            sE++;
+        }
+
+        // renderização
+        b.innerHTML += `
+            <tr class="${info.class}">
+                <td class="border">${a.date || '-'}</td>
+                <td class="border uppercase">${a.wd || '-'}</td>
+                <td class="border">${a.time || '-'}</td>
+                <td class="border font-bold">${getPrimeiroNome?.(a.prof) || '-'}</td>
+                <td class="border font-black">${info.texto}</td>
+            </tr>
+        `;
     });
 
-    // 5. Atualização da interface (DOM)
+    // ==========================================
+    // 🔷 SE NÃO GEROU NADA
+    // ==========================================
+    if (b.innerHTML === '') {
+        b.innerHTML = `<tr><td colspan="5">Sem aulas no período selecionado</td></tr>`;
+    }
+
+    // ==========================================
+    // 🔷 ATUALIZAÇÃO FINAL
+    // ==========================================
     document.getElementById('cont-regular').textContent = sR;
     document.getElementById('cont-extra').textContent = sE;
     document.getElementById('resultadoBusca').classList.remove('hidden');
 }
-
-// Listeners para o funcionamento do Pivo
-document.getElementById('turmaSelectPivo').onchange = (e) => {
-    const tId = e.target.value;
-    const semS = document.getElementById('semestreSelectPivo');
-    
-    // Exibe ou oculta o seletor de semestre conforme o tipo de turma
-    if (ehSemestral(tId)) {
-        semS.classList.remove('hidden');
-    } else {
-        semS.classList.add('hidden');
-    }
-    renderPivo();
-};
-
-document.getElementById('semestreSelectPivo').onchange = renderPivo;
 
 function gerarGradeGeral() {
     const week = document.getElementById("weekInputGeral").value;
@@ -1215,36 +1307,114 @@ function renderPivo() {
         }
 
         function exportarDisciplinaPDF() {
-            const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
-            const tId = document.getElementById('turmaSelect').value;
-            const dId = document.getElementById('disciplinaSelect').value;
-            const sem = document.getElementById('semestreSelect').value;
-            const data = dataStore[tId].discs[dId];
-            const turmaNome = dataStore[tId].name;
-            const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
-            const year = document.getElementById('yearSelect').value;
-            const cal = CALENDARIOS[year];
-            const limiteS1 = cal.s1.fim.getTime();
 
-            const aulasFiltradas = data.sch.filter(a => {
-            const tempoAula = a.dtObj.getTime();
-            return ehSemestral(tId)
-            ? (sem === "1" ? tempoAula <= limiteS1 : tempoAula > limiteS1)
-            : true;
-        });
-            
-            const profs = [...new Set(aulasFiltradas.map(s => s.prof))].join(", ");
-            const somaAulas = aulasFiltradas.filter(s => !s.tag || TRADUCAO[s.tag].soma).length;
-            
-            gerarCabecalhoPadrao(doc);
-            doc.setFont("helvetica", "bold"); doc.setFontSize(11);
-            doc.text(`DISCIPLINA: ${data.name} ${ehSemestral(tId) ? '('+sem+'º SEMESTRE)' : ''}`, 14, 45);
-            doc.text(`PROFESSORES: ${profs}`, 14, 51);
-            doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
-            doc.autoTable({ html: '#tableD', startY: 62, theme: 'grid', styles: { fontSize: 9, halign: 'center' }, headStyles: { fillColor: [21, 128, 61] } });
-            gerarRodapePadrao(doc);
-            doc.save(`${data.name} - ${turmaNome} - ${dataEmissao}.pdf`);
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+
+    // ==========================================
+    // 🔷 CAPTURA DE DADOS
+    // ==========================================
+    const tId = document.getElementById('turmaSelect').value;
+    const dId = document.getElementById('disciplinaSelect').value;
+    const sem = document.getElementById('semestreSelect').value;
+    const year = document.getElementById('yearSelect').value;
+
+    const turma = dataStore?.[tId];
+    const disc = turma?.discs?.[dId];
+
+    if (!turma || !disc || !Array.isArray(disc.sch)) {
+        alert("Sem dados para exportar.");
+        return;
+    }
+
+    const turmaNome = turma.name || '';
+    const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+
+    // ==========================================
+    // 🔷 CALENDÁRIO
+    // ==========================================
+    const cal = CALENDARIOS?.[year];
+    const limiteS1 = cal?.s1?.fim ? new Date(cal.s1.fim).getTime() : null;
+
+    // ==========================================
+    // 🔷 FILTRO DE AULAS (CORRIGIDO)
+    // ==========================================
+    const aulasFiltradas = disc.sch.filter(a => {
+
+        if (!a || !a.dtObj) return false;
+
+        const tempoAula = new Date(a.dtObj).getTime();
+
+        if (ehSemestral(tId) && limiteS1) {
+            return (sem === "1")
+                ? tempoAula <= limiteS1
+                : tempoAula > limiteS1;
         }
+
+        return true;
+    });
+
+    // ==========================================
+    // 🔷 SE NÃO HOUVER AULAS
+    // ==========================================
+    if (aulasFiltradas.length === 0) {
+        alert("Nenhuma aula encontrada para exportação.");
+        return;
+    }
+
+    // ==========================================
+    // 🔷 PROFESSORES
+    // ==========================================
+    const profs = [...new Set(
+        aulasFiltradas.map(a => a.prof).filter(Boolean)
+    )].join(", ");
+
+    // ==========================================
+    // 🔷 CONTAGEM DE AULAS
+    // ==========================================
+    const somaAulas = aulasFiltradas.filter(a => {
+    const info = TRADUCAO?.[a.tag];
+    return !a.tag || (info ? info.soma : true);
+}).length;
+
+    // ==========================================
+    // 🔷 CABEÇALHO
+    // ==========================================
+    gerarCabecalhoPadrao(doc);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+
+    doc.text(
+        `DISCIPLINA: ${disc.name || '-'} ${ehSemestral(tId) ? '(' + sem + 'º SEMESTRE)' : ''}`,
+        14,
+        45
+    );
+
+    doc.text(`PROFESSORES: ${profs || '-'}`, 14, 51);
+    doc.text(`TOTAL DE AULAS (EXCETO REC/EX): ${somaAulas}`, 14, 57);
+
+    // ==========================================
+    // 🔷 TABELA (RENDER SEGURO)
+    // ==========================================
+    doc.autoTable({
+        html: '#tableD',
+        startY: 62,
+        theme: 'grid',
+        styles: { fontSize: 9, halign: 'center' },
+        headStyles: { fillColor: [21, 128, 61] }
+    });
+
+    // ==========================================
+    // 🔷 RODAPÉ
+    // ==========================================
+    gerarRodapePadrao(doc);
+
+    // ==========================================
+    // 🔷 EXPORTAÇÃO
+    // ==========================================
+    doc.save(`${disc.name} - ${turmaNome} - ${dataEmissao}.pdf`);
+}
 
         function exportarPivoPDF() {
             const { jsPDF } = window.jspdf; const doc = new jsPDF('p', 'mm', 'a4');
@@ -1594,6 +1764,685 @@ function exportarDashboardPDF() {
 };
             });
         }
+
+      // =====================================================
+// 🔷 CONFIGURAÇÕES GERAIS
+// =====================================================
+
+// ==========================================
+// 🔷 FÉRIAS DO INTEGRADO
+// ==========================================
+const FERIAS_INTEGRADO = [
+    {
+        inicio: "2026-06-21",
+        fim: "2026-07-21"
+    },
+    {
+        inicio: "2026-11-30",
+        fim: "2027-01-31"
+    }
+];
+
+        // ==========================================
+// 🔷 FÉRIAS DO SUPERIOR
+// ==========================================
+const FERIAS_SUPERIOR = [
+    {
+        inicio: "2026-06-27",
+        fim: "2026-07-21"
+    },
+    {
+        inicio: "2026-12-05",
+        fim: "2027-01-31"
+    }
+];
+        // ==========================================
+// 🔷 VERIFICA SE ESTÁ EM FÉRIAS (INTEGRADO)
+// ==========================================
+function estaEmFeriasIntegrado(data) {
+
+    const d = data.toISOString().split('T')[0];
+
+    return FERIAS_INTEGRADO.some(f => {
+        return d >= f.inicio && d <= f.fim;
+    });
+}
+        
+        // ==========================================
+// 🔷 VERIFICA SE ESTÁ EM FÉRIAS (SUPERIOR)
+// ==========================================
+function estaEmFeriasSuperior(data) {
+
+    const d = data.toISOString().split('T')[0];
+
+    return FERIAS_SUPERIOR.some(f => {
+        return d >= f.inicio && d <= f.fim;
+    });
+}
+        
+        const FERIADOS_INTEGRADO = ["2026-02-16",
+                                    "2026-02-17",
+                                    "2026-02-18",
+                                    "2026-04-03",
+                                    "2026-04-20",
+                                    "2026-04-21",
+                                    "2026-05-01",
+                                    "2026-06-04",
+                                    "2026-06-05",
+                                   "2026-09-07",
+                                   "2026-10-12",
+                                   "2026-10-15",
+                                   "2026-10-28",
+                                   "2026-11-02",
+                                   "2026-11-20",
+                                   "2026-11-26"];
+
+        const FERIADOS_SUPERIOR = ["2026-02-16",
+                                    "2026-02-17",
+                                    "2026-02-18",
+                                    "2026-04-03",
+                                    "2026-04-20",
+                                    "2026-04-21",
+                                    "2026-05-01",
+                                    "2026-06-04",
+                                    "2026-06-05",
+                                   "2026-09-07",
+                                   "2026-10-12",
+                                   "2026-10-15",
+                                   "2026-10-28",
+                                   "2026-11-02",
+                                   "2026-11-20",
+                                   "2026-11-26"];
+
+        const SABADOS_LETIVOS = [
+    { data: "2026-03-07", tipo: "integrado", referencia: 1 // segunda 
+    },
+    { data: "2026-03-14", tipo: "integrado", referencia: 2 // segunda
+    },
+    { data: "2026-03-21", tipo: "integrado", referencia: 4 // segunda
+    },
+    { data: "2026-03-28", tipo: "integrado", referencia: 5 // segunda
+    },
+    { data: "2026-04-04", tipo: "integrado", referencia: 1 // segunda 
+    },
+    { data: "2026-04-11", tipo: "integrado", referencia: 3 // segunda
+    },
+    { data: "2026-04-18", tipo: "integrado", referencia: 4 // segunda
+    },
+    { data: "2026-04-25", tipo: "integrado", referencia: 5 // segunda
+    },
+    { data: "2026-05-09", tipo: "integrado", referencia: 1 // segunda 
+    },
+    { data: "2026-05-16", tipo: "integrado", referencia: 2 // segunda
+    },
+    { data: "2026-05-23", tipo: "integrado", referencia: 1 // segunda
+    },
+    { data: "2026-05-30", tipo: "integrado", referencia: 3 // segunda
+    },
+    { data: "2026-06-06", tipo: "integrado", referencia: 5 // segunda 
+    },
+    { data: "2026-06-13", tipo: "integrado", referencia: 2 // segunda
+    },
+    { data: "2026-06-20", tipo: "integrado", referencia: 5 // segunda
+    },
+    { data: "2026-07-25", tipo: "integrado", referencia: 1 // segunda
+    },
+    { data: "2026-08-01", tipo: "integrado", referencia: 2 // segunda 
+    },
+    { data: "2026-08-15", tipo: "integrado", referencia: 3 // segunda
+    },
+    { data: "2026-08-29", tipo: "integrado", referencia: 4 // segunda
+    },
+    { data: "2026-09-05", tipo: "integrado", referencia: 5 // segunda
+    },
+    { data: "2026-09-12", tipo: "integrado", referencia: 1 // segunda 
+    },
+    { data: "2026-09-19", tipo: "integrado", referencia: 2 // segunda
+    },
+    { data: "2026-09-26", tipo: "integrado", referencia: 3 // segunda
+    },
+    { data: "2026-10-03", tipo: "integrado", referencia: 4 // segunda
+    },
+    { data: "2026-10-10", tipo: "integrado", referencia: 5 // segunda 
+    },
+    { data: "2026-10-24", tipo: "integrado", referencia: 4 // segunda
+    },
+    { data: "2026-10-31", tipo: "integrado", referencia: 1 // segunda
+    },
+    { data: "2026-11-07", tipo: "integrado", referencia: 1 // segunda
+    },
+    { data: "2026-11-14", tipo: "integrado", referencia: 1 // segunda
+    },
+            
+    { data: "2026-03-14", tipo: "superior_s1",  referencia: 1 // quarta
+    },
+    { data: "2026-03-28", tipo: "superior_s1",  referencia: 2 // quarta
+    },
+    { data: "2026-04-11", tipo: "superior_s1",  referencia: 1 // quarta
+    },
+    { data: "2026-04-18", tipo: "superior_s1",  referencia: 3 // quarta
+    },
+    { data: "2026-04-25", tipo: "superior_s1",  referencia: 4 // quarta
+    },
+    { data: "2026-05-09", tipo: "superior_s1",  referencia: 5 // quarta
+    },
+    { data: "2026-05-23", tipo: "superior_s1",  referencia: 2 // quarta
+    },
+    { data: "2026-06-13", tipo: "superior_s1",  referencia: 5 // quarta
+    },
+    { data: "2026-06-20", tipo: "superior_s1",  referencia: 5 // quarta
+    },
+    { data: "2026-08-01", tipo: "superior_s2",  referencia: 1 // quarta
+    },
+    { data: "2026-08-15", tipo: "superior_s2",  referencia: 2 // quarta
+    },
+    { data: "2026-08-29", tipo: "superior_s2",  referencia: 3 // quarta
+    },
+    { data: "2026-09-12", tipo: "superior_s2",  referencia: 1 // quarta
+    },
+    { data: "2026-09-26", tipo: "superior_s2",  referencia: 4 // quarta
+    },
+    { data: "2026-10-03", tipo: "superior_s2",  referencia: 1 // quarta
+    },
+    { data: "2026-10-10", tipo: "superior_s2",  referencia: 5 // quarta
+    },
+    { data: "2026-10-24", tipo: "superior_s2",  referencia: 1 // quarta
+    },
+    { data: "2026-11-14", tipo: "superior_s2",  referencia: 4 // quarta
+    }
+];
+
+// =====================================================
+// 🔷 BASE DE HORÁRIOS
+// =====================================================
+
+let BASE_HORARIOS = {
+    integrado: {},
+    superior_s1: {},
+    superior_s2: {}
+};
+
+        
+        // ==========================================
+// 🔷 VERIFICA FERIADO POR TIPO
+// ==========================================
+function ehFeriado(data, tipo) {
+
+    const d = data.toISOString().split('T')[0];
+
+    if (tipo === "integrado") {
+        return FERIADOS_INTEGRADO.includes(d);
+    }
+
+    if (tipo.startsWith("superior")) {
+        return FERIADOS_SUPERIOR.includes(d);
+    }
+
+    return false;
+}
+        
+// =====================================================
+// 🔷 FUNÇÃO: PROCESSAR LINHAS BASE
+// =====================================================
+
+function processarLinhaBase(dataStr, horario, cell, tNome) {
+
+    if (!dataStr.startsWith("BASE_")) return false;
+
+    const partes = dataStr.split("_");
+
+    let tipo = "";
+    let semestre = "";
+
+    if (partes[1] === "INT") {
+        tipo = "integrado";
+    } else if (partes[1] === "SUP") {
+        semestre = partes[2]; // S1 ou S2
+        tipo = `superior_${semestre.toLowerCase()}`;
+    }
+
+    const mapaDias = {
+        "SEG": 1,
+        "TER": 2,
+        "QUA": 3,
+        "QUI": 4,
+        "SEX": 5
+    };
+
+    const diaIndex = partes[1] === "INT" ? 2 : 3;
+    const diaSemana = mapaDias[partes[diaIndex]];
+
+    if (diaSemana === undefined) return true;
+
+    let disc, prof;
+
+    if (cell.includes(" - ")) {
+        const p = cell.split(" - ");
+        prof = p.pop().trim();
+        disc = p.join(" - ").trim();
+    } else {
+        disc = cell;
+        prof = "N/I";
+    }
+
+    const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    // 🔥 GARANTE O NÍVEL SUPERIOR
+if (!BASE_HORARIOS[tipo]) {
+    BASE_HORARIOS[tipo] = {};
+}
+
+// 🔥 AGORA SIM É SEGURO
+if (!BASE_HORARIOS[tipo][tId]) {
+    BASE_HORARIOS[tipo][tId] = {};
+}
+
+if (!BASE_HORARIOS[tipo][tId][dId]) {
+    BASE_HORARIOS[tipo][tId][dId] = [];
+}
+
+    BASE_HORARIOS[tipo][tId][dId].push({
+        name: disc,
+        prof: traduzirProfessor(prof),
+        diaSemana: diaSemana,
+        time: horario
+    });
+
+    return true;
+}
+
+// =====================================================
+// 🔷 FUNÇÃO: PEGAR ÚLTIMA DATA REAL
+// =====================================================
+
+function getUltimaDataRegistrada() {
+    let ultima = null;
+
+    Object.values(dataStore).forEach(turma => {
+        Object.values(turma.discs).forEach(disc => {
+            disc.sch.forEach(aula => {
+                if (!ultima || aula.dtObj > ultima) {
+                    ultima = aula.dtObj;
+                }
+            });
+        });
+    });
+
+    return ultima;
+}
+
+// =====================================================
+// 🔷 FUNÇÃO: GERAR FUTURO AUTOMÁTICO
+// =====================================================
+
+function gerarFuturoComBase() {
+
+    const ultimaData = getUltimaDataRegistrada();
+    if (!ultimaData) return;
+
+    const year = document.getElementById('yearSelect').value;
+    const cal = CALENDARIOS[year];
+
+    let dataAtual = new Date(ultimaData);
+    dataAtual.setDate(dataAtual.getDate() + 1);
+
+    while (dataAtual <= cal.s2.fim) {
+
+        const dataStr = dataAtual.toISOString().split('T')[0];
+        const diaSemana = dataAtual.getDay();
+
+        Object.keys(dataStore).forEach(tId => {
+
+            const turma = dataStore[tId];
+
+            const ehIntegrado = !ehSemestral(tId);
+let tipo = "integrado";
+
+if (!ehIntegrado) {
+    if (dataAtual >= cal.s1.inicio && dataAtual <= cal.s1.fim) {
+        tipo = "superior_s1";
+    } else {
+        tipo = "superior_s2";
+    }
+}
+
+            // ==========================================
+// 🔷 BLOQUEIO DE FERIADO POR TIPO
+// ==========================================
+if (ehFeriado(dataAtual, tipo)) {
+    return;
+}
+
+// ==========================================
+// 🔷 BLOQUEIO DE FÉRIAS
+// ==========================================
+if (ehIntegrado && estaEmFeriasIntegrado(dataAtual)) {
+    return;
+}
+
+if (!ehIntegrado && estaEmFeriasSuperior(dataAtual)) {
+    return;
+}
+
+            const baseTurma = BASE_HORARIOS[tipo]?.[tId];
+            if (!baseTurma) return;
+
+            Object.keys(baseTurma).forEach(dId => {
+
+                const baseAulas = baseTurma[dId];
+
+                baseAulas.forEach(base => {
+
+                    // GARANTE DISCIPLINA
+                    if (!dataStore[tId].discs[dId]) {
+                        dataStore[tId].discs[dId] = {
+                            name: base.name,
+                            sch: []
+                        };
+                    }
+
+                    const disc = dataStore[tId].discs[dId];
+
+                    // =========================
+                    // AULA NORMAL
+                    // =========================
+                    if (base.diaSemana === diaSemana) {
+
+                        const existe = disc.sch.some(a =>
+                            a.dtObj.toDateString() === dataAtual.toDateString() &&
+                            a.time === base.time // 🔥 AGORA DIFERENCIA HORÁRIOS
+                        );
+
+                        if (!existe) {
+                            disc.sch.push({
+                                date: dataAtual.toLocaleDateString('pt-BR'),
+                                dtObj: new Date(dataAtual),
+                                wd: dataAtual.toLocaleDateString('pt-BR', { weekday: 'long' }),
+                                time: base.time,
+                                prof: base.prof,
+                                tag: null
+                            });
+                        }
+                    }
+
+                    // =========================
+                    // SÁBADO LETIVO (CORRIGIDO)
+                    // =========================
+                    // =========================
+if (diaSemana === 6) {
+
+    const sabados = SABADOS_LETIVOS.filter(s => s.data === dataStr);
+
+    sabados.forEach(sabado => {
+
+        if (sabado.tipo !== tipo) return;
+
+        if (sabado.referencia === base.diaSemana) {
+
+            const existe = disc.sch.some(a =>
+                a.dtObj.toDateString() === dataAtual.toDateString() &&
+                a.time === base.time
+            );
+
+            if (!existe) {
+                disc.sch.push({
+                    date: dataAtual.toLocaleDateString('pt-BR'),
+                    dtObj: new Date(dataAtual),
+                    wd: "sábado letivo",
+                    time: base.time,
+                    prof: base.prof,
+                    tag: "SÁBADO LETIVO"
+                });
+            }
+        }
+
+    });
+}
+
+                });
+
+            });
+
+        });
+
+        dataAtual.setDate(dataAtual.getDate() + 1);
+    }
+}
+
+        async function exportarTodosProfessoresPDF() {
+
+    const { jsPDF } = window.jspdf;
+
+    const year = document.getElementById('yearSelect').value;
+    const cal = CALENDARIOS?.[year];
+    const limiteS1 = cal?.s1?.fim ? new Date(cal.s1.fim).getTime() : null;
+
+    const professores = {};
+
+    // ==========================================
+    // 🔷 AGRUPAR DADOS POR PROFESSOR
+    // ==========================================
+    Object.entries(dataStore).forEach(([tId, turma]) => {
+
+        Object.entries(turma.discs).forEach(([dId, disc]) => {
+
+            if (!disc.sch) return;
+
+            disc.sch.forEach(a => {
+
+                if (!a.prof || !a.dtObj) return;
+
+                const nomeProf = a.prof;
+
+                if (!professores[nomeProf]) {
+                    professores[nomeProf] = [];
+                }
+
+                professores[nomeProf].push({
+                    turma: turma.name,
+                    disciplina: disc.name,
+                    data: a.date,
+                    dtObj: new Date(a.dtObj),
+                    mes: new Date(a.dtObj).toLocaleString('pt-BR', { month: 'long' }),
+                    tag: a.tag,
+                    tId
+                });
+
+            });
+
+        });
+
+    });
+
+    // ==========================================
+    // 🔷 GERAR UM PDF POR PROFESSOR
+    // ==========================================
+    for (const prof in professores) {
+
+        const doc = new jsPDF('p', 'mm', 'a4');
+
+        const aulas = professores[prof];
+
+        // ordenar por data
+        aulas.sort((a, b) => a.dtObj - b.dtObj);
+
+        // ==========================================
+        // 🔷 CABEÇALHO
+        // ==========================================
+        gerarCabecalhoPadrao(doc);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text(`PROFESSOR: ${prof}`, 14, 45);
+
+        // ==========================================
+        // 🔷 AGRUPAR POR DISCIPLINA + TURMA
+        // ==========================================
+        const grupos = {};
+
+        aulas.forEach(a => {
+            const chave = `${a.disciplina} | ${a.turma}`;
+
+            if (!grupos[chave]) grupos[chave] = [];
+
+            grupos[chave].push(a);
+        });
+
+        let y = 52;
+
+        for (const chave in grupos) {
+
+            const lista = grupos[chave];
+
+            doc.setFontSize(10);
+            doc.text(chave, 14, y);
+            y += 2;
+
+            const tabela = lista.map(a => {
+
+                const info = TRADUCAO?.[a.tag] || { texto: "NORMAL", soma: true };
+
+                return [
+                    a.data,
+                    a.mes,
+                    info.texto
+                ];
+            });
+
+            doc.autoTable({
+                startY: y,
+                head: [["Data", "Mês", "Tipo"]],
+                body: tabela,
+                theme: 'grid',
+                styles: { fontSize: 8, halign: 'center' }
+            });
+
+            y = doc.lastAutoTable.finalY + 6;
+
+            // quebra de página automática
+            if (y > 270) {
+                doc.addPage();
+                y = 20;
+            }
+        }
+
+        gerarRodapePadrao(doc);
+
+        // ==========================================
+        // 🔷 SALVAR PDF
+        // ==========================================
+        const nomeArquivo = `Relatorio - ${prof.replace(/\s/g, '_')}.pdf`;
+        doc.save(nomeArquivo);
+
+        // pequeno delay para não travar navegador
+        await new Promise(r => setTimeout(r, 300));
+    }
+}
+async function exportarTodosProfessoresMensalPDF() {
+
+    const { jsPDF } = window.jspdf;
+
+    const professores = {};
+
+    // ==========================================
+    // 🔷 AGRUPAR POR PROFESSOR → DISCIPLINA → TURMA
+    // ==========================================
+    Object.entries(dataStore).forEach(([tId, turma]) => {
+
+        Object.entries(turma.discs).forEach(([dId, disc]) => {
+
+            if (!disc.sch) return;
+
+            disc.sch.forEach(a => {
+
+                if (!a.prof || !a.dtObj) return;
+
+                const prof = a.prof;
+                const chave = `${disc.name}||${turma.name}`;
+
+                if (!professores[prof]) professores[prof] = {};
+                if (!professores[prof][chave]) {
+                    professores[prof][chave] = {
+                        disciplina: disc.name,
+                        turma: turma.name,
+                        meses: Array(12).fill(0),
+                        sabado: 0,
+                        total: 0
+                    };
+                }
+
+                const obj = professores[prof][chave];
+
+                const data = new Date(a.dtObj);
+                const mes = data.getMonth(); // 0-11
+
+                const info = TRADUCAO?.[a.tag] || { soma: true };
+
+                if (info.soma) {
+                    obj.meses[mes]++;
+                    obj.total++;
+                }
+
+                if (a.tag === "SÁBADO LETIVO") {
+                    obj.sabado++;
+                }
+
+            });
+
+        });
+
+    });
+
+    // ==========================================
+    // 🔷 GERAR PDF POR PROFESSOR
+    // ==========================================
+    for (const prof in professores) {
+
+        const doc = new jsPDF('p', 'mm', 'a4');
+
+        gerarCabecalhoPadrao(doc);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text(`PROFESSOR: ${prof}`, 14, 45);
+
+        const linhas = [];
+
+        Object.values(professores[prof]).forEach(item => {
+
+            linhas.push([
+                item.disciplina,
+                item.turma,
+                ...item.meses.map(v => v === 0 ? '-' : v),
+                item.sabado || '-',
+                item.total
+            ]);
+        });
+
+        doc.autoTable({
+            startY: 50,
+            head: [[
+                "DISCIPLINA", "TURMA",
+                "JAN","FEV","MAR","ABR","MAI","JUN",
+                "JUL","AGO","SET","OUT","NOV","DEZ",
+                "SÁB","TOTAL"
+            ]],
+            body: linhas,
+            theme: 'grid',
+            styles: { fontSize: 8, halign: 'center' },
+            headStyles: { fillColor: [21, 128, 61] }
+        });
+
+        gerarRodapePadrao(doc);
+
+        const nomeArquivo = `Relatorio - ${prof.replace(/\s/g, '_')}.pdf`;
+        doc.save(nomeArquivo);
+
+        await new Promise(r => setTimeout(r, 300));
+    }
+}
+        
 </script>
 </body>
 </html>
