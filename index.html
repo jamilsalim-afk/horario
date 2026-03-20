@@ -660,6 +660,22 @@ function exportarRelatorioProfessorPDF() {
     document.getElementById('yearSelect').onchange = carregarDados;
     popularFiltroProfessores();
 
+                // 🔷 CONTROLE DO PIVÔ (COLE AQUI)
+    document.getElementById('turmaSelectPivo').onchange = (e) => {
+        const tId = e.target.value;
+        const semS = document.getElementById('semestreSelectPivo');
+
+        if (ehSemestral(tId)) {
+            semS.classList.remove('hidden');
+        } else {
+            semS.classList.add('hidden');
+        }
+
+        renderPivo();
+    };
+
+    document.getElementById('semestreSelectPivo').onchange = renderPivo;
+
     // 🔹 NOVA ABA - RELATÓRIO GERAL
     document.getElementById("weekInputGeral").onchange = function(){
         if(this.value){
