@@ -1497,217 +1497,214 @@ function ehSemestral(tId) {
 }
 
 async function carregarDados() {
-    const year = document.getElementById('yearSelect').value;
-    const urlBase = GIST_URLS[year];
-
-    if (!urlBase) {
-        alert("URL não configurada para o ano: " + year);
-        return;
-    }
-
-    // Adicionamos um carimbo de tempo (?t=...) para ignorar o cache do navegador e evitar o 404
-    const urlGist = urlBase + (urlBase.endsWith('/') ? '' : '/') + "?t=" + new Date().getTime();
-
-    // Reset de segurança para não misturar anos
-    window.dataStore = {}; 
-    window.BASE_HORARIOS = { integrado: {}, superior_s1: {}, superior_s2: {} };
-
     try {
-        console.log("Buscando dados em:", urlGist);
-        const response = await fetch(urlGist);
+        const yearSelected = document.getElementById('yearSelect').value;
         
-        if (!response.ok) {
-            throw new Error(`Erro ${response.status}: Não foi possível acessar o Gist.`);
-        }
+        // 1. Verificação de Segurança do Calendário
+        const cal = (typeof CALENDARIOS !== 'undefined') ? CALENDARIOS[yearSelected] : null;
         
-        const csvText = await response.text();
-        const linhas = csvText.split('\n');
-        if (linhas.length < 1) return;
+        document.getElementById('infoYear').textContent = yearSelected;
 
-        // 1. MAPEAMENTO DO CABEÇALHO (Identifica as 57 turmas)
-        const cabecalho = linhas[0].split(';');
-        const mapaTurmas = {}; 
-
-        // Começa da coluna 2 (índice 2), pulando Dia e Horário
-        for (let c = 2; c < cabecalho.length; c++) {
-            const nomeTurma = cabecalho[c].trim();
-            if (nomeTurma) {
-                const tId = nomeTurma.toLowerCase().replace(/[^a-z0-9]/g, '');
-                mapaTurmas[c] = { id: tId, nome: nomeTurma };
-                
-                // Inicializa a turma no dataStore
-                dataStore[tId] = { name: nomeTurma, discs: {} };
+        // Só tenta preencher as datas se o objeto 'cal' e 's1' existirem
+        if (cal && cal.s1 && cal.s2) {
+            if (document.getElementById('semestre1')) {
+                document.getElementById('semestre1').textContent = `${cal.s1.inicio.toLocaleDateString('pt-BR')} a ${cal.s1.fim.toLocaleDateString('pt-BR')}`;
             }
+            if (document.getElementById('semestre2')) {
+                document.getElementById('semestre2').textContent = `${cal.s2.inicio.toLocaleDateString('pt-BR')} a ${cal.s2.fim.toLocaleDateString('pt-BR')}`;
+            }
+        } else {
+            console.warn(`Aviso: Calendário para ${yearSelected} não configurado. As datas de semestre ficarão vazias.`);
         }
 
-        // 2. PROCESSAMENTO DAS LINHAS (Distribuição dos dados)
-        for (let i = 1; i < linhas.length; i++) {
-            const linha = linhas[i].trim();
-            if (!linha) continue;
-
-            const colunas = linha.split(';');
-            const dataFelt = colunas[0]?.trim(); // Ex: 20/03/2026
-            const horario  = colunas[1]?.trim(); // Ex: 07:30
-
-            if (!dataFelt || !horario) continue;
-
-            // Percorre as colunas de turmas (da 3ª em diante)
-            for (let c = 2; c < colunas.length; c++) {
-                const conteudo = colunas[c]?.trim();
-                
-                // Ignora se estiver vago ou sem aula
-                if (!conteudo || conteudo === "-" || conteudo === "" || conteudo.toLowerCase() === "vago") continue;
-
-                // SEPARAÇÃO: Disciplina - Professor (usando o último hífen)
-                let dNome, profRaw;
-                if (conteudo.includes('-')) {
-                    const partes = conteudo.split('-');
-                    profRaw = partes.pop().trim(); 
-                    dNome = partes.join('-').trim(); 
-                } else {
-                    dNome = conteudo;
-                    profRaw = "Não Informado";
-                }
-
-                const infoTurma = mapaTurmas[c];
-                if (!infoTurma) continue;
-
-                const dId = dNome.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-                if (!dataStore[infoTurma.id].discs[dId]) {
-                    dataStore[infoTurma.id].discs[dId] = { name: dNome, sch: [] };
-                }
-
-                // A) Linha de Horário Padrão (BASE_)
-                if (dataFelt.startsWith("BASE_")) {
-                    if (typeof processarLinhaBase === "function") {
-                        processarLinhaBase(dataFelt, horario, profRaw, infoTurma.nome, dNome);
-                    }
-                } 
-                // B) Linha de Cronograma Real (Datas)
-                else if (dataFelt.includes('/')) {
-                    const [dia, mes, ano] = dataFelt.split('/');
-                    const dtObj = new Date(ano, mes - 1, dia);
-
-                    dataStore[infoTurma.id].discs[dId].sch.push({
-                        date: dataFelt,
-                        dtObj: dtObj,
-                        time: horario,
-                        prof: (typeof traduzirProfessor === "function") ? traduzirProfessor(profRaw) : profRaw,
-                        tag: "" 
-                    });
-                }
-            }
-        }
-
-        // --- FINALIZAÇÃO ---
         const loadingElem = document.getElementById('loading');
-        if (loadingElem) loadingElem.style.display = 'none';
+        if (loadingElem) loadingElem.classList.remove('hidden');
 
-        alert(`Sucesso! ${Object.keys(mapaTurmas).length} turmas carregadas do Gist.`);
+        // 2. Busca de Dados (Gist)
+        const urlGist = GIST_URLS[yearSelected] + "?t=" + new Date().getTime();
+        const res = await fetch(urlGist);
+        if (!res.ok) throw new Error(`Erro ao acessar Gist: ${res.status}`);
         
-        if (typeof atualizarSelects === "function") atualizarSelects();
+        let csv = await res.text();
+        
+        // Correção específica para quebras de linha em AGRONOMIA
+        csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
 
-        // 🔥 GATILHO DE VISUALIZAÇÃO: Resolve o problema de aparecer só ao redimensionar
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
+        const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
+        if (lines.length < 1) throw new Error("Arquivo CSV vazio.");
+
+        const headers = lines[0].split(';').map(h => h.trim());
+        const turmasHeaders = headers.slice(2); 
+
+        // 3. Reset dos Depósitos de Dados
+        window.dataStore = {};
+        window.BASE_HORARIOS = { integrado: {}, superior_s1: {}, superior_s2: {} };
+
+        let lastDate = "";
+
+        // 4. Processamento das Linhas
+        lines.slice(1).forEach(line => {
+            const cols = line.split(';').map(c => c?.trim());
+
+            if (cols[0] && cols[0].length > 0) { 
+                lastDate = cols[0].replace(/\./g, '/'); 
+            }
+
+            if (!cols[1] || !lastDate) return;
+
+            turmasHeaders.forEach((tNome, idx) => {
+                const cell = cols[idx + 2];
+                if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
+
+                // A) Linha BASE
+                if (typeof processarLinhaBase === "function") {
+                    if (processarLinhaBase(cols[0], cols[1], cell, tNome)) return;
+                }
+
+                if (cols[0].startsWith("BASE_")) return;
+                if (!lastDate.includes(`/${yearSelected}`)) return;
+
+                const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+                if (!dataStore[tId]) {
+                    dataStore[tId] = { name: tNome, discs: {} };
+                }
+
+                const tagM = cell.match(/\[(.*?)\]/);
+                const tag = tagM ? tagM[1].toUpperCase() : null;
+                const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
+
+                let discNome, profNome;
+                if (cleanT.includes(' - ')) {
+                    const partes = cleanT.split(' - ');
+                    profNome = partes.pop().trim();
+                    discNome = partes.join(' - ').trim();
+                } else { 
+                    discNome = cleanT; 
+                    profNome = "N/I"; 
+                }
+
+                const dId = discNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+                if (!dataStore[tId].discs[dId]) {
+                    dataStore[tId].discs[dId] = { name: discNome, sch: [] };
+                }
+
+                const p = lastDate.split('/');
+                const dt = new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]), 12, 0, 0);
+
+                dataStore[tId].discs[dId].sch.push({ 
+                    date: lastDate, 
+                    dtObj: dt, 
+                    wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }), 
+                    time: cols[1], 
+                    prof: (typeof traduzirProfessor === "function") ? traduzirProfessor(profNome) : profNome, 
+                    tag: tag 
+                });
+            });
+        });
+
+        // 5. Finalização
+        if (loadingElem) loadingElem.classList.add('hidden');
+
+        if (typeof gerarFuturoComBase === "function") gerarFuturoComBase();
+        if (typeof popularSelects === "function") popularSelects();
+        if (typeof limparResultados === "function") limparResultados();
+
+        setTimeout(() => { 
+            window.dispatchEvent(new Event('resize')); 
         }, 300);
 
-    } catch (error) {
-        console.error("Erro técnico:", error);
-        alert("Falha ao carregar dados: " + error.message);
+    } catch (e) { 
+        console.error("Erro Crítico:", e);
+        const loading = document.getElementById('loading');
+        if (loading) loading.innerHTML = `<span class="text-red-500">Erro: ${e.message}</span>`; 
     }
 }
 
 async function gerarFuturoComBase() {
-    // 1. Identifica o contexto do ano e calendário
     const year = document.getElementById('yearSelect').value;
     const cal = CALENDARIOS[year];
 
-    if (!cal) {
-        alert("Calendário acadêmico de " + year + " não encontrado.");
-        return;
+    if (!cal) return;
+
+    // 1. Ponto de partida: Hoje ou a última aula do Gist
+    // Se getUltimaDataRegistrada falhar, usamos a data atual do sistema
+    let dataAtual;
+    try {
+        const ultima = typeof getUltimaDataRegistrada === "function" ? getUltimaDataRegistrada() : null;
+        dataAtual = ultima ? new Date(ultima) : new Date();
+        dataAtual.setDate(dataAtual.getDate() + 1);
+    } catch(e) {
+        dataAtual = new Date();
     }
 
-    // 2. Define o ponto de partida (última aula real) e o limite final do ano
-    const ultimaData = getUltimaDataRegistrada();
-    if (!ultimaData) {
-        alert("Nenhuma aula real encontrada para projetar o futuro.");
-        return;
-    }
+    // Limite da projeção (Fim do ano letivo)
+    const dataLimiteAno = (cal.s2 && cal.s2.fim) ? new Date(cal.s2.fim) : new Date(year, 11, 31);
 
-    // A projeção começa no dia seguinte à última aula registrada
-    let dataAtual = new Date(ultimaData);
-    dataAtual.setDate(dataAtual.getDate() + 1);
-
-    // O limite é o último dia do semestre/ano definido no Gist de Calendário
-    const dataLimiteAno = new Date(year, 11, 31); 
-
-    // 3. Cache de Sábados Letivos do ano selecionado
+    // 2. Mapeamento de Sábados (Segurança para não quebrar se não existir)
     const mapaSabados = {};
-    const sabadosDesteAno = CALENDARIO_DINAMICO[year]?.sabados || [];
-    sabadosDesteAno.forEach(s => {
-        mapaSabados[s.data] = s;
-    });
+    if (typeof CALENDARIO_DINAMICO !== 'undefined' && CALENDARIO_DINAMICO[year]) {
+        (CALENDARIO_DINAMICO[year].sabados || []).forEach(s => { mapaSabados[s.data] = s; });
+    }
 
-    console.log(`Iniciando projeção para ${year} a partir de: ${dataAtual.toLocaleDateString()}`);
+    console.log("Iniciando projeção futura...");
 
-    // 4. LOOP DE PROJEÇÃO DIA A DIA
+    // 3. LOOP DE PROJEÇÃO
     while (dataAtual <= dataLimiteAno) {
-        const diaSemana = dataAtual.getDay(); // 0=Dom, 1=Seg... 6=Sab
-        const dataStrIso = dataAtual.toISOString().split('T')[0];
+        const diaSemana = dataAtual.getDay(); // 0=Dom, 1=Seg...
         const dataFormatadaBr = dataAtual.toLocaleDateString('pt-BR');
+        const dataIso = dataAtual.toISOString().split('T')[0];
 
-        // Percorre todas as turmas carregadas no dataStore
-        Object.keys(dataStore).forEach(tId => {
-            const turma = dataStore[tId];
-            const ehIntegrado = !ehSemestral(tId);
+        // Pulamos domingos e feriados (se a função existir)
+        if (diaSemana === 0) { dataAtual.setDate(dataAtual.getDate() + 1); continue; }
+        if (typeof ehFeriado === "function" && ehFeriado(dataAtual)) { dataAtual.setDate(dataAtual.getDate() + 1); continue; }
 
-            // Descobre em qual período (S1, S2, etc) esta data se encaixa para esta turma
-            const periodo = getPeriodoLetivo(dataAtual, tId, cal);
-            if (!periodo || !periodo.tipo) return;
+        Object.keys(window.dataStore).forEach(tId => {
+            const turma = window.dataStore[tId];
+            
+            // Identifica se é Integrado ou Superior para saber qual BASE usar
+            // Se a turma tem "AGRO" ou "INFO" e não tem "SEMESTRE", costuma ser Integrado
+            const ehSuperior = tId.includes('semestre') || tId.includes('superior');
+            const tipoBase = ehSuperior ? "superior_s1" : "integrado"; 
 
-            // --- VALIDAÇÕES DE INTERRUPÇÃO (Férias e Feriados) ---
-            if (ehFeriado(dataAtual)) return; 
-            if (ehIntegrado && estaEmFeriasIntegrado(dataAtual)) return;
-            if (!ehIntegrado && estaEmFeriasSuperior(dataAtual)) return;
-
-            // Busca o horário BASE (ex: BASE_INT_SEG) para este período e turma
-            const baseTurma = BASE_HORARIOS[periodo.tipo]?.[tId];
+            const baseTurma = window.BASE_HORARIOS[tipoBase]?.[tId];
             if (!baseTurma) return;
 
+            // baseTurma agora é um objeto onde as chaves são dId
             Object.keys(baseTurma).forEach(dId => {
-                baseTurma[dId].forEach(base => {
+                baseTurma[dId].forEach(aulaBase => {
                     let deveAdicionar = false;
                     let tagAula = "PROJETADA";
 
-                    // AULA NORMAL (Segunda a Sexta)
-                    if (diaSemana >= 1 && diaSemana <= 5 && base.diaSemana === diaSemana) {
+                    // Regra de Segunda a Sexta
+                    if (diaSemana >= 1 && diaSemana <= 5 && aulaBase.diaSemana === diaSemana) {
                         deveAdicionar = true;
                     }
 
-                    // SÁBADO LETIVO (Substituição de dia)
-                    if (diaSemana === 6) {
-                        const sab = mapaSabados[dataStrIso];
-                        // Se o sábado de hoje referencia o dia da semana desta aula base
-                        if (sab && sab.tipo === periodo.tipo && sab.referencia === base.diaSemana) {
-                            deveAdicionar = true;
-                            tagAula = "SÁBADO LETIVO";
-                        }
+                    // Regra de Sábados Letivos
+                    const sabadoLetivo = mapaSabados[dataIso] || mapaSabados[dataFormatadaBr];
+                    if (diaSemana === 6 && sabadoLetivo && sabadoLetivo.referencia === aulaBase.diaSemana) {
+                        deveAdicionar = true;
+                        tagAula = "SÁBADO LETIVO";
                     }
 
                     if (deveAdicionar) {
-                        // Evita duplicados: só adiciona se não houver aula nesse horário/dia
-                        const jaExiste = turma.discs[dId].sch.some(a => 
-                            a.date === dataFormatadaBr && a.time === base.time
-                        );
+                        // Garantimos que a disciplina existe no dataStore daquela turma
+                        if (!turma.discs[dId]) {
+                            turma.discs[dId] = { name: aulaBase.disc, sch: [] };
+                        }
+
+                        // Evita duplicidade
+                        const jaExiste = turma.discs[dId].sch.some(a => a.date === dataFormatadaBr && a.time === aulaBase.time);
 
                         if (!jaExiste) {
                             turma.discs[dId].sch.push({
                                 date: dataFormatadaBr,
                                 dtObj: new Date(dataAtual),
-                                time: base.time,
-                                prof: base.prof,
+                                wd: dataAtual.toLocaleDateString('pt-BR', { weekday: 'long' }),
+                                time: aulaBase.time,
+                                prof: aulaBase.prof,
                                 tag: tagAula
                             });
                         }
@@ -1716,14 +1713,10 @@ async function gerarFuturoComBase() {
             });
         });
 
-        // Avança 1 dia no calendário
         dataAtual.setDate(dataAtual.getDate() + 1);
     }
 
-    alert("Projeção concluída para o ano de " + year);
-    
-    // Atualiza a tela se houver alguma tabela aberta
-    if (typeof renderizarTabelasAtivas === "function") renderizarTabelasAtivas();
+    console.log("Projeção finalizada.");
 }
 
 function renderD() {
@@ -1953,7 +1946,7 @@ function gerarGradeGeral() {
 // PRECISAMOS TERMINAR PARA FICAR BONITO E LEGAL
 // ABRAÇOS E BOA NOITE
 
-        function popularFiltroProfessores() {
+function popularFiltroProfessores() {
     const dataList = document.getElementById("listaProfessores");
     if (!dataList) return;
 
@@ -2017,7 +2010,7 @@ function limparResultados() {
     if (semestreSelectPivo) semestreSelectPivo.classList.add('hidden');
 }
 
-        function popularSelects() {
+function popularSelects() {
 
     const t1 = document.getElementById('turmaSelect');
     const t2 = document.getElementById('turmaSelectPivo');
@@ -2089,7 +2082,7 @@ if (semestreSelectEl) {
     semestreSelectEl.onchange = atualizarListaDisciplinas;
 }
 
-        function atualizarListaDisciplinas() {
+function atualizarListaDisciplinas() {
 
     const tId = document.getElementById('turmaSelect').value;
     const sem = document.getElementById('semestreSelect').value;
@@ -2274,7 +2267,7 @@ function renderPivo() {
     b.innerHTML = html;
 }
 
-        function gerarGrade() {
+function gerarGrade() {
 
     const prof = document.getElementById('profSelect').value;
     const week = document.getElementById('weekInput').value;
@@ -2480,7 +2473,7 @@ function renderPivo() {
     document.getElementById('gradeRender').innerHTML = h + "</tbody></table>";
 }
 
-        function gerarGradeTurma() {
+function gerarGradeTurma() {
 
     const tId = document.getElementById('turmaSelectSemanal').value;
     const week = document.getElementById('weekInputTurma').value;
@@ -2592,7 +2585,7 @@ function getStartOfWeek(w, y) {
     return s;
 }
 
-        function gerarCabecalhoPadrao(doc) {
+function gerarCabecalhoPadrao(doc) {
             doc.setFont("helvetica", "bold"); doc.setFontSize(14);
             doc.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", 105, 15, { align: "center" });
             doc.setFontSize(12); doc.text("CAMPUS CACOAL", 105, 22, { align: "center" });
@@ -2602,7 +2595,7 @@ function getStartOfWeek(w, y) {
             doc.setDrawColor(21, 128, 61); doc.setLineWidth(0.5); doc.line(14, 38, 196, 38);
         }
 
-        function gerarRodapePadrao(doc) {
+function gerarRodapePadrao(doc) {
             const pageCount = doc.internal.getNumberOfPages();
             for (let i = 1; i <= pageCount; i++) {
                 doc.setPage(i); doc.setFontSize(8); doc.setTextColor(100); doc.line(14, 285, 196, 285);
@@ -2611,7 +2604,7 @@ function getStartOfWeek(w, y) {
             }
         }
 
-        function exportarDisciplinaPDF() {
+function exportarDisciplinaPDF() {
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
