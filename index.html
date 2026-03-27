@@ -1498,67 +1498,70 @@ function ehSemestral(tId) {
 
 async function carregarDados() {
     const year = document.getElementById('yearSelect').value;
-    const urlGist = GIST_URLS[year];
+    const urlBase = GIST_URLS[year];
 
-    if (!urlGist) {
+    if (!urlBase) {
         alert("URL não configurada para o ano: " + year);
         return;
     }
 
-    // 1. RESET DE SEGURANÇA
-    // Limpamos os dados da memória para evitar conflito entre 2025 e 2026
+    // Adicionamos um carimbo de tempo (?t=...) para ignorar o cache do navegador e evitar o 404
+    const urlGist = urlBase + (urlBase.endsWith('/') ? '' : '/') + "?t=" + new Date().getTime();
+
+    // Reset de segurança para não misturar anos
     window.dataStore = {}; 
     window.BASE_HORARIOS = { integrado: {}, superior_s1: {}, superior_s2: {} };
 
     try {
-        // 2. BUSCA DO ARQUIVO CSV (Link Raw)
-        const response = await fetch(urlGist, { cache: "reload" });
-        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+        console.log("Buscando dados em:", urlGist);
+        const response = await fetch(urlGist);
+        
+        if (!response.ok) {
+            throw new Error(`Erro ${response.status}: Não foi possível acessar o Gist.`);
+        }
         
         const csvText = await response.text();
         const linhas = csvText.split('\n');
         if (linhas.length < 1) return;
 
-        // 3. MAPEAMENTO DINÂMICO DO CABEÇALHO
-        // O índice 0 é 'Dia', o 1 é 'Horário'. As turmas começam no índice 2.
+        // 1. MAPEAMENTO DO CABEÇALHO (Identifica as 57 turmas)
         const cabecalho = linhas[0].split(';');
         const mapaTurmas = {}; 
 
+        // Começa da coluna 2 (índice 2), pulando Dia e Horário
         for (let c = 2; c < cabecalho.length; c++) {
             const nomeTurma = cabecalho[c].trim();
             if (nomeTurma) {
-                // Criamos um ID limpo (ex: "1-a-agropecuaria")
                 const tId = nomeTurma.toLowerCase().replace(/[^a-z0-9]/g, '');
                 mapaTurmas[c] = { id: tId, nome: nomeTurma };
                 
-                // Inicializa a estrutura da turma no armazenamento global
+                // Inicializa a turma no dataStore
                 dataStore[tId] = { name: nomeTurma, discs: {} };
             }
         }
 
-        // 4. PROCESSAMENTO DAS LINHAS DE HORÁRIOS
+        // 2. PROCESSAMENTO DAS LINHAS (Distribuição dos dados)
         for (let i = 1; i < linhas.length; i++) {
             const linha = linhas[i].trim();
             if (!linha) continue;
 
             const colunas = linha.split(';');
-            const dataFelt = colunas[0]?.trim(); // "20/03/2026" ou "BASE_INT_SEG"
-            const horario  = colunas[1]?.trim(); // "07:30"
+            const dataFelt = colunas[0]?.trim(); // Ex: 20/03/2026
+            const horario  = colunas[1]?.trim(); // Ex: 07:30
 
             if (!dataFelt || !horario) continue;
 
-            // Percorre cada coluna de turma (da 3ª coluna em diante)
+            // Percorre as colunas de turmas (da 3ª em diante)
             for (let c = 2; c < colunas.length; c++) {
                 const conteudo = colunas[c]?.trim();
                 
-                // Ignora células vazias, hífens de preenchimento ou "Vago"
+                // Ignora se estiver vago ou sem aula
                 if (!conteudo || conteudo === "-" || conteudo === "" || conteudo.toLowerCase() === "vago") continue;
 
-                // SEPARAÇÃO: Disciplina - Professor
+                // SEPARAÇÃO: Disciplina - Professor (usando o último hífen)
                 let dNome, profRaw;
                 if (conteudo.includes('-')) {
                     const partes = conteudo.split('-');
-                    // O professor é sempre a última parte após o último hífen
                     profRaw = partes.pop().trim(); 
                     dNome = partes.join('-').trim(); 
                 } else {
@@ -1571,18 +1574,17 @@ async function carregarDados() {
 
                 const dId = dNome.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-                // Inicializa a Disciplina dentro desta Turma específica
                 if (!dataStore[infoTurma.id].discs[dId]) {
                     dataStore[infoTurma.id].discs[dId] = { name: dNome, sch: [] };
                 }
 
-                // A) TRATAMENTO DE HORÁRIO PADRÃO (Linhas "BASE_")
+                // A) Linha de Horário Padrão (BASE_)
                 if (dataFelt.startsWith("BASE_")) {
                     if (typeof processarLinhaBase === "function") {
                         processarLinhaBase(dataFelt, horario, profRaw, infoTurma.nome, dNome);
                     }
                 } 
-                // B) TRATAMENTO DE CRONOGRAMA REAL (Datas "DD/MM/AAAA")
+                // B) Linha de Cronograma Real (Datas)
                 else if (dataFelt.includes('/')) {
                     const [dia, mes, ano] = dataFelt.split('/');
                     const dtObj = new Date(ano, mes - 1, dia);
@@ -1598,15 +1600,22 @@ async function carregarDados() {
             }
         }
 
-        alert(`Sucesso! ${Object.keys(mapaTurmas).length} turmas carregadas para o ano ${year}.`);
+        // --- FINALIZAÇÃO ---
+        const loadingElem = document.getElementById('loading');
+        if (loadingElem) loadingElem.style.display = 'none';
+
+        alert(`Sucesso! ${Object.keys(mapaTurmas).length} turmas carregadas do Gist.`);
         
-        // 5. ATUALIZAÇÃO DA INTERFACE
         if (typeof atualizarSelects === "function") atualizarSelects();
-        if (typeof limparResultados === "function") limparResultados();
+
+        // 🔥 GATILHO DE VISUALIZAÇÃO: Resolve o problema de aparecer só ao redimensionar
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 300);
 
     } catch (error) {
-        console.error("Erro ao carregar CSV:", error);
-        alert("Erro técnico ao ler a planilha: " + error.message);
+        console.error("Erro técnico:", error);
+        alert("Falha ao carregar dados: " + error.message);
     }
 }
 
