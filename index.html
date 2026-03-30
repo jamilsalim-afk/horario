@@ -1662,39 +1662,35 @@ async function carregarDados() {
 async function gerarFuturoComBase() {
     console.log("--- INICIANDO DEPURACAO DA PROJEÇÃO ---");
     const year = document.getElementById('yearSelect').value;
-    const dadosAno = CALENDARIO_DINAMICO[year];
     
-    if (!dadosAno) {
-        console.error("ERRO: CALENDARIO_DINAMICO não encontrado para", year);
+    // Garantia de que o objeto global existe
+    if (typeof CALENDARIO_DINAMICO === 'undefined' || !CALENDARIO_DINAMICO[year]) {
+        console.error("ERRO: CALENDARIO_DINAMICO não configurado para", year);
         return;
     }
 
+    const dadosAno = CALENDARIO_DINAMICO[year];
     const limites = dadosAno.limites;
     
-    // 1. Define o ponto de partida (Amanhã ou a próxima data após o Gist)
-    let dataAtual;
-    const ultimaStr = (typeof getUltimaDataRegistrada === "function") ? getUltimaDataRegistrada() : null;
-    
-    if (ultimaStr) {
-        const p = ultimaStr.split('/');
-        dataAtual = new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
-        dataAtual.setDate(dataAtual.getDate() + 1);
-    } else {
-        dataAtual = new Date();
-    }
+    // 1. PONTO DE PARTIDA (O ajuste crucial)
+    // Se começarmos APÓS a última data do Gist, e o Gist for até o fim do ano, o loop nunca roda.
+    // Vamos definir o início como HOJE, mas permitindo que você ajuste para o início do semestre se quiser recalcular tudo.
+    let dataAtual = new Date();
+    dataAtual.setHours(0, 0, 0, 0); 
 
-    // 2. Define o limite final do ano (Garante que não projete infinitamente)
-    const fimAnoStr = limites.integrado?.fim || limites.superior?.s2?.fim || `${year}-12-31`;
-    const dataLimiteAno = new Date(fimAnoStr + "T23:59:59");
+    // 2. LIMITE FINAL
+    // Busca a maior data possível entre os calendários configurados
+    const dataLimiteAno = new Date((limites.superior?.s2?.fim || limites.integrado?.fim || `${year}-12-31`) + "T23:59:59");
 
     console.log(`Projetando de ${dataAtual.toLocaleDateString()} até ${dataLimiteAno.toLocaleDateString()}`);
 
     let aulasContabilizadas = 0;
 
-    // Loop dia a dia
+    // 3. LOOP PRINCIPAL (Dia a dia)
     while (dataAtual <= dataLimiteAno) {
-        const diaSemana = dataAtual.getDay(); // 0 = Dom, 6 = Sáb
+        const diaSemana = dataAtual.getDay(); // 0 = Dom, 1 = Seg... 6 = Sáb
         const dataIso = dataAtual.toISOString().split('T')[0];
+        const dataLocalStr = dataAtual.toLocaleDateString('pt-BR');
 
         // Pula Domingos e Feriados Globais
         if (diaSemana === 0 || (typeof ehFeriado === "function" && ehFeriado(dataAtual))) {
@@ -1702,12 +1698,13 @@ async function gerarFuturoComBase() {
             continue;
         }
 
+        // Percorre todas as turmas carregadas no dataStore
         Object.keys(window.dataStore).forEach(tId => {
-            const superior = ehSemestral(tId);
+            const superior = (typeof ehSemestral === "function") ? ehSemestral(tId) : false;
             
             // Determina qual base de horário usar (Integrado, S1 ou S2)
             let baseTipoReal = "integrado";
-            if (superior) {
+            if (superior && limites.superior) {
                 const s1Fim = new Date(limites.superior.s1.fim + "T23:59:59");
                 baseTipoReal = (dataAtual <= s1Fim) ? "superior_s1" : "superior_s2";
             }
@@ -1718,25 +1715,35 @@ async function gerarFuturoComBase() {
                 Object.keys(baseTurma).forEach(dId => {
                     baseTurma[dId].forEach(aulaBase => {
                         
-                        // Validação A: É um dia útil que bate com o horário fixo?
+                        // Validação A: É o dia da semana padrão da aula? (Seg-Sex)
                         const eDiaBase = (diaSemana >= 1 && diaSemana <= 5 && aulaBase.diaSemana === diaSemana);
                         
-                        // Validação B: É um sábado letivo que substitui esse dia da semana?
+                        // Validação B: É um sábado letivo que substitui este dia da semana?
                         const sabadoConfig = (dadosAno.sabados || []).find(s => s.data === dataIso);
-                        const eSabadoLetivo = (diaSemana === 6 && sabadoConfig && sabadoConfig.referencia === aulaBase.diaSemana);
+                        const eSabadoLetivo = (diaSemana === 6 && sabadoConfig && parseInt(sabadoConfig.referencia) === aulaBase.diaSemana);
 
                         if (eDiaBase || eSabadoLetivo) {
-                            // Verifica se a turma está em férias/recesso nesse dia
-                            if (estaDentroPeriodoLetivo(dataAtual, tId)) {
-                                
-                                // Se a disciplina não existir no store, cria
+                            
+                            // Validação C: A turma está em período letivo? (Pula férias/recessos específicos)
+                            if (typeof estaDentroPeriodoLetivo === "function" && !estaDentroPeriodoLetivo(dataAtual, tId)) {
+                                return;
+                            }
+
+                            // Validação D: EVITAR DUPLICIDADE
+                            // Se a aula já existe (veio do Gist/Manual), não projetamos por cima.
+                            const jaExiste = window.dataStore[tId].discs[dId]?.sch.some(a => 
+                                a.date === dataLocalStr && a.time === aulaBase.time
+                            );
+
+                            if (!jaExiste) {
+                                // Se a disciplina não existir no store para esta turma, cria a estrutura
                                 if (!window.dataStore[tId].discs[dId]) {
                                     window.dataStore[tId].discs[dId] = { name: aulaBase.disc || dId, sch: [] };
                                 }
 
-                                // Adiciona a aula projetada
+                                // Inserção da Aula Projetada
                                 window.dataStore[tId].discs[dId].sch.push({
-                                    date: dataAtual.toLocaleDateString('pt-BR'),
+                                    date: dataLocalStr,
                                     dtObj: new Date(dataAtual),
                                     wd: dataAtual.toLocaleDateString('pt-BR', { weekday: 'long' }),
                                     time: aulaBase.time,
@@ -1750,8 +1757,11 @@ async function gerarFuturoComBase() {
                 });
             }
         });
+
+        // Avança para o próximo dia
         dataAtual.setDate(dataAtual.getDate() + 1);
     }
+
     console.log(`--- FIM DA PROJEÇÃO: ${aulasContabilizadas} aulas geradas ---`);
 }
 
