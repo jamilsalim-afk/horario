@@ -1515,147 +1515,137 @@ function ehSemestral(tId) {
 }
 
 async function carregarDados() {
+    console.log("--- INICIANDO PROCESSAMENTO COMPLETO DO GIST ---");
     try {
         const yearSelected = document.getElementById('yearSelect').value;
         
-        // 1. Verificação de Segurança do Calendário (Agora usando CALENDARIO_DINAMICO)
-        const dadosAno = (typeof CALENDARIO_DINAMICO !== 'undefined') ? CALENDARIO_DINAMICO[yearSelected] : null;
-        const limites = dadosAno ? dadosAno.limites : null;
-        
-        const infoYearEl = document.getElementById('infoYear');
-        if (infoYearEl) infoYearEl.textContent = yearSelected;
-
-        // Função auxiliar interna para formatar as strings "YYYY-MM-DD" para o usuário
-        const formatarParaExibicao = (str) => {
-            if (!str) return "";
-            return str.split('-').reverse().join('/');
+        // Inicialização de Segurança dos Objetos Globais
+        window.dataStore = {};
+        window.BASE_HORARIOS = { 
+            integrado: {}, 
+            superior_s1: {}, 
+            superior_s2: {} 
         };
 
-        // Só tenta preencher as datas se os limites existirem na nova estrutura
-        if (limites && limites.superior) {
-            const s1El = document.getElementById('semestre1');
-            const s2El = document.getElementById('semestre2');
+        // 1. BUSCA DOS DADOS NO GIST (Anti-Cache)
+        const url = GIST_URLS[yearSelected] + "?t=" + new Date().getTime();
+        const res = await fetch(url);
+        const csv = await res.text();
 
-            if (s1El && limites.superior.s1) {
-                s1El.textContent = `${formatarParaExibicao(limites.superior.s1.inicio)} a ${formatarParaExibicao(limites.superior.s1.fim)}`;
-            }
-            if (s2El && limites.superior.s2) {
-                s2El.textContent = `${formatarParaExibicao(limites.superior.s2.inicio)} a ${formatarParaExibicao(limites.superior.s2.fim)}`;
-            }
-        } else {
-            console.warn(`Aviso: Calendário para ${yearSelected} não configurado ou sem limites. As datas de semestre ficarão vazias.`);
-        }
-
-        const loadingElem = document.getElementById('loading');
-        if (loadingElem) loadingElem.classList.remove('hidden');
-
-        // 2. Busca de Dados (Gist)
-        // Mantido: assume-se que GIST_URLS ainda existe como base de caminhos
-        const urlGist = GIST_URLS[yearSelected] + "?t=" + new Date().getTime();
-        const res = await fetch(urlGist);
-        if (!res.ok) throw new Error(`Erro ao acessar Gist: ${res.status}`);
-        
-        let csv = await res.text();
-        
-        // Correção específica para quebras de linha em AGRONOMIA (Mantido conforme original)
-        csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
-
+        // 2. TRATAMENTO DE LINHAS E CABEÇALHO
         const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
-        if (lines.length < 1) throw new Error("Arquivo CSV vazio.");
+        if (lines.length === 0) throw new Error("O CSV está vazio!");
 
         const headers = lines[0].split(';').map(h => h.trim());
-        const turmasHeaders = headers.slice(2); 
+        const turmasHeaders = headers.slice(2); // Pula 'Dia' e 'Horário'
 
-        // 3. Reset dos Depósitos de Dados (Mantido)
-        window.dataStore = {};
-        window.BASE_HORARIOS = { integrado: {}, superior_s1: {}, superior_s2: {} };
+        // 3. MAPEAMENTO DE DIAS DA SEMANA (Essencial para Projeção)
+        const MAPA_DIAS = { 
+            'SEG': 1, 'TER': 2, 'QUA': 3, 'QUI': 4, 'SEX': 5, 'SAB': 6, 'DOM': 0 
+        };
 
-        let lastDate = "";
-
-        // 4. Processamento das Linhas
-        lines.slice(1).forEach(line => {
+        // 4. LOOP PRINCIPAL DE 100 LINHAS (Processamento Linha por Linha)
+        lines.slice(1).forEach((line, lineIdx) => {
             const cols = line.split(';').map(c => c?.trim());
+            const identificador = cols[0] || "";
+            const horario = cols[1] || "";
 
-            if (cols[0] && cols[0].length > 0) { 
-                lastDate = cols[0].replace(/\./g, '/'); 
+            if (!horario) return; // Pula linhas sem horário definido
+
+            // --- BLOCO A: PROCESSAMENTO DE HORÁRIOS BASE (MOLDE) ---
+            if (identificador.startsWith("BASE_")) {
+                const partes = identificador.split('_'); 
+                let tipoChave = "integrado";
+                let diaTexto = "";
+
+                // Lógica de Identificação de Prefixo (INT vs SUP_S1 vs SUP_S2)
+                if (partes[1] === "INT") {
+                    tipoChave = "integrado";
+                    diaTexto = partes[2]; // Ex: BASE_INT_SEG
+                } else if (partes[1] === "SUP") {
+                    // Trata BASE_SUP_S1_SEG ou BASE_SUP_S2_SEG
+                    tipoChave = partes[2] === "S1" ? "superior_s1" : "superior_s2";
+                    diaTexto = partes[3];
+                }
+
+                const diaNum = MAPA_DIAS[diaTexto];
+
+                // Itera pelas turmas na linha de BASE
+                turmasHeaders.forEach((tNome, idx) => {
+                    const conteudoCelula = cols[idx + 2];
+                    if (!conteudoCelula || conteudoCelula.length < 3 || conteudoCelula === "0") return;
+
+                    const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    
+                    // Separa Disciplina e Professor
+                    let discNome = conteudoCelula, profNome = "N/I";
+                    if (conteudoCelula.includes(' - ')) {
+                        const partesN = conteudoCelula.split(' - ');
+                        profNome = partesN.pop().trim();
+                        discNome = partesN.join(' - ').trim();
+                    }
+                    const dId = discNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+                    // Alimenta o Objeto de Moldes
+                    if (!window.BASE_HORARIOS[tipoChave][tId]) window.BASE_HORARIOS[tipoChave][tId] = {};
+                    if (!window.BASE_HORARIOS[tipoChave][tId][dId]) window.BASE_HORARIOS[tipoChave][tId][dId] = [];
+
+                    window.BASE_HORARIOS[tipoChave][tId][dId].push({
+                        diaSemana: diaNum,
+                        time: horario,
+                        disc: discNome,
+                        prof: profNome
+                    });
+                });
             }
 
-            if (!cols[1] || !lastDate) return;
+            // --- BLOCO B: PROCESSAMENTO DE DATAS REAIS (GIST HISTÓRICO) ---
+            else if (identificador.includes("/")) {
+                const dataLimpa = identificador.replace(/\./g, '/');
+                const p = dataLimpa.split('/');
+                const dtObj = new Date(p[2], p[1]-1, p[0]);
 
-            turmasHeaders.forEach((tNome, idx) => {
-                const cell = cols[idx + 2];
-                if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
+                turmasHeaders.forEach((tNome, idx) => {
+                    const conteudoCelula = cols[idx + 2];
+                    if (!conteudoCelula || conteudoCelula.length < 3) return;
 
-                // A) Linha BASE (Mantido: processarLinhaBase já foi corrigida para usar o novo calendário)
-                if (typeof processarLinhaBase === "function") {
-                    if (processarLinhaBase(cols[0], cols[1], cell, tNome)) return;
-                }
+                    const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    if (!dataStore[tId]) dataStore[tId] = { name: tNome, discs: {} };
 
-                if (cols[0].startsWith("BASE_")) return;
-                
-                // Filtro de ano (Segurança para garantir que estamos lendo dados do ano certo)
-                if (!lastDate.includes(`/${yearSelected}`)) return;
+                    let discNome = conteudoCelula, profNome = "N/I";
+                    if (conteudoCelula.includes(' - ')) {
+                        const partesN = conteudoCelula.split(' - ');
+                        profNome = partesN.pop().trim();
+                        discNome = partesN.join(' - ').trim();
+                    }
+                    const dId = discNome.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-                const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-                if (!dataStore[tId]) {
-                    dataStore[tId] = { name: tNome, discs: {} };
-                }
-
-                // Extração de Tags e Nomes (Mantido)
-                const tagM = cell.match(/\[(.*?)\]/);
-                const tag = tagM ? tagM[1].toUpperCase() : null;
-                const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
-
-                let discNome, profNome;
-                if (cleanT.includes(' - ')) {
-                    const partes = cleanT.split(' - ');
-                    profNome = partes.pop().trim();
-                    discNome = partes.join(' - ').trim();
-                } else { 
-                    discNome = cleanT; 
-                    profNome = "N/I"; 
-                }
-
-                const dId = discNome.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-                if (!dataStore[tId].discs[dId]) {
-                    dataStore[tId].discs[dId] = { name: discNome, sch: [] };
-                }
-
-                // Criação do objeto de data para o agendamento
-                const p = lastDate.split('/');
-                const dt = new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]), 12, 0, 0);
-
-                dataStore[tId].discs[dId].sch.push({ 
-                    date: lastDate, 
-                    dtObj: dt, 
-                    wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }), 
-                    time: cols[1], 
-                    prof: (typeof traduzirProfessor === "function") ? traduzirProfessor(profNome) : profNome, 
-                    tag: tag 
+                    if (!dataStore[tId].discs[dId]) dataStore[tId].discs[dId] = { name: discNome, sch: [] };
+                    
+                    dataStore[tId].discs[dId].sch.push({
+                        date: dataLimpa,
+                        dtObj: dtObj,
+                        wd: dtObj.toLocaleDateString('pt-BR', { weekday: 'long' }),
+                        time: horario,
+                        prof: profNome
+                    });
                 });
-            });
+            }
         });
 
-        // 5. Finalização (Mantido)
-        if (loadingElem) loadingElem.classList.add('hidden');
-
-        if (typeof gerarFuturoComBase === "function") gerarFuturoComBase();
-        if (typeof popularSelects === "function") popularSelects();
-        if (typeof limparResultados === "function") limparResultados();
-
-        setTimeout(() => { 
-            window.dispatchEvent(new Event('resize')); 
-        }, 300);
-
-    } catch (e) { 
-        console.error("Erro Crítico:", e);
-        const loading = document.getElementById('loading');
-        if (loading) {
-            loading.innerHTML = `<span class="text-red-500">Erro: ${e.message}</span>`;
-            loading.classList.remove('hidden');
+        console.log("Mapeamento de Bases concluído com sucesso.");
+        
+        // 5. DISPARO DA PROJEÇÃO (Agora com BASE_HORARIOS preenchido corretamente)
+        if (typeof gerarFuturoComBase === "function") {
+            await gerarFuturoComBase();
         }
+
+        // Finalização da UI
+        if (typeof popularSelects === "function") popularSelects();
+
+    } catch (e) {
+        console.error("ERRO CRÍTICO NO CARREGAMENTO:", e);
+        alert("Erro ao carregar dados do Gist. Verifique o console (F12).");
     }
 }
 
