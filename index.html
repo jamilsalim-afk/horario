@@ -1652,17 +1652,14 @@ async function gerarFuturoComBase() {
     const dadosAno = CALENDARIO_DINAMICO[year];
 
     if (!dadosAno) {
-        console.error("ERRO: CALENDARIO_DINAMICO não encontrado para", year);
+        console.error("Calendário não encontrado:", year);
         return;
     }
 
     const limites = dadosAno.limites;
 
-    // 🔷 Define ponto inicial da projeção
     let dataAtual;
-    const ultimaData = (typeof getUltimaDataRegistrada === "function")
-        ? getUltimaDataRegistrada()
-        : null;
+    const ultimaData = getUltimaDataRegistrada();
 
     if (ultimaData) {
         dataAtual = new Date(ultimaData);
@@ -1671,7 +1668,6 @@ async function gerarFuturoComBase() {
         dataAtual = new Date();
     }
 
-    // 🔷 Limite final do período
     const fimAnoStr =
         limites.integrado?.fim ||
         limites.superior?.s2?.fim ||
@@ -1683,34 +1679,22 @@ async function gerarFuturoComBase() {
         `Projetando de ${dataAtual.toLocaleDateString()} até ${dataLimiteAno.toLocaleDateString()}`
     );
 
+    console.log("BASE_HORARIOS:", window.BASE_HORARIOS);
+    console.log("TURMAS DATASTORE:", Object.keys(window.dataStore));
+
     let aulasContabilizadas = 0;
 
-    // 🔷 Loop diário
     while (dataAtual <= dataLimiteAno) {
-        const diaSemana = dataAtual.getDay(); // 0=Dom, 6=Sáb
+        const diaSemana = dataAtual.getDay();
 
-        // 🔥 CORREÇÃO FUSO HORÁRIO (evita bug UTC)
-        const dataIso =
-            dataAtual.getFullYear() + "-" +
-            String(dataAtual.getMonth() + 1).padStart(2, "0") + "-" +
-            String(dataAtual.getDate()).padStart(2, "0");
-
-        // 🔷 Ignora domingos e feriados
-        if (
-            diaSemana === 0 ||
-            (typeof ehFeriado === "function" && ehFeriado(dataAtual))
-        ) {
+        if (diaSemana === 0) {
             dataAtual.setDate(dataAtual.getDate() + 1);
             continue;
         }
 
         Object.keys(window.dataStore).forEach(tId => {
-            const superior =
-                (typeof ehSemestral === "function")
-                    ? ehSemestral(tId)
-                    : false;
+            const superior = ehSemestral(tId);
 
-            // 🔷 Define qual base usar
             let baseTipoReal = "integrado";
 
             if (superior && limites.superior?.s1?.fim) {
@@ -1727,74 +1711,37 @@ async function gerarFuturoComBase() {
             const baseTurma =
                 window.BASE_HORARIOS?.[baseTipoReal]?.[tId];
 
+            console.log("TURMA:", tId);
+            console.log("TIPO BASE:", baseTipoReal);
+            console.log("BASE TURMA:", baseTurma);
+
             if (!baseTurma) return;
 
             Object.keys(baseTurma).forEach(dId => {
                 baseTurma[dId].forEach(aulaBase => {
-                    // 🔷 Aula regular do mesmo dia da semana
+                    console.log("AULA BASE:", aulaBase);
+
                     const eDiaBase =
-                        diaSemana >= 1 &&
-                        diaSemana <= 5 &&
                         aulaBase.diaSemana === diaSemana;
 
-                    // 🔷 Sábado letivo
-                    const sabadoConfig =
-                        (dadosAno.sabados || []).find(
-                            s => s.data === dataIso
-                        );
+                    console.log("BATE DIA?", eDiaBase);
 
-                    const eSabadoLetivo =
-                        diaSemana === 6 &&
-                        sabadoConfig &&
-                        sabadoConfig.referencia === aulaBase.diaSemana;
+                    if (eDiaBase) {
+                        console.log("PASSOU NO DIA");
 
-                    if (eDiaBase || eSabadoLetivo) {
-                        if (
-                            typeof estaDentroPeriodoLetivo === "function" &&
-                            estaDentroPeriodoLetivo(dataAtual, tId)
-                        ) {
-                            if (!window.dataStore[tId].discs[dId]) {
-                                window.dataStore[tId].discs[dId] = {
-                                    name: aulaBase.name || aulaBase.disc || dId,
-                                    sch: []
-                                };
-                            }
+                        const dentro =
+                            estaDentroPeriodoLetivo(dataAtual, tId);
 
-                            const dataBR =
-                                dataAtual.toLocaleDateString("pt-BR");
+                        console.log("PERÍODO LETIVO?", dentro);
 
-                            // 🔥 Evita duplicidade
-                            const existe =
-                                window.dataStore[tId].discs[dId].sch.some(
-                                    a =>
-                                        a.date === dataBR &&
-                                        a.time === aulaBase.time
-                                );
-
-                            if (!existe) {
-                                window.dataStore[tId].discs[dId].sch.push({
-                                    date: dataBR,
-                                    dtObj: new Date(dataAtual),
-                                    wd: dataAtual.toLocaleDateString(
-                                        "pt-BR",
-                                        { weekday: "long" }
-                                    ),
-                                    time: aulaBase.time || "",
-                                    prof: aulaBase.prof || "N/I",
-                                    tag: eSabadoLetivo
-                                        ? "SÁBADO LETIVO"
-                                        : "PROJETADA"
-                                });
-
-                                aulasContabilizadas++;
-                            }
+                        if (dentro) {
+                            aulasContabilizadas++;
                         }
                     }
                 });
             });
         });
 
-        // 🔷 Próximo dia
         dataAtual.setDate(dataAtual.getDate() + 1);
     }
 
