@@ -1651,123 +1651,78 @@ async function carregarDados() {
 
 async function gerarFuturoComBase() {
     console.log("--- [DEBUG] INICIANDO PROJEÇÃO DETALHADA ---");
-    
-    const yearSelectEl = document.getElementById('yearSelect');
-    const year = yearSelectEl ? yearSelectEl.value : new Date().getFullYear().toString();
-    
-    if (typeof CALENDARIO_DINAMICO === 'undefined' || !CALENDARIO_DINAMICO[year]) {
-        console.error("--- [DEBUG] ERRO: CALENDARIO_DINAMICO não encontrado para", year);
-        return;
-    }
-
+    const year = document.getElementById('yearSelect').value;
     const dadosAno = CALENDARIO_DINAMICO[year];
     const limites = dadosAno.limites;
-    
+
     let dataAtual = new Date();
     dataAtual.setHours(0, 0, 0, 0);
 
-    let dataLimiteAno;
-    try {
-        const fI = limites.integrado?.fim;
-        const fS = limites.superior?.s2?.fim;
-        const dataStr = fS || fI || `${year}-12-31`;
-        dataLimiteAno = new Date(dataStr + "T23:59:59");
-    } catch (err) {
-        dataLimiteAno = new Date(`${year}-12-31T23:59:59`);
-    }
-
-    console.log(`--- [DEBUG] Janela de Projeção: ${dataAtual.toLocaleDateString()} até ${dataLimiteAno.toLocaleDateString()}`);
-
-    const qtdBases = Object.keys(window.BASE_HORARIOS || {}).reduce((acc, curr) => acc + Object.keys(window.BASE_HORARIOS[curr]).length, 0);
-    console.log(`--- [DEBUG] Turmas com horário base carregado: ${qtdBases}`);
-
-    if (qtdBases === 0) {
-        console.warn("--- [DEBUG] AVISO: BASE_HORARIOS está vazio. A projeção não tem modelos para seguir.");
-    }
+    const dataLimiteAno = new Date((limites.superior?.s2?.fim || limites.integrado?.fim || `${year}-12-31`) + "T23:59:59");
+    console.log(`--- [DEBUG] Janela: ${dataAtual.toLocaleDateString()} até ${dataLimiteAno.toLocaleDateString()}`);
 
     let aulasContabilizadas = 0;
 
     while (dataAtual <= dataLimiteAno) {
         const diaSemana = dataAtual.getDay();
         const dataIso = dataAtual.toISOString().split('T')[0];
-        const dataLocalStr = dataAtual.toLocaleDateString('pt-BR');
+        const dataLocalStr = dataAtual.toLocaleDateString('pt-BR'); // Formato "DD/MM/AAAA"
 
-        const eFeriado = (typeof ehFeriado === "function" && ehFeriado(dataAtual));
-        if (diaSemana === 0 || eFeriado) {
+        if (diaSemana === 0 || (typeof ehFeriado === "function" && ehFeriado(dataAtual))) {
             dataAtual.setDate(dataAtual.getDate() + 1);
             continue;
         }
 
         Object.keys(window.dataStore).forEach(tId => {
-
-            // =====================================================
-            // 🔥 NOVA LÓGICA (SUBSTITUI ehSemestral)
-            // =====================================================
+            const superior = (typeof ehSemestral === "function") ? ehSemestral(tId) : false;
+            
             let baseTipoReal = "integrado";
-
-            const temS1 = window.BASE_HORARIOS.superior_s1?.[tId];
-            const temS2 = window.BASE_HORARIOS.superior_s2?.[tId];
-
-            if (temS1 || temS2) {
-                if (limites?.superior?.s1?.fim) {
-                    const s1Fim = new Date(limites.superior.s1.fim + "T23:59:59");
-                    baseTipoReal = (dataAtual <= s1Fim) ? "superior_s1" : "superior_s2";
-                }
+            if (superior && limites.superior) {
+                const s1Fim = new Date(limites.superior.s1.fim + "T23:59:59");
+                baseTipoReal = (dataAtual <= s1Fim) ? "superior_s1" : "superior_s2";
             }
 
             const baseTurma = window.BASE_HORARIOS[baseTipoReal]?.[tId];
+            if (!baseTurma) return;
 
-            if (baseTurma) {
-                Object.keys(baseTurma).forEach(dId => {
-                    baseTurma[dId].forEach(aulaBase => {
-                        
-                        const eDiaBase = (diaSemana >= 1 && diaSemana <= 5 && aulaBase.diaSemana === diaSemana);
-                        
-                        const sabadoConfig = (dadosAno.sabados || []).find(s => s.data === dataIso);
-                        const eSabadoLetivo = (diaSemana === 6 && sabadoConfig && Number(sabadoConfig.referencia) === aulaBase.diaSemana);
+            Object.keys(baseTurma).forEach(dId => {
+                baseTurma[dId].forEach(aulaBase => {
+                    const eDiaBase = (diaSemana >= 1 && diaSemana <= 5 && aulaBase.diaSemana === diaSemana);
+                    const sabadoConfig = (dadosAno.sabados || []).find(s => s.data === dataIso);
+                    const eSabadoLetivo = (diaSemana === 6 && sabadoConfig && Number(sabadoConfig.referencia) === aulaBase.diaSemana);
 
-                        if (eDiaBase || eSabadoLetivo) {
-                            
-                            if (typeof estaDentroPeriodoLetivo === "function") {
-                                if (!estaDentroPeriodoLetivo(dataAtual, tId)) return;
+                    if (eDiaBase || eSabadoLetivo) {
+                        if (typeof estaDentroPeriodoLetivo === "function" && !estaDentroPeriodoLetivo(dataAtual, tId)) return;
+
+                        // --- AJUSTE CRUCIAL: VERIFICAÇÃO DE DUPLICIDADE ---
+                        // Verificamos se já existe uma aula "Real" (não projetada) naquele horário e data
+                        const aulaExistente = window.dataStore[tId].discs[dId]?.sch.find(a => 
+                            a.date === dataLocalStr && a.time === aulaBase.time
+                        );
+
+                        // Só projetamos se não existir NADA ou se o que existir for apenas um placeholder vazio
+                        if (!aulaExistente) {
+                            if (!window.dataStore[tId].discs[dId]) {
+                                window.dataStore[tId].discs[dId] = { name: aulaBase.disc, sch: [] };
                             }
 
-                            const jaExiste = window.dataStore[tId].discs[dId]?.sch.some(a => 
-                                a.date === dataLocalStr && a.time === aulaBase.time
-                            );
-
-                            if (!jaExiste) {
-
-                                if (!window.dataStore[tId].discs[dId]) {
-                                    window.dataStore[tId].discs[dId] = { name: aulaBase.disc || dId, sch: [] };
-                                }
-
-                                window.dataStore[tId].discs[dId].sch.push({
-                                    date: dataLocalStr,
-                                    dtObj: new Date(dataAtual),
-                                    wd: dataAtual.toLocaleDateString('pt-BR', { weekday: 'long' }),
-                                    time: aulaBase.time,
-                                    prof: (typeof traduzirProfessor === "function") ? traduzirProfessor(aulaBase.prof) : aulaBase.prof,
-                                    tag: eSabadoLetivo ? "SÁBADO LETIVO" : "PROJETADA"
-                                });
-
-                                aulasContabilizadas++;
-                            }
+                            window.dataStore[tId].discs[dId].sch.push({
+                                date: dataLocalStr,
+                                dtObj: new Date(dataAtual),
+                                wd: dataAtual.toLocaleDateString('pt-BR', { weekday: 'long' }),
+                                time: aulaBase.time,
+                                prof: (typeof traduzirProfessor === "function") ? traduzirProfessor(aulaBase.prof) : aulaBase.prof,
+                                tag: eSabadoLetivo ? "SÁBADO LETIVO" : "PROJETADA"
+                            });
+                            aulasContabilizadas++;
                         }
-                    });
+                    }
                 });
-            } else {
-                // 🔍 DEBUG EXTRA (opcional, pode remover depois)
-                // console.warn("SEM BASE:", tId, baseTipoReal);
-            }
+            });
         });
-
         dataAtual.setDate(dataAtual.getDate() + 1);
     }
-
     console.log(`--- [DEBUG] FIM DA PROJEÇÃO: ${aulasContabilizadas} aulas geradas ---`);
-    
-    if (typeof popularSelects === "function") popularSelects();
 }
 
 function renderD() {
