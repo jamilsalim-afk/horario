@@ -1517,10 +1517,14 @@ function ehSemestral(tId) {
 async function carregarDados() {
     try {
         const yearSelected = document.getElementById('yearSelect').value;
-        
-        const dadosAno = (typeof CALENDARIO_DINAMICO !== 'undefined') ? CALENDARIO_DINAMICO[yearSelected] : null;
+
+        const dadosAno =
+            typeof CALENDARIO_DINAMICO !== 'undefined'
+                ? CALENDARIO_DINAMICO[yearSelected]
+                : null;
+
         const limites = dadosAno ? dadosAno.limites : null;
-        
+
         const infoYearEl = document.getElementById('infoYear');
         if (infoYearEl) infoYearEl.textContent = yearSelected;
 
@@ -1534,114 +1538,204 @@ async function carregarDados() {
             const s2El = document.getElementById('semestre2');
 
             if (s1El && limites.superior.s1) {
-                s1El.textContent = `${formatarParaExibicao(limites.superior.s1.inicio)} a ${formatarParaExibicao(limites.superior.s1.fim)}`;
+                s1El.textContent =
+                    `${formatarParaExibicao(limites.superior.s1.inicio)} a ${formatarParaExibicao(limites.superior.s1.fim)}`;
             }
+
             if (s2El && limites.superior.s2) {
-                s2El.textContent = `${formatarParaExibicao(limites.superior.s2.inicio)} a ${formatarParaExibicao(limites.superior.s2.fim)}`;
+                s2El.textContent =
+                    `${formatarParaExibicao(limites.superior.s2.inicio)} a ${formatarParaExibicao(limites.superior.s2.fim)}`;
             }
         }
 
         const loadingElem = document.getElementById('loading');
         if (loadingElem) loadingElem.classList.remove('hidden');
 
-        const urlGist = GIST_URLS[yearSelected] + "?t=" + new Date().getTime();
+        const urlGist =
+            GIST_URLS[yearSelected] + "?t=" + new Date().getTime();
+
         const res = await fetch(urlGist);
-        if (!res.ok) throw new Error(`Erro ao acessar Gist: ${res.status}`);
-        
+
+        if (!res.ok) {
+            throw new Error(`Erro ao acessar Gist: ${res.status}`);
+        }
+
         let csv = await res.text();
+
         csv = csv.replace(/(AGRONOMIA)(\d)/g, "$1\n$2");
 
-        const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
-        if (lines.length < 1) throw new Error("Arquivo CSV vazio.");
+        const lines = csv
+            .split(/\r?\n/)
+            .filter(l => l.trim().length > 0);
 
-        const headers = lines[0].split(';').map(h => h.trim());
-        const turmasHeaders = headers.slice(2); 
+        if (lines.length < 1) {
+            throw new Error("Arquivo CSV vazio.");
+        }
+
+        const headers = lines[0]
+            .split(';')
+            .map(h => h.trim());
+
+        const turmasHeaders = headers.slice(2);
 
         window.dataStore = {};
-        window.BASE_HORARIOS = { integrado: {}, superior_s1: {}, superior_s2: {} };
+        window.BASE_HORARIOS = {
+            integrado: {},
+            superior_s1: {},
+            superior_s2: {}
+        };
 
         let lastDate = "";
 
         lines.slice(1).forEach(line => {
             const cols = line.split(';').map(c => c?.trim());
 
-            const isLinhaBase = cols[0]?.startsWith("BASE_");
+            const isLinhaBase =
+                cols[0] && cols[0].startsWith("BASE_");
 
-            // 🔥 PROCESSA BASE PRIMEIRO (CORREÇÃO PRINCIPAL)
+            // 🔥 PROCESSA AS BASES PRIMEIRO
             if (isLinhaBase) {
                 turmasHeaders.forEach((tNome, idx) => {
                     const cell = cols[idx + 2];
-                    if (cell && typeof processarLinhaBase === "function") {
-                        processarLinhaBase(cols[0], cols[1], cell, tNome);
+
+                    if (
+                        cell &&
+                        typeof processarLinhaBase === "function"
+                    ) {
+                        processarLinhaBase(
+                            cols[0],
+                            cols[1],
+                            cell,
+                            tNome
+                        );
                     }
                 });
+
                 return;
             }
 
-            if (cols[0] && cols[0].length > 0) { 
-                lastDate = cols[0].replace(/\./g, '/'); 
+            // 🔥 CAPTURA DATA
+            if (cols[0] && cols[0].length > 0) {
+                lastDate = cols[0].replace(/\./g, '/');
             }
 
+            // 🔥 IGNORA LINHAS SEM HORÁRIO OU SEM DATA
             if (!cols[1] || !lastDate) return;
-
-            if (!lastDate.includes(`/${yearSelected}`)) return;
 
             turmasHeaders.forEach((tNome, idx) => {
                 const cell = cols[idx + 2];
-                if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
 
-                const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (
+                    !cell ||
+                    cell === "" ||
+                    cell === "0" ||
+                    cell.length < 3
+                ) return;
 
-                if (!dataStore[tId]) {
-                    dataStore[tId] = { name: tNome, discs: {} };
+                const tId = tNome
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]/g, '');
+
+                if (!window.dataStore[tId]) {
+                    window.dataStore[tId] = {
+                        name: tNome,
+                        discs: {}
+                    };
                 }
 
                 const tagM = cell.match(/\[(.*?)\]/);
-                const tag = tagM ? tagM[1].toUpperCase() : null;
-                const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
+
+                const tag = tagM
+                    ? tagM[1].toUpperCase()
+                    : null;
+
+                const cleanT = tagM
+                    ? cell.replace(tagM[0], "").trim()
+                    : cell;
 
                 let discNome, profNome;
+
                 if (cleanT.includes(' - ')) {
                     const partes = cleanT.split(' - ');
                     profNome = partes.pop().trim();
                     discNome = partes.join(' - ').trim();
-                } else { 
-                    discNome = cleanT; 
-                    profNome = "N/I"; 
+                } else {
+                    discNome = cleanT;
+                    profNome = "N/I";
                 }
 
-                const dId = discNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+                const dId = discNome
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]/g, '');
 
-                if (!dataStore[tId].discs[dId]) {
-                    dataStore[tId].discs[dId] = { name: discNome, sch: [] };
+                if (!window.dataStore[tId].discs[dId]) {
+                    window.dataStore[tId].discs[dId] = {
+                        name: discNome,
+                        sch: []
+                    };
                 }
 
                 const p = lastDate.split('/');
-                const dt = new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]), 12, 0, 0);
 
-                dataStore[tId].discs[dId].sch.push({ 
-                    date: lastDate, 
-                    dtObj: dt, 
-                    wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }), 
-                    time: cols[1], 
-                    prof: (typeof traduzirProfessor === "function") ? traduzirProfessor(profNome) : profNome, 
-                    tag: tag 
+                const dt = new Date(
+                    parseInt(p[2]),
+                    parseInt(p[1]) - 1,
+                    parseInt(p[0]),
+                    12,
+                    0,
+                    0
+                );
+
+                window.dataStore[tId].discs[dId].sch.push({
+                    date: lastDate,
+                    dtObj: dt,
+                    wd: dt.toLocaleDateString('pt-BR', {
+                        weekday: 'long'
+                    }),
+                    time: cols[1],
+                    prof:
+                        typeof traduzirProfessor === "function"
+                            ? traduzirProfessor(profNome)
+                            : profNome,
+                    tag: tag
                 });
             });
         });
 
-        if (loadingElem) loadingElem.classList.add('hidden');
+        if (loadingElem) {
+            loadingElem.classList.add('hidden');
+        }
 
-        if (typeof gerarFuturoComBase === "function") gerarFuturoComBase();
-        if (typeof popularSelects === "function") popularSelects();
-        if (typeof limparResultados === "function") limparResultados();
+        console.log("DATASTORE CARREGADO:", window.dataStore);
+        console.log("BASES CARREGADAS:", window.BASE_HORARIOS);
 
-        setTimeout(() => { 
-            window.dispatchEvent(new Event('resize')); 
+        if (typeof gerarFuturoComBase === "function") {
+            gerarFuturoComBase();
+        }
+
+        if (typeof popularSelects === "function") {
+            popularSelects();
+        }
+
+        if (typeof limparResultados === "function") {
+            limparResultados();
+        }
+
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
         }, 300);
 
-    } catch (e) { 
+    } catch (e) {
         console.error("Erro Crítico:", e);
+
+        const loading = document.getElementById('loading');
+
+        if (loading) {
+            loading.innerHTML =
+                `<span class="text-red-500">Erro: ${e.message}</span>`;
+
+            loading.classList.remove('hidden');
+        }
     }
 }
 
