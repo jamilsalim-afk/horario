@@ -1650,81 +1650,140 @@ async function gerarFuturoComBase() {
 
     const year = document.getElementById('yearSelect').value;
     const dadosAno = CALENDARIO_DINAMICO[year];
-    
-    if (!dadosAno) return;
+
+    if (!dadosAno) {
+        console.error("ERRO: CALENDARIO_DINAMICO não encontrado para", year);
+        return;
+    }
 
     const limites = dadosAno.limites;
 
+    // 🔷 Define ponto inicial da projeção
     let dataAtual;
-    const ultimaStr = (typeof getUltimaDataRegistrada === "function") ? getUltimaDataRegistrada() : null;
-    
-    if (ultimaStr) {
-        const p = ultimaStr.split('/');
-        dataAtual = new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
+    const ultimaData = (typeof getUltimaDataRegistrada === "function")
+        ? getUltimaDataRegistrada()
+        : null;
+
+    if (ultimaData) {
+        dataAtual = new Date(ultimaData);
         dataAtual.setDate(dataAtual.getDate() + 1);
     } else {
         dataAtual = new Date();
     }
 
-    const fimAnoStr = limites.integrado?.fim || limites.superior?.s2?.fim || `${year}-12-31`;
+    // 🔷 Limite final do período
+    const fimAnoStr =
+        limites.integrado?.fim ||
+        limites.superior?.s2?.fim ||
+        `${year}-12-31`;
+
     const dataLimiteAno = new Date(fimAnoStr + "T23:59:59");
+
+    console.log(
+        `Projetando de ${dataAtual.toLocaleDateString()} até ${dataLimiteAno.toLocaleDateString()}`
+    );
 
     let aulasContabilizadas = 0;
 
+    // 🔷 Loop diário
     while (dataAtual <= dataLimiteAno) {
-        const diaSemana = dataAtual.getDay();
+        const diaSemana = dataAtual.getDay(); // 0=Dom, 6=Sáb
 
-        // 🔥 CORREÇÃO DO ISO (sem UTC bug)
-        const dataIso = dataAtual.getFullYear() + '-' +
-            String(dataAtual.getMonth() + 1).padStart(2, '0') + '-' +
-            String(dataAtual.getDate()).padStart(2, '0');
+        // 🔥 CORREÇÃO FUSO HORÁRIO (evita bug UTC)
+        const dataIso =
+            dataAtual.getFullYear() + "-" +
+            String(dataAtual.getMonth() + 1).padStart(2, "0") + "-" +
+            String(dataAtual.getDate()).padStart(2, "0");
 
-        if (diaSemana === 0 || (typeof ehFeriado === "function" && ehFeriado(dataAtual))) {
+        // 🔷 Ignora domingos e feriados
+        if (
+            diaSemana === 0 ||
+            (typeof ehFeriado === "function" && ehFeriado(dataAtual))
+        ) {
             dataAtual.setDate(dataAtual.getDate() + 1);
             continue;
         }
 
         Object.keys(window.dataStore).forEach(tId => {
-            const superior = ehSemestral(tId);
-            
+            const superior =
+                (typeof ehSemestral === "function")
+                    ? ehSemestral(tId)
+                    : false;
+
+            // 🔷 Define qual base usar
             let baseTipoReal = "integrado";
-            if (superior) {
-                const s1Fim = new Date(limites.superior.s1.fim + "T23:59:59");
-                baseTipoReal = (dataAtual <= s1Fim) ? "superior_s1" : "superior_s2";
+
+            if (superior && limites.superior?.s1?.fim) {
+                const s1Fim = new Date(
+                    limites.superior.s1.fim + "T23:59:59"
+                );
+
+                baseTipoReal =
+                    dataAtual <= s1Fim
+                        ? "superior_s1"
+                        : "superior_s2";
             }
 
-            const baseTurma = window.BASE_HORARIOS[baseTipoReal]?.[tId];
+            const baseTurma =
+                window.BASE_HORARIOS?.[baseTipoReal]?.[tId];
+
             if (!baseTurma) return;
 
             Object.keys(baseTurma).forEach(dId => {
                 baseTurma[dId].forEach(aulaBase => {
+                    // 🔷 Aula regular do mesmo dia da semana
+                    const eDiaBase =
+                        diaSemana >= 1 &&
+                        diaSemana <= 5 &&
+                        aulaBase.diaSemana === diaSemana;
 
-                    const eDiaBase = (diaSemana >= 1 && diaSemana <= 5 && aulaBase.diaSemana === diaSemana);
-                    
-                    const sabadoConfig = (dadosAno.sabados || []).find(s => s.data === dataIso);
-                    const eSabadoLetivo = (diaSemana === 6 && sabadoConfig && sabadoConfig.referencia === aulaBase.diaSemana);
+                    // 🔷 Sábado letivo
+                    const sabadoConfig =
+                        (dadosAno.sabados || []).find(
+                            s => s.data === dataIso
+                        );
+
+                    const eSabadoLetivo =
+                        diaSemana === 6 &&
+                        sabadoConfig &&
+                        sabadoConfig.referencia === aulaBase.diaSemana;
 
                     if (eDiaBase || eSabadoLetivo) {
-                        if (estaDentroPeriodoLetivo(dataAtual, tId)) {
-
+                        if (
+                            typeof estaDentroPeriodoLetivo === "function" &&
+                            estaDentroPeriodoLetivo(dataAtual, tId)
+                        ) {
                             if (!window.dataStore[tId].discs[dId]) {
-                                window.dataStore[tId].discs[dId] = { name: aulaBase.name || dId, sch: [] };
+                                window.dataStore[tId].discs[dId] = {
+                                    name: aulaBase.name || aulaBase.disc || dId,
+                                    sch: []
+                                };
                             }
 
-                            const dataBR = dataAtual.toLocaleDateString('pt-BR');
+                            const dataBR =
+                                dataAtual.toLocaleDateString("pt-BR");
 
-                            const existe = window.dataStore[tId].discs[dId].sch.some(
-                                a => a.date === dataBR && a.time === aulaBase.time
-                            );
+                            // 🔥 Evita duplicidade
+                            const existe =
+                                window.dataStore[tId].discs[dId].sch.some(
+                                    a =>
+                                        a.date === dataBR &&
+                                        a.time === aulaBase.time
+                                );
 
                             if (!existe) {
                                 window.dataStore[tId].discs[dId].sch.push({
                                     date: dataBR,
                                     dtObj: new Date(dataAtual),
-                                    wd: dataAtual.toLocaleDateString('pt-BR', { weekday: 'long' }),
-                                    time: aulaBase.time,
-                                    prof: aulaBase.prof,
-                                    tag: eSabadoLetivo ? "SÁBADO LETIVO" : "PROJETADA"
+                                    wd: dataAtual.toLocaleDateString(
+                                        "pt-BR",
+                                        { weekday: "long" }
+                                    ),
+                                    time: aulaBase.time || "",
+                                    prof: aulaBase.prof || "N/I",
+                                    tag: eSabadoLetivo
+                                        ? "SÁBADO LETIVO"
+                                        : "PROJETADA"
                                 });
 
                                 aulasContabilizadas++;
@@ -1735,10 +1794,13 @@ async function gerarFuturoComBase() {
             });
         });
 
+        // 🔷 Próximo dia
         dataAtual.setDate(dataAtual.getDate() + 1);
     }
 
-    console.log(`--- FIM DA PROJEÇÃO: ${aulasContabilizadas} aulas geradas ---`);
+    console.log(
+        `--- FIM DA PROJEÇÃO: ${aulasContabilizadas} aulas geradas ---`
+    );
 }
 
 function renderD() {
