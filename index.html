@@ -511,67 +511,66 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function getPeriodoLetivo(data, tId) {
-    // 🔷 Obtém o ano selecionado na tela
-    const year = document.getElementById('yearSelect')?.value;
+    const yearSelect = document.getElementById("yearSelect");
 
-    // 🔷 Validação básica do calendário
-    if (!window.CALENDARIO_DINAMICO || !year) {
-        console.warn("Calendário não encontrado ou ano não selecionado.");
+    if (!yearSelect) {
+        console.warn("yearSelect não encontrado.");
+        return null;
+    }
+
+    const year = yearSelect.value;
+
+    if (
+        !window.CALENDARIO_DINAMICO ||
+        !window.CALENDARIO_DINAMICO[year]
+    ) {
+        console.warn("Calendário do ano não encontrado:", year);
         return null;
     }
 
     const dadosAno = window.CALENDARIO_DINAMICO[year];
 
-    if (!dadosAno || !dadosAno.limites) {
-        console.warn("Limites do calendário não encontrados para o ano:", year);
+    if (!dadosAno.limites) {
+        console.warn("Limites não encontrados.");
         return null;
     }
 
     const limites = dadosAno.limites;
 
-    // 🔷 Validação da data recebida
     const dataRef = new Date(data);
 
     if (isNaN(dataRef.getTime())) {
-        console.warn("Data inválida recebida em getPeriodoLetivo:", data);
+        console.warn("Data inválida:", data);
         return null;
     }
 
-    // 🔷 Verifica se é turma semestral
     const superior =
         typeof ehSemestral === "function"
             ? ehSemestral(tId)
             : false;
 
-    // 🔷 ENSINO INTEGRADO
+    // 🔷 INTEGRADO
     if (!superior) {
         if (!limites.integrado) {
-            console.warn("Período integrado não configurado.");
             return null;
         }
 
-        const inicio = new Date(
-            limites.integrado.inicio + "T00:00:00"
-        );
-
-        const fim = new Date(
-            limites.integrado.fim + "T23:59:59"
-        );
-
         return {
-            inicio: inicio,
-            fim: fim,
-            tipo: "integrado"
+            inicio: new Date(
+                limites.integrado.inicio + "T00:00:00"
+            ),
+            fim: new Date(
+                limites.integrado.fim + "T23:59:59"
+            )
         };
     }
 
-    // 🔷 ENSINO SUPERIOR
+    // 🔷 SUPERIOR
     if (
         !limites.superior ||
         !limites.superior.s1 ||
         !limites.superior.s2
     ) {
-        console.warn("Períodos do superior não configurados.");
         return null;
     }
 
@@ -591,46 +590,29 @@ function getPeriodoLetivo(data, tId) {
         limites.superior.s2.fim + "T23:59:59"
     );
 
-    // 🔷 Data está no primeiro semestre
     if (dataRef >= s1Inicio && dataRef <= s1Fim) {
         return {
             inicio: s1Inicio,
-            fim: s1Fim,
-            tipo: "superior",
-            semestre: 1
+            fim: s1Fim
         };
     }
 
-    // 🔷 Data está no segundo semestre
     if (dataRef >= s2Inicio && dataRef <= s2Fim) {
         return {
             inicio: s2Inicio,
-            fim: s2Fim,
-            tipo: "superior",
-            semestre: 2
+            fim: s2Fim
         };
     }
 
-    // 🔷 Fora do período letivo (férias/recesso)
     return null;
 }
 
 function estaDentroPeriodoLetivo(data, tId) {
     const periodo = getPeriodoLetivo(data, tId);
 
-    // 🔷 Se não houver período válido, retorna falso
-    if (!periodo || !periodo.inicio || !periodo.fim) {
-        return false;
-    }
+    if (!periodo) return false;
 
-    const dataRef = new Date(data);
-
-    // 🔷 Proteção contra data inválida
-    if (isNaN(dataRef.getTime())) {
-        return false;
-    }
-
-    return dataRef >= periodo.inicio && dataRef <= periodo.fim;
+    return data >= periodo.inicio && data <= periodo.fim;
 }
 
         const PROFESSORES = {
