@@ -1178,14 +1178,14 @@ async function carregarDados() {
 async function obterCSVConsolidado(ano) {
     const timestamp = new Date().getTime();
 
-    // anos antigos continuam no GIST
+    // ano antigo via gist
     if (ano === "2025") {
         const res = await fetch(GIST_URLS[ano] + "?t=" + timestamp);
         if (!res.ok) throw new Error("Erro ao acessar Gist");
         return await res.text();
     }
 
-    // 2026 = Google Sheets
+    // 2026 = integrado + superior
     if (ano === "2026") {
         const integradoUrl =
             "https://docs.google.com/spreadsheets/d/1j33kiPqwtzZNuvkBgYDaIiXZvVMY_J0qWAtRfYGdnD8/export?format=csv&gid=1589791808";
@@ -1204,48 +1204,48 @@ async function obterCSVConsolidado(ano) {
     throw new Error(`Ano ${ano} não configurado`);
 }
 
-      function consolidarCSVs(csv1, csv2) {
-    const linhas1 = csv1.split(/\r?\n/).filter(l => l.trim());
-    const linhas2 = csv2.split(/\r?\n/).filter(l => l.trim());
+function consolidarCSVs(csvIntegrado, csvSuperior) {
+    const linhasInt = csvIntegrado
+        .split(/\r?\n/)
+        .filter(l => l.trim());
 
-    if (!linhas1.length) return csv2;
-    if (!linhas2.length) return csv1;
+    const linhasSup = csvSuperior
+        .split(/\r?\n/)
+        .filter(l => l.trim());
 
-    const cabecalho1 = linhas1[0];
-    const cabecalho2 = linhas2[0];
+    if (!linhasInt.length) return csvSuperior;
+    if (!linhasSup.length) return csvIntegrado;
 
-    const cols1 = cabecalho1.split(';');
-    const cols2 = cabecalho2.split(';');
+    const separador = linhasInt[0].includes('\t')
+        ? '\t'
+        : linhasInt[0].includes(';')
+        ? ';'
+        : ',';
 
-    // remove DATA e HORÁRIO do segundo
-    const turmasSuperior = cols2.slice(2);
+    const cabecalhoInt = linhasInt[0].split(separador);
+    const cabecalhoSup = linhasSup[0].split(separador);
 
+    // usa o cabeçalho do integrado + turmas do superior
     const novoCabecalho = [
-        ...cols1,
-        ...turmasSuperior
-    ].join(';');
+        ...cabecalhoInt,
+        ...cabecalhoSup.slice(2)
+    ].join(separador);
 
-    const corpo1 = linhas1.slice(1);
-    const corpo2 = linhas2.slice(1);
+    const corpoInt = linhasInt.slice(1);
+    const corpoSup = linhasSup.slice(1);
 
-    const maior = Math.max(corpo1.length, corpo2.length);
+    // concatena tudo embaixo
+    const linhasFinais = [
+        novoCabecalho,
+        ...corpoInt.map(l => l + separador.repeat(cabecalhoSup.length - 2)),
+        ...corpoSup.map(l => separador.repeat(cabecalhoInt.length) + l.split(separador).slice(2).join(separador))
+    ];
 
-    const linhasFinal = [novoCabecalho];
+    console.log("CSV consolidado final:", linhasFinais.slice(0, 10));
 
-    for (let i = 0; i < maior; i++) {
-        const l1 = corpo1[i]?.split(';') || [];
-        const l2 = corpo2[i]?.split(';') || [];
-
-        const novaLinha = [
-            ...(l1.length ? l1 : ["", ""]),
-            ...l2.slice(2)
-        ];
-
-        linhasFinal.push(novaLinha.join(';'));
-    }
-
-    return linhasFinal.join('\n');
+    return linhasFinais.join('\n');
 }
+        
 /**
  * Gera as aulas futuras projetando os horários BASE_
  * para os dias letivos válidos do calendário selecionado.
