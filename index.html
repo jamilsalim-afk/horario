@@ -1,1 +1,4562 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGP - IFRO Campus Cacoal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .tab-btn.active { border-bottom: 4px solid #15803d; color: #15803d; font-weight: 800; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase; padding: 6px 4px !important; }
+        td { font-size: 12px !important; padding: 8px !important; }
+        .tableGS { table-layout: auto; width: max-content; min-width: 100%; }
+        .tableGS td, .tableGS th { word-wrap: break-word; vertical-align: middle; text-align: center; border: 1px solid #e5e7eb; }
+        .tableGS th { font-size: 10px !important; padding: 4px !important; }
+        .tableGS td { font-size: 10px !important; padding: 4px !important; }
+        .aula-card { padding: 3px; margin: 1px; border-radius: 4px; line-height: 1.05; border-left: 3px solid #15803d; text-align: center; font-size: 9px; font-weight: 600; }
+        .status-normal { background-color: #f0fdf4; border-color: #15803d; }
+        .status-extra { background-color: #ecfdf5; border-color: #059669; color: #065f46; }
+        .status-reposicao { background-color: #eff6ff; border-color: #2563eb; color: #1e40af; }
+        .status-rec { background-color: #fdf2f8; border-color: #db2777; color: #9d174d; }
+        .status-exame { background-color: #f5f5f5; border-color: #4b5563; color: #1f2937; }
+        .intervalo-row { background-color: #f3f4f6 !important; color: #6b7280; font-weight: bold; text-transform: uppercase; font-size: 10px; }
+        
+        .filtros-geral{
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 20;
+            padding-bottom: 10px;
+        }
+
+        .grade-scroll{
+            max-height: 650px;
+            overflow-y: auto;
+        }
+        #dashboardContent > div {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .info-card {
+            padding: 15px !important;
+            border-radius: 8px !important;
+        }
+
+        .info-card-title {
+            font-size: 12px !important;
+        }
+
+        .info-card-value {
+            font-size: 20px !important;
+            font-weight: bold;
+        }
+         #tabelaHorarioAnual tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<header class="bg-[#15803d] text-white shadow-lg">
+    <div class="container mx-auto px-4 py-4 md:py-6">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div class="space-y-1">
+                <h1 class="text-lg sm:text-xl md:text-2xl font-black italic uppercase tracking-tight leading-tight">
+                    INSTITUTO FEDERAL DE RÔNDONIA - IFRO
+                </h1>
+                <p class="text-[10px] sm:text-xs font-bold opacity-80 uppercase">Campus Cacoal</p>
+                <p class="text-[10px] sm:text-xs font-bold opacity-80 uppercase">Departamento de Apoio ao Ensino</p>
+                <p class="mt-2 text-xs sm:text-sm font-black uppercase border-t border-white/20 pt-2">Sistema de Gestão Pedagógica</p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4 w-full lg:w-auto">
+                <div class="flex flex-col w-full sm:w-auto">
+                    <label class="text-[10px] font-bold opacity-70">Ano Letivo</label>
+                    <select id="yearSelect" class="bg-white/20 border border-white/30 px-3 py-2 rounded-lg text-white font-bold outline-none cursor-pointer w-full sm:w-32">
+                        <option value="2025" class="text-black">2025</option>
+                        <option value="2026" class="text-black" selected>2026</option>
+                        <option value="2027" class="text-black">2027</option>
+                        <option value="2028" class="text-black">2028</option>
+                        <option value="2029" class="text-black">2029</option>
+                        <option value="2030" class="text-black">2030</option>
+                    </select>
+                </div>
+                <div id="dataRelatorio" class="bg-white/10 px-4 py-2 rounded-lg font-mono text-sm border border-white/20 w-full sm:w-auto text-center">
+                    --/--/----
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<nav class="bg-white shadow-md sticky top-0 z-50">
+    <div class="flex flex-col md:flex-row min-h-screen">
+    <aside id="sidebar" class="bg-white shadow-md w-full md:w-64 p-4 hidden md:block border-r">
+        <h2 class="text-sm font-black text-gray-500 uppercase mb-4">Menu</h2>
+        <div class="flex flex-col gap-2">
+            <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100 active" data-tab="tab-disciplina">Disciplina</button>
+            <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100" data-tab="tab-turma">Turma</button>
+            <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100" data-tab="tab-semanal">Semanal Professor</button>
+            <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100" data-tab="tab-professor">Professor</button>
+            <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100" data-tab="tab-anual-professor">Anual Professor</button>
+            <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100" data-tab="tab-semanal-turma">Semanal Turma</button>
+            <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100" data-tab="tab-geral">Geral</button>
+            <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100" data-tab="dashboardTab">Dashboard</button>
+            <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100" data-tab="tab-info">Informações</button>
+        </div>
+    </aside>
+
+    <div class="flex-1">
+        <div class="md:hidden p-4 bg-white border-b">
+            <button onclick="toggleSidebar()" class="bg-[#15803d] text-white px-4 py-2 rounded-lg font-bold w-full">
+                ☰ Abrir Menu
+            </button>
+        </div>
+
+        <main class="p-4 md:p-8">
+            <div id="loading" class="text-center py-10 font-bold text-green-700 italic animate-pulse">
+                CARREGANDO DADOS...
+            </div>
+
+        <section id="tab-disciplina" class="tab-pane active">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <select id="turmaSelect" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
+                    <select id="semestreSelect" class="p-3 border rounded-lg font-bold bg-blue-50 border-blue-200 hidden">
+                        <option value="1">1º SEMESTRE</option>
+                        <option value="2">2º SEMESTRE</option>
+                    </select>
+                    <select id="disciplinaSelect" class="p-3 border rounded-lg bg-gray-50" disabled><option>Selecione a Turma</option></select>
+                </div>
+                <div id="resultadoBusca" class="hidden">
+                    <div class="flex flex-wrap gap-4 mb-4 items-center">
+                        <div class="bg-green-100 p-4 rounded-lg border border-green-200 text-center flex-1">
+                            <p class="text-[10px] font-bold text-green-800">AULAS REGULARES</p>
+                            <span id="cont-regular" class="text-2xl font-black text-green-900">0</span>
+                        </div>
+                        <div class="bg-pink-100 p-4 rounded-lg border border-pink-200 text-center flex-1">
+                            <p class="text-[10px] font-bold text-pink-800">RECUPERAÇÃO/EXAME</p>
+                            <span id="cont-extra" class="text-2xl font-black text-pink-900">0</span>
+                        </div>
+                        <button onclick="exportarDisciplinaPDF()" class="bg-[#15803d] text-white px-8 py-4 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF Disciplina</button>
+                    </div>
+                    <table id="tableD" class="min-w-full bg-white border text-center">
+                        <thead class="bg-gray-50">
+                            <tr><th class="border">DATA</th><th class="border">DIA</th><th class="border">HORÁRIO</th><th class="border">PROFESSOR</th><th class="border">STATUS</th></tr>
+                        </thead>
+                        <tbody id="bodyD"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-turma" class="tab-pane">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="flex gap-4 mb-6">
+                    <select id="turmaSelectPivo" class="p-3 border rounded-lg font-bold flex-1 bg-gray-50"></select>
+                    <select id="semestreSelectPivo" class="p-3 border rounded-lg font-bold bg-blue-50 border-blue-200 hidden">
+                        <option value="1">1º SEMESTRE</option>
+                        <option value="2">2º SEMESTRE</option>
+                    </select>
+                    <button onclick="exportarPivoPDF()" class="bg-[#15803d] text-white px-8 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF Turma</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table id="tablePivo" class="min-w-full border text-center">
+                        <thead class="bg-[#15803d] text-white">
+                            <tr>
+                                <th class="text-left w-64">DISCIPLINA</th>
+                                <th>JAN</th><th>FEV</th><th>MAR</th><th>ABR</th><th>MAI</th><th>JUN</th><th>JUL</th><th>AGO</th><th>SET</th><th>OUT</th><th>NOV</th><th>DEZ</th><th>SÁB</th>
+                                <th class="bg-green-600">TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bodyPivo" class="bg-white font-bold"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-semanal" class="tab-pane">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <select id="profSelect" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
+                    <input type="week" id="weekInput" class="p-3 border rounded-lg">
+                    <div class="flex gap-2">
+                        <button onclick="gerarGrade()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition uppercase text-xs">Ver Grade</button>
+                        <button onclick="exportarGradePDF()" class="bg-[#15803d] text-white font-bold rounded-lg flex-1 hover:bg-green-800 transition shadow-md uppercase text-xs">Exportar PDF Grade</button>
+                    </div>
+                </div>
+                <div id="gradeRender" class="overflow-x-auto border rounded-lg"></div>
+            </div>
+        </section>
+        
+        <section id="tab-semanal-turma" class="tab-pane">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <select id="turmaSelectSemanal" class="p-3 border rounded-lg font-bold bg-gray-50"></select>
+                    <input type="week" id="weekInputTurma" class="p-3 border rounded-lg">
+                    <div class="flex gap-2">
+                        <button onclick="gerarGradeTurma()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition uppercase text-xs">Ver Grade Turma</button>
+                        <button onclick="exportarGradeTurmaPDF()" class="bg-[#15803d] text-white font-bold rounded-lg flex-1 hover:bg-green-800 transition shadow-md uppercase text-xs">Exportar PDF Grade</button>
+                    </div>
+                </div>
+                <div id="gradeTurmaRender" class="overflow-x-auto border rounded-lg"></div>
+            </div>
+        </section>
+
+        <section id="tab-geral" class="tab-pane">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="filtros-geral">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <input type="week" id="weekInputGeral" class="p-3 border rounded-lg">
+                        <select id="nivelSelect" class="p-3 border rounded-lg hidden">
+                            <option value="">-- SELECIONE O NÍVEL --</option>
+                            <option value="tecnico">TÉCNICO</option>
+                            <option value="superior">SUPERIOR</option>
+                        </select>
+                        <input list="listaProfessores" id="buscaGeral" oninput="gerarGradeGeral()" class="border p-2" placeholder="Digite o nome do professor...">
+                        <datalist id="listaProfessores"></datalist>
+                    </div>
+                    <button onclick="gerarGradeGeral()" class="bg-blue-700 text-white px-4 py-2 rounded-lg mb-4">Atualizar Grade</button>
+                    <button onclick="exportarGradeGeralPDF()" class="bg-green-700 text-white px-4 py-2 rounded-lg mb-4">Exporta Grade PDF</button>
+                </div>
+                <div class="grade-scroll">
+                    <div id="gradeGeralRender" class="overflow-x-auto border rounded-lg"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-professor" class="tab-pane">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="flex gap-4 mb-6">
+                    <input list="listaProfessores" id="buscaProfessorRel" oninput="gerarRelatorioProfessorCompleto()" class="border p-3 rounded-lg flex-1" placeholder="Digite o nome do professor...">
+                    <button onclick="exportarRelatorioProfessorPDF()" class="bg-[#15803d] text-white px-8 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exportar PDF</button>
+                </div>
+                <div class="flex gap-4 mb-6">
+                    <button onclick="exportarTodosProfessoresPDF()" class="bg-blue-700 text-white px-4 rounded-lg font-bold hover:bg-blue-900 transition shadow-md uppercase">Exportar Todos PDF</button>
+                    <button onclick="exportarTodosProfessoresMensalPDF()" class="bg-blue-700 text-white px-4 rounded-lg font-bold hover:bg-blue-900 transition shadow-md uppercase">Exportar Todos (Mensal) PDF</button>
+                </div>
+
+                <h3 class="font-bold mt-6 mb-2">EXECUTADO</h3>
+                <table class="w-full border-collapse border text-center">
+                    <thead class="bg-gray-100 font-bold text-[10px]">
+                        <tr>
+                            <th class="border p-2">Disciplina</th><th class="border p-2">Turma</th>
+                            <th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Jun</th>
+                            <th>Jul</th><th>Ago</th><th>Set</th><th>Out</th><th>Nov</th><th>Dez</th>
+                            <th>Sáb</th><th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyRelatorioProf" class="text-[11px]"></tbody>
+                </table>
+
+                <h3 class="font-bold mt-8 mb-2 text-blue-700">PREVISTO</h3>
+                <table class="w-full border-collapse border text-center">
+                    <thead class="bg-blue-50 font-bold text-[10px]">
+                        <tr>
+                            <th class="border p-2">Disciplina</th><th class="border p-2">Turma</th>
+                            <th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Jun</th>
+                            <th>Jul</th><th>Ago</th><th>Set</th><th>Out</th><th>Nov</th><th>Dez</th>
+                            <th>Sáb</th><th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyRelatorioPrevisto" class="text-[11px]"></tbody>
+                </table>
+
+                <h3 class="font-bold mt-8 mb-2 text-red-700">DIFERENÇA (EXECUTADO - PREVISTO)</h3>
+                <table class="w-full border-collapse border text-center">
+                    <thead class="bg-red-50 font-bold text-[10px]">
+                        <tr>
+                            <th class="border p-2">Disciplina</th><th class="border p-2">Turma</th>
+                            <th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Jun</th>
+                            <th>Jul</th><th>Ago</th><th>Set</th><th>Out</th><th>Nov</th><th>Dez</th>
+                            <th>Sáb</th><th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyRelatorioDiferenca" class="text-[11px]"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="tab-anual-professor" class="tab-pane hidden">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="flex gap-4 mb-6">
+                    <input list="listaProfessores" id="buscaProfessorAnual" oninput="gerarHorarioAnualProfessor()" class="border p-3 rounded-lg flex-1" placeholder="Selecione o professor para ver o histórico anual...">
+                    <button onclick="gerarHorarioAnualProfessor()" class="bg-[#15803d] text-white px-6 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">Exibir Horário Anual</button>
+                    <button onclick="exportarHorarioAnualPDF()" class="bg-blue-700 text-white px-6 rounded-lg font-bold hover:bg-blue-900 transition shadow-md uppercase">Exportar PDF</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table id="tabelaHorarioAnual" class="w-full border-collapse border text-left">
+                        <thead class="bg-gray-100 font-bold text-[11px]">
+                            <tr><th class="border p-2">Dia da Aula</th></tr>
+                        </thead>
+                        <tbody id="bodyHorarioAnual" class="text-[11px]"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <div id="dashboardTab" class="tab-pane">
+            <div style="margin-top:15px;">
+                <button onclick="gerarDashboard()" class="px-4 py-2 bg-[#2563eb] text-white rounded-lg font-bold uppercase text-[12px]">Atualizar Dashboard</button>
+                <button onclick="exportarDashboardPDF()" class="px-4 py-2 bg-[#15803d] text-white rounded-lg ml-2 font-bold uppercase text-[12px] shadow-md">Exportar Dashboard PDF</button>
+            </div>
+            <div id="dashboardContent"></div>
+            <div style="margin-top:30px;"><canvas id="graficoProfessor" height="100"></canvas></div>
+        </div>
+
+        <section id="tab-info" class="tab-pane">
+            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <h3 class="text-[#15803d] font-black border-b-2 border-green-700 pb-2 uppercase text-sm">Estrutura Organizacional</h3>
+                        <div class="space-y-2 text-xs">
+                            <p><strong>INSTITUIÇÃO:</strong> Instituto Federal de Rondônia - IFRO</p>
+                            <p><strong>CAMPUS:</strong> Cacoal</p>
+                            <p><strong>DEPARTAMENTO:</strong> Departamento de Apoio ao Ensino (DAPE)</p>
+                            <p><strong>COORDENAÇÃO:</strong> Coordenação de Desenvolvimento de Ferramentas Pedagógicas</p>
+                        </div>
+                        <h3 class="text-[#15803d] font-black border-b-2 border-green-700 pb-2 pt-4 uppercase text-sm">Contato e Localização</h3>
+                        <div class="space-y-2 text-xs">
+                            <p><strong>ENDEREÇO:</strong> BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO</p>
+                            <p><strong>TELEFONE:</strong> (69) 3443-9501</p>
+                            <p><strong>E-MAIL:</strong> dape.cacoal@ifro.edu.br</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-6 rounded-lg border border-dashed border-gray-300 text-center">
+                        <h3 class="text-gray-700 font-black mb-4 uppercase text-sm">Calendário Acadêmico - <span id="infoYear">2026</span></h3>
+                        <div class="space-y-4 text-left">
+                            <div class="bg-white p-4 rounded shadow-sm border-l-4 border-orange-500">
+                                <p class="text-[10px] font-bold text-gray-500 uppercase">Ensino Integrado (Anual)</p>
+                                <p id="cal-integrado" class="text-base font-black text-gray-800">Carregando...</p>
+                            </div>
+                            <div class="bg-white p-4 rounded shadow-sm border-l-4 border-blue-500">
+                                <p class="text-[10px] font-bold text-gray-500 uppercase">Superior - 1º Semestre</p>
+                                <p id="semestre1" class="text-base font-black text-gray-800">Carregando...</p>
+                            </div>
+                            <div class="bg-white p-4 rounded shadow-sm border-l-4 border-green-500">
+                                <p class="text-[10px] font-bold text-gray-500 uppercase">Superior - 2º Semestre</p>
+                                <p id="semestre2" class="text-base font-black text-gray-800">Carregando...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+    // ---> CALENDÁRIO LETIVO/FERIAS/FERIADOS/SABADOS LETIVOS
+    // --- CONFIGURAÇÃO DE DATAS POR ANO ---
+    // Centralização total da inteligência de calendário
+    const CALENDARIO_DINAMICO = {
+        "2025": {
+            limites: {
+                integrado: { inicio: "2025-01-01", fim: "2025-12-31" },
+                superior: {
+                    s1: { inicio: "2025-01-01", fim: "2025-07-12" },
+                    s2: { inicio: "2025-07-27", fim: "2025-12-31" }
+                }
+            },
+            ferias_int: [{ inicio: "2025-06-20", fim: "2025-07-20" }, { inicio: "2025-12-01", fim: "2025-12-31" }],
+            ferias_sup: [{ inicio: "2025-06-25", fim: "2025-07-20" }, { inicio: "2025-12-10", fim: "2025-12-31" }],
+            feriados: ["2025-01-01", "2025-04-18", "2025-05-01", "2025-09-07", "2025-10-12", "2025-11-02", "2025-11-15", "2025-12-25"],
+            sabados: [] 
+        },
+        "2026": {
+            limites: {
+                integrado: { inicio: "2026-02-10", fim: "2026-12-11" },
+                superior: {
+                    s1: { inicio: "2026-02-09", fim: "2026-07-03" },
+                    s2: { inicio: "2026-07-22", fim: "2026-12-11" }
+                }
+            },
+            // Férias e recessos específicos por nível
+            ferias_int: [
+                { inicio: "2026-06-21", fim: "2026-07-21" }, 
+                { inicio: "2026-11-30", fim: "2027-01-31" }
+            ],
+            ferias_sup: [
+                { inicio: "2026-06-27", fim: "2026-07-21" }, 
+                { inicio: "2026-12-05", fim: "2027-01-31" }
+            ],
+            // Feriados e Pontos Facultativos Gerais
+            feriados: [
+                "2026-02-16", "2026-02-17", "2026-02-18", "2026-04-03", "2026-04-20", 
+                "2026-04-21", "2026-05-01", "2026-06-04", "2026-06-05", "2026-09-07", 
+                "2026-10-12", "2026-10-15", "2026-10-28", "2026-11-02", "2026-11-20", "2026-11-26"
+            ],
+            sabados: [
+                // INTEGRADO
+                { data: "2026-03-07", tipo: "integrado", referencia: 1 },
+                { data: "2026-03-14", tipo: "integrado", referencia: 2 },
+                { data: "2026-03-21", tipo: "integrado", referencia: 4 },
+                { data: "2026-03-28", tipo: "integrado", referencia: 5 },
+                { data: "2026-04-04", tipo: "integrado", referencia: 1 },
+                { data: "2026-04-11", tipo: "integrado", referencia: 3 },
+                { data: "2026-04-18", tipo: "integrado", referencia: 4 },
+                { data: "2026-04-25", tipo: "integrado", referencia: 5 },
+                { data: "2026-05-09", tipo: "integrado", referencia: 1 },
+                { data: "2026-05-16", tipo: "integrado", referencia: 2 },
+                { data: "2026-05-23", tipo: "integrado", referencia: 1 },
+                { data: "2026-05-30", tipo: "integrado", referencia: 3 },
+                { data: "2026-06-06", tipo: "integrado", referencia: 5 },
+                { data: "2026-06-13", tipo: "integrado", referencia: 2 },
+                { data: "2026-06-20", tipo: "integrado", referencia: 5 },
+                { data: "2026-07-25", tipo: "integrado", referencia: 1 },
+                { data: "2026-08-01", tipo: "integrado", referencia: 2 },
+                { data: "2026-08-15", tipo: "integrado", referencia: 3 },
+                { data: "2026-08-29", tipo: "integrado", referencia: 4 },
+                { data: "2026-09-05", tipo: "integrado", referencia: 5 },
+                { data: "2026-09-12", tipo: "integrado", referencia: 1 },
+                { data: "2026-09-19", tipo: "integrado", referencia: 2 },
+                { data: "2026-09-26", tipo: "integrado", referencia: 3 },
+                { data: "2026-10-03", tipo: "integrado", referencia: 4 },
+                { data: "2026-10-10", tipo: "integrado", referencia: 5 },
+                { data: "2026-10-24", tipo: "integrado", referencia: 4 },
+                { data: "2026-10-31", tipo: "integrado", referencia: 1 },
+                { data: "2026-11-07", tipo: "integrado", referencia: 1 },
+                { data: "2026-11-14", tipo: "integrado", referencia: 1 },
+                
+                // SUPERIOR S1
+                { data: "2026-03-14", tipo: "superior_s1",  referencia: 1 },
+                { data: "2026-03-28", tipo: "superior_s1",  referencia: 2 },
+                { data: "2026-04-11", tipo: "superior_s1",  referencia: 1 },
+                { data: "2026-04-18", tipo: "superior_s1",  referencia: 3 },
+                { data: "2026-04-25", tipo: "superior_s1",  referencia: 4 },
+                { data: "2026-05-09", tipo: "superior_s1",  referencia: 5 },
+                { data: "2026-05-23", tipo: "superior_s1",  referencia: 2 },
+                { data: "2026-06-13", tipo: "superior_s1",  referencia: 5 },
+                { data: "2026-06-20", tipo: "superior_s1",  referencia: 5 },
+                
+                // SUPERIOR S2
+                { data: "2026-08-01", tipo: "superior_s2",  referencia: 1 },
+                { data: "2026-08-15", tipo: "superior_s2",  referencia: 2 },
+                { data: "2026-08-29", tipo: "superior_s2",  referencia: 3 },
+                { data: "2026-09-12", tipo: "superior_s2",  referencia: 1 },
+                { data: "2026-09-26", tipo: "superior_s2",  referencia: 4 },
+                { data: "2026-10-03", tipo: "superior_s2",  referencia: 1 },
+                { data: "2026-10-10", tipo: "superior_s2",  referencia: 5 },
+                { data: "2026-10-24", tipo: "superior_s2",  referencia: 1 },
+                { data: "2026-11-14", tipo: "superior_s2",  referencia: 4 }
+            ]
+        }
+    };
+
+
+// Função que injeta os dados baseada no ano selecionado
+function atualizarAbaInfo(anoSelecionado) {
+    // Busca dentro de CALENDARIO_DINAMICO as configurações do ano
+    const dadosAno = CALENDARIO_DINAMICO[anoSelecionado];
+
+    if (dadosAno && dadosAno.limites) {
+        const limites = dadosAno.limites;
+
+        // Atualiza o texto do ano no título da aba Info
+        const infoYearEl = document.getElementById('infoYear');
+        if (infoYearEl) infoYearEl.textContent = anoSelecionado;
+
+        // Função interna para formatar YYYY-MM-DD para DD/MM/YYYY
+        const formatarData = (dataStr) => {
+            if (!dataStr) return "--/--/----";
+            const dataObj = new Date(dataStr + "T00:00:00");
+            return dataObj.toLocaleDateString('pt-BR');
+        };
+
+        // Referências dos elementos na Aba Info (IDs conforme Parte 1)
+        const integradoEl = document.getElementById('cal-integrado');
+        const s1El = document.getElementById('semestre1');
+        const s2El = document.getElementById('semestre2');
+
+        // Injeta as datas do Integrado (Anual)
+        if (integradoEl && limites.integrado) {
+            integradoEl.innerText = `${formatarData(limites.integrado.inicio)} até ${formatarData(limites.integrado.fim)}`;
+        }
+
+        // Injeta as datas do Superior (S1 e S2)
+        if (s1El && limites.superior && limites.superior.s1) {
+            s1El.innerText = `${formatarData(limites.superior.s1.inicio)} até ${formatarData(limites.superior.s1.fim)}`;
+        }
+        if (s2El && limites.superior && limites.superior.s2) {
+            s2El.innerText = `${formatarData(limites.superior.s2.inicio)} até ${formatarData(limites.superior.s2.fim)}`;
+        }
+    } else {
+        console.warn(`Calendário para o ano ${anoSelecionado} não encontrado.`);
+    }
+}
+
+// Escutador de eventos para o campo de seleção de ANO (ID: yearSelect conforme Parte 1)
+document.addEventListener('DOMContentLoaded', () => {
+    const selectAno = document.getElementById('yearSelect');
+    
+    if (selectAno) {
+        // Atualiza quando o usuário muda o ano no Select
+        selectAno.addEventListener('change', function() {
+            atualizarAbaInfo(this.value);
+        });
+        
+        // Chama uma vez ao carregar a página para o ano inicial
+        atualizarAbaInfo(selectAno.value);
+    }
+});
+
+
+function estaDentroPeriodoLetivo(data, tId) {
+    const periodo = getPeriodoLetivo(data, tId);
+    // Só retorna verdadeiro se a data estiver dentro de um período válido (Integrado, S1 ou S2)
+    return periodo.inicio && data >= periodo.inicio && data <= periodo.fim;
+}
+
+        const PROFESSORES = {
+        "Adilson": "Adilson Miranda de Almeida",
+"Adriana": "Adriana Aparecida Rigolon",
+"Agatha": "Agatha Christie de Souza Zemke",
+"Agmar": "Agmar Aparecido Felix Chaves",
+"Aguinaldo": "Aguinaldo Pereira",
+"Alberto": "Alberto Ayres Benício",
+"Aline": "Aline da Silva Correa Valério Sakyrabiar",
+"Aline S": "Aline da Silva Aquilau",
+"Ana C": "Ana Caroline Carvalho Miranda",
+"Andreia": "Andreia Maciel da Silva",
+"Angelica": "Angelica Fernandes Estok",
+"Angelita": "Angelita Aparecida Coutinho Picazevicz",
+"Antonio": "Antonio Ferreira Neto",
+"Arilson": "Arilson Ramos",
+"Atila": "Atila Bezerra Mira",
+"Ayrton": "Ayrton Schupp Pinheiro Oliveira",
+"Barbara": "Barbara Ferreira Fadul",
+"Cirlania": "Cirlania Pereira Batista",
+"Claudemir": "Claudemir Miranda Barboza",
+"Claudia": "Claudia Aline Puerari",
+"Coordenador": "Coordenador",
+"Daianne": "Daianne Castilho Silva",
+"Daphne": "Daphne Chiara Antônio",
+"Davys": "Davys Sleman de Negreiros",
+"Debora": "Debora Costa Barroso Corrêa",
+"Dheimy": "Dheimy da Silva Novelli",
+"Dhieisi": "Dhieisi Ebert Bolsanello",
+"Dierlei": "Dierlei dos Santos",
+"Edmilson": "Edmilson Maria de Brito",
+"Edna": "Edna Cristiane da Matta",
+"Edslei": "Edslei Rodrigues de Almeida",
+"Eduardo": "Eduardo Lucas Jorge Serapião",
+"Erick": "Erick Rodrigo de Oliveira Mesquita",
+"Eslei": "Eslei Justiniano dos Reis",
+"Gabriel": "Gabriel Tenório dos Santos",
+"Gean": "Gean Batista de Lima",
+"Genival": "Genival Gomes da Silva Junior",
+"Gian": "Gian Willian Tavares de Souza",
+"Gilson D": "Gilson Divino Araújo da Silva",
+"Gilson P": "Gilson Pedro Ranzula",
+"Guilherme": "Guilherme Raniel da Cruz Santos",
+"Heloisa": "Heloisa Helena Ribeiro de Miranda",
+"Henri": "Henri Francis Ternes de Oliveira",
+"Henrique": "Henrique Silva Sérvio",
+"Ideir": "Ideir Coto",
+"Ingrid": "Ingrid Leticia Menezes Barbosa",
+"Iramaia": "Iramaia Grespan Ferreira",
+"Irlan": "Irlan Cordeiro de Souza",
+"Isis": "Isis Lazzarini Foroni",
+"Jakeline": "Jakeline Melo dos Anjos",
+"Jefferson": "Jefferson Lemes Pinto",
+"Jhonata": "Jhonata Lemos da Silva",
+"Joel M": "Joel Martins Braga Junior",
+"Joelson": "Joelson Barral do Espírito Santo",
+"Jorge": "Jorge da Silva Werneck",
+"Jose A": "Jose de Anchieta Almeida da Silva",
+"Jose N": "Jose Nilson Rosa Baraldi Molis",
+"Jose V": "Jose Vechiatto",
+"Josimar": "Josimar Monteiro Santos",
+"Julia S": "Julia de Souza Lopes Basso",
+"Juliana F": "Juliana Ferraz Huback Rodrigues",
+"Juliana M": "Juliana Maria Freitas de Assis Holanda",
+"Juliane": "Juliane Lima Araújo",
+"Juliano A": "Juliano Alves de Deus",
+"Juliano C": "Juliano Cristhian Silva",
+"Julio": "Julio Eduardo Neves dos Santos",
+"Junia": "Junia de Souza Lopes",
+"Jussara": "Jussara Maria Oliveira de Araújo",
+"Larissa": "Larissa Cristina Torrezani Starling Reinicke",
+"Leia": "Leia Marcia dos Santos Kempim",
+"Leonardo": "Leonardo dos Santos Franca Shockness",
+"Lilian A": "Lilian Andrea dos Santos",
+"Lilian B": "Lilian Barbosa da Silva",
+"Lilian C": "Lilian Catiúscia Eifler Firme da Silva",
+"Luciana": "Luciana Alves Ranzula",
+"Magno": "Magno Batista Amorim",
+"Maily": "Maily Marques Pereira",
+"Marcilei": "Marcilei Serafim Germano",
+"Marcio": "Marcio Adolfo de Almeida",
+"Marco A": "Marco Aurélio Nunes de Barros",
+"Marco R": "Marco Rodrigo de Souza",
+"Marcos": "Marcos - Prof PVH",
+"Marcos G": "Marcos Grutzmacher",
+"Maria A": "Maria Angélica Petrini",
+"Maria C": "Maria Cristiana de Freitas da Costa",
+"Messias": "Messias José dos Santos Silva",
+"Nathali": "Nathali Fernanda Machado Silva",
+"Nephi": "Nephi Moraes de Barros",
+"Nirvani": "Nirvani Schroeder Henrique",
+"Paula": "Paula Michelli da Silva Franco Belmont",
+"Paulla": "Paulla Vieira Rodrigues",
+"Paulo": "Paulo Fernando Campagnolli",
+"Professor": "Professor Contratado",
+"Rafael A": "Rafael Ayres Romanholo",
+"Rafael C": "Rafael Carlos Bispo",
+"Raquel": "Raquel Pereira da Silva",
+"Rivaldo": "Rivaldo José de Souza Silva",
+"Rodolfo": "Rodolfo Gustavo Teixeira Ribas",
+"Rogerio": "Rogerio Giovani Soares Ferreira",
+"Saiane": "Saiane Barros de Souza",
+"Saiara": "Saiara Gerlaine Silva Toledo",
+"Samanta": "Samanta Margarida Milani",
+"Sergio": "Sergio Nunes de Jesus",
+"Shelly": "Shelly Braum",
+"Sirlei": "Sirlei Soares dos Santos",
+"Sirley": "Sirley Leite Freitas",
+"Substituto": "Substituto",
+"Substituto_a1": "Substituto_a1",
+"Substituto_a2": "Substituto_a2",
+"Substituto_a3": "Substituto_a3",
+"Substituto_a4": "Substituto_a4",
+"Substituto_a5": "Substituto_a5",
+"Substituto_a6": "Substituto_a6",
+"Thiago": "Thiago Jose Sampaio Kaiser",
+"Tiago": "Tiago Roberto Silva Santos",
+"Uberlando": "Uberlando Tiburtino Leite",
+"Uirande": "Uirande Oliveira Costa",
+"Vera": "Vera Lucia Lopes Silveira",
+"Wellyton": "Wellyton Rocha Vasconcellos" };
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('hidden');
+}
+
+function getPeriodoLetivo(data, tId, cal) {
+    // Helper para converter string YYYY-MM-DD em Date objeto
+    // Ajustado para garantir que o fim do dia seja considerado (23:59:59) se necessário
+    const toDate = (str, isEnd = false) => new Date(str + (isEnd ? "T23:59:59" : "T00:00:00"));
+    
+    const ehIntegrado = !ehSemestral(tId);
+
+    if (ehIntegrado) {
+        const inicioInt = toDate(cal.integrado.inicio);
+        const fimInt = toDate(cal.integrado.fim, true); // Usa o fim do dia
+
+        if (data < inicioInt || data > fimInt) {
+            return null; 
+        }
+
+        return {
+            inicio: inicioInt,
+            fim: fimInt,
+            tipo: "integrado"
+        };
+    }
+
+    const s1Inicio = toDate(cal.superior.s1.inicio);
+    const s1Fim = toDate(cal.superior.s1.fim, true);
+    const s2Inicio = toDate(cal.superior.s2.inicio);
+    const s2Fim = toDate(cal.superior.s2.fim, true);
+
+    if (data >= s1Inicio && data <= s1Fim) {
+        return {
+            inicio: s1Inicio,
+            fim: s1Fim,
+            tipo: "superior_s1"
+        };
+    }
+
+    if (data >= s2Inicio && data <= s2Fim) {
+        return {
+            inicio: s2Inicio,
+            fim: s2Fim,
+            tipo: "superior_s2"
+        };
+    }
+
+    return null; 
+}
+
+// 1. Melhora a formatação visual (Ex: BIOLOGIA CELULAR -> Biologia Celular)
+function formatarNome(nome) {
+    if (!nome) return "";
+
+    const minusculas = ['de', 'da', 'do', 'das', 'dos', 'e'];
+
+    return nome
+        .toLowerCase()
+        .trim()
+        .split(/\s+/)
+        .map((p, i) => {
+            if (i > 0 && minusculas.includes(p)) return p;
+            return p.charAt(0).toUpperCase() + p.slice(1);
+        })
+        .join(" ");
+}
+
+// 2. Normalização para BUSCA (Onde estava o problema do relatório)
+function normalizarTexto(txt) {
+    if (!txt) return "";
+    return txt
+        .toString()
+        .normalize("NFD")               // Decompõe acentos
+        .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+        .toLowerCase()                  // Padroniza para maiúsculas
+        .trim()                         // Remove espaços nas pontas
+        .replace(/\s+/g, ' ');          // Transforma múltiplos espaços em um só (MANTÉM O ESPAÇO)
+}
+
+/**
+ * Criação do Mapa de Professores:
+ * Transforma a lista bruta em um objeto de busca rápida com chaves normalizadas.
+ * Nota: Certifique-se de que a constante 'PROFESSORES' esteja definida antes deste trecho.
+ */
+// O JS já conhece 'PROFESSORES' aqui, então criamos o mapa direto:
+const MAPA_PROFESSORES = Object.fromEntries(
+    Object.entries(PROFESSORES).map(([k, v]) => [
+        normalizarTexto(k),
+        formatarNome(v)
+    ])
+);
+
+function traduzirProfessor(nome) {
+    // Tratamento para células vazias ou nulas do Gist
+    if (!nome || nome.trim() === "") return "Não Identificado";
+
+    const chave = normalizarTexto(nome);
+
+    // Se estiver no mapa, usa o nome completo. 
+    // Se não estiver (ex: professor novo), ele formata o nome curto (Ex: "JOAO" -> "Joao")
+    return MAPA_PROFESSORES[chave] || formatarNome(nome);
+}
+
+// =========================
+// 🔷 CURSOS SUPERIORES (CONFIGURAÇÃO)
+// =========================
+const CURSOS_SEMESTRAIS = [
+    "GEOGRAFIA",
+    "MATEMÁTICA",
+    "AGRONEGÓCIO",
+    "ZOOTECNIA",
+    "AGRONOMIA",
+    "SEMESTRE" // Adicionado para capturar cabeçalhos que indicam semestralidade
+];
+
+// Alias para manter compatibilidade com outras partes do seu script
+function turmaEhSuperior(nome) {
+    return ehSemestral(nome);
+}
+
+// =========================
+// 🔷 TRATAMENTO DE NOMES
+// =========================
+function getPrimeiroNome(nomeCompleto) {
+    if (!nomeCompleto) return "";
+    // Remove espaços extras e pega apenas a primeira palavra
+    return nomeCompleto.trim().split(/\s+/)[0]; 
+}
+
+// =========================
+// 🔷 TRADUÇÃO DE STATUS E ESTILIZAÇÃO (CSS)
+// =========================
+const TRADUCAO = { 
+    "+": {
+        texto: "EXTRA",
+        class: "bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-[10px] font-bold",
+        soma: true
+    },
+    "R": {
+        texto: "REPOSIÇÃO",
+        class: "bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-[10px] font-bold",
+        soma: true
+    },
+    "REC": {
+        texto: "RECUPERAÇÃO",
+        class: "bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full text-[10px] font-bold",
+        soma: false
+    },
+    "EX": {
+        texto: "EXAME",
+        class: "bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-[10px] font-bold",
+        soma: false
+    },
+    "SÁBADO LETIVO": {
+        texto: "SÁBADO LETIVO",
+        class: "bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-[10px] font-bold",
+        soma: true
+    }
+};
+
+// ==========================================
+// 🔷 GABARITO DE HORÁRIOS (ESTRUTURA IFRO)
+// ==========================================
+const GABARITO = [
+    { h:"07:30 - 08:20", t:"aula" },
+    { h:"08:20 - 09:10", t:"aula" },
+    { h:"09:10 - 09:30", t:"intervalo", l:"INTERVALO MATUTINO" },
+    { h:"09:30 - 10:20", t:"aula" },
+    { h:"10:20 - 11:10", t:"aula" },
+    { h:"11:10 - 12:00", t:"aula" },
+    { h:"12:00 - 13:50", t:"intervalo", l:"ALMOÇO" },
+    { h:"13:50 - 14:40", t:"aula" },
+    { h:"14:40 - 15:30", t:"aula" },
+    { h:"15:30 - 15:50", t:"intervalo", l:"INTERVALO VESPERTINO" },
+    { h:"15:50 - 16:40", t:"aula" },
+    { h:"16:40 - 17:30", t:"aula" },
+    { h:"17:30 - 18:20", t:"aula" },
+    { h:"18:20 - 19:00", t:"intervalo", l:"JANTAR" },
+    { h:"19:00 - 19:50", t:"aula" },
+    { h:"19:50 - 20:40", t:"aula" },
+    { h:"20:40 - 20:50", t:"intervalo", l:"INTERVALO NOTURNO" },
+    { h:"20:50 - 21:40", t:"aula" },
+    { h:"21:40 - 22:30", t:"aula" }
+];
+
+// ==========================================
+// 🔷 ARMAZENAMENTO E CONFIGURAÇÃO
+// ==========================================
+let dataStore = {}; // Repositório global de dados processados
+
+const DATA_SOURCES = {
+    "2025": {
+        tipo: "gist",
+        url: "https://gist.githubusercontent.com/jamilsalim-afk/15207392062fe2b7f6fbd0a788e8d99c/raw/"
+    },
+
+    "2026": {
+        tipo: "sheets",
+        fallbackGist: "https://gist.githubusercontent.com/jamilsalim-afk/793aa8c9f80f2cb21e8db0d706d68159/raw/",
+
+        integrado: {
+            sheetId: "1j33kiPqwtzZNuvkBgYDaIiXZvVMY_J0qWAtRfYGdnD8",
+            gid: "1589791808"
+        },
+
+        superior: {
+            sheetId: "COLOQUE_O_ID_DA_MESMA_PLANILHA_OU_OUTRA",
+            gid: "COLOQUE_O_GID_DA_ABA_SUPERIOR"
+        }
+    }
+};
+
+// Disciplinas que não entram na contagem de aulas letivas nos relatórios
+const DISCIPLINAS_OCULTAR = [
+    "ATENDIMENTO INDIVIDUAL",
+    "ESTUDOS INDIVIDUAIS",
+    "PPS/ATENDIMENTO",
+    "RESERVA ENSINO",
+    "REUNIÃO DE SERVIDORES"
+];
+
+/**
+ * Função Auxiliar: Verifica se uma disciplina deve ser exibida
+ */
+function deveExibirDisciplina(nomeDisciplina) {
+    if (!nomeDisciplina) return false;
+    const nomeNorm = normalizarTexto(nomeDisciplina);
+    return !DISCIPLINAS_OCULTAR.some(oculta => 
+        nomeNorm.includes(normalizarTexto(oculta))
+    );
+}
+
+// ==========================================
+// 🔷 FUNÇÃO AUXILIAR DE FILTRAGEM
+// ==========================================
+function disciplinaDeveSerOcultada(nome) {
+    if (!nome) return false;
+    const nomeUpper = nome.toUpperCase();
+    // Verifica se o nome da disciplina contém algum dos termos proibidos
+    return DISCIPLINAS_OCULTAR.some(d => nomeUpper.includes(d.toUpperCase()));
+}
+
+// ==========================================
+// 🔷 INICIALIZAÇÃO DO SISTEMA (WINDOW ONLOAD)
+// ==========================================
+window.onload = async () => {
+    console.log("🚀 Iniciando Sistema de Gestão Pedagógica - IFRO Cacoal");
+
+    // 1. Atualiza a data de emissão no rodapé/cabeçalho da página
+    const dataRel = document.getElementById('dataRelatorio');
+    if (dataRel) {
+        dataRel.textContent = new Date().toLocaleDateString('pt-BR');
+    }
+
+    // 2. Carregamento inicial dos dados do Gist (Aguarda a conclusão)
+    try {
+        await carregarDados();
+    } catch (error) {
+        console.error("Erro crítico ao carregar dados iniciais:", error);
+        alert("Erro ao conectar com o servidor de dados. Verifique sua conexão.");
+    }
+
+    // 3. Inicializa componentes de interface
+    if (typeof initTabs === "function") initTabs();
+    if (typeof popularFiltroProfessores === "function") popularFiltroProfessores();
+
+    // 4. Configura seletor de Ano com recarregamento automático
+    const yearSelect = document.getElementById('yearSelect');
+    if (yearSelect) {
+        yearSelect.onchange = async function() {
+            // Limpa o datastore antes de carregar o novo ano para evitar conflitos
+            dataStore = {}; 
+            await carregarDados();
+            // Opcional: recarregar a aba atual após a troca de ano
+            const activeTab = document.querySelector('.tab-btn.active');
+            if (activeTab) activeTab.click();
+        };
+    }
+
+    // 5. Ativa a primeira aba por padrão para o usuário não ver a tela vazia
+    const primeiraTab = document.querySelector('.tab-btn');
+    if (primeiraTab) primeiraTab.click();
+
+    // ==========================================
+    // 🔷 LÓGICA DO RELATÓRIO PIVÔ
+    // ==========================================
+    const turmaPivo = document.getElementById('turmaSelectPivo');
+    const semestrePivo = document.getElementById('semestreSelectPivo');
+
+    if (turmaPivo && semestrePivo) {
+        turmaPivo.onchange = (e) => {
+            const tId = e.target.value;
+
+            // Se for curso superior, mostra seletor de semestre. Se for técnico, esconde.
+            if (ehSemestral(tId)) {
+                semestrePivo.classList.remove('hidden');
+            } else {
+                semestrePivo.classList.add('hidden');
+            }
+
+            if (typeof renderPivo === "function") renderPivo();
+        };
+
+        semestrePivo.onchange = () => {
+            if (typeof renderPivo === "function") renderPivo();
+        };
+    }
+
+    // ==========================================
+    // 🔷 LÓGICA DO RELATÓRIO GERAL (GRADE)
+    // ==========================================
+    const weekInputGeral = document.getElementById("weekInputGeral");
+    const nivelSelect = document.getElementById("nivelSelect");
+    const buscaGeral = document.getElementById("buscaGeral");
+
+    if (weekInputGeral && nivelSelect && buscaGeral) {
+        weekInputGeral.onchange = function () {
+            if (this.value) {
+                nivelSelect.classList.remove("hidden");
+            } else {
+                nivelSelect.classList.add("hidden");
+                buscaGeral.classList.add("hidden");
+            }
+        };
+
+        nivelSelect.onchange = function () {
+            if (this.value) {
+                buscaGeral.classList.remove("hidden");
+                if (typeof gerarGradeGeral === "function") gerarGradeGeral();
+            } else {
+                buscaGeral.classList.add("hidden");
+            }
+        };
+
+        buscaGeral.oninput = () => {
+            if (typeof gerarGradeGeral === "function") gerarGradeGeral();
+        };
+    }
+};
+
+
+// Mantenha apenas ESTA versão no seu arquivo:
+function ehSemestral(tId) {
+    // 1. Validação de segurança: evita erro se a turma não existir no banco de dados
+    if (!tId || !dataStore[tId] || !dataStore[tId].name) return false;
+
+    // 2. Pega o nome real da turma (Ex: "MATEMÁTICA - 1º SEMESTRE")
+    const nome = dataStore[tId].name.toUpperCase().trim();
+
+    // 3. Verifica se o nome da turma bate com a sua lista de cursos superiores
+    return CURSOS_SEMESTRAIS.some(curso => 
+        nome.includes(curso.toUpperCase())
+    );
+}
+
+async function carregarDados() {
+    try {
+        const yearSelected = document.getElementById('yearSelect').value;
+        const loadingElem = document.getElementById('loading');
+
+        if (loadingElem) loadingElem.classList.remove('hidden');
+
+        window.dataStore = {};
+
+        // NOVA FONTE DE DADOS
+        const csv = await obterCSVConsolidado(yearSelected);
+
+        const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
+        if (lines.length < 1) throw new Error("Arquivo CSV vazio.");
+
+        const headers = lines[0].split(';').map(h => h.trim());
+        const turmasHeaders = headers.slice(2);
+
+        let lastDate = "";
+
+        lines.slice(1).forEach(line => {
+            const cols = line.split(';').map(c => c?.trim());
+            const primeiraColuna = cols[0] ? cols[0].toLowerCase() : "";
+
+            if (cols[0] && !primeiraColuna.startsWith("base_")) {
+                lastDate = cols[0].replace(/\./g, '/');
+            }
+
+            if (!cols[1] || (!primeiraColuna.startsWith("base_") && !lastDate)) return;
+
+            turmasHeaders.forEach((tNome, idx) => {
+                const cell = cols[idx + 2];
+                if (!cell || cell === "" || cell === "0" || cell.length < 3) return;
+
+                const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+                if (!dataStore[tId]) {
+                    dataStore[tId] = { name: tNome, discs: {} };
+                }
+
+                const tagM = cell.match(/\[(.*?)\]/);
+                const tag = tagM ? tagM[1].toUpperCase() : null;
+                const cleanT = tagM ? cell.replace(tagM[0], "").trim() : cell;
+
+                let discNome, profNome;
+
+                if (cleanT.includes(' - ')) {
+                    const partes = cleanT.split(' - ');
+                    profNome = partes.pop().trim();
+                    discNome = partes.join(' - ').trim();
+                } else {
+                    discNome = cleanT;
+                    profNome = "N/I";
+                }
+
+                const dId = discNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+                if (!dataStore[tId].discs[dId]) {
+                    dataStore[tId].discs[dId] = { name: discNome, sch: [] };
+                }
+
+                if (primeiraColuna.startsWith("base_")) {
+                    dataStore[tId].discs[dId].sch.push({
+                        tipo: "MOLDE",
+                        identificador: primeiraColuna,
+                        time: cols[1],
+                        prof: traduzirProfessor?.(profNome) || profNome,
+                        tag
+                    });
+                } else {
+                    const p = lastDate.split('/');
+                    const dt = new Date(
+                        parseInt(p[2]),
+                        parseInt(p[1]) - 1,
+                        parseInt(p[0]),
+                        12, 0, 0
+                    );
+
+                    if (lastDate.includes(`/${yearSelected}`)) {
+                        dataStore[tId].discs[dId].sch.push({
+                            tipo: "MANUAL",
+                            date: lastDate,
+                            dtObj: dt,
+                            wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }),
+                            time: cols[1],
+                            prof: traduzirProfessor?.(profNome) || profNome,
+                            tag
+                        });
+                    }
+                }
+            });
+        });
+
+        console.log("📊 Dados brutos carregados. Iniciando geração do calendário...");
+
+        gerarFuturoComBase();
+
+        popularSelects?.();
+        limparResultados?.();
+        atualizarAbaInfo?.(yearSelected);
+
+        if (loadingElem) loadingElem.classList.add('hidden');
+
+        setTimeout(() => {
+            window.dispatchEvent(new Event('resize'));
+        }, 300);
+
+    } catch (e) {
+        console.error("Erro Crítico no Carregamento:", e);
+
+        const loadingElem = document.getElementById('loading');
+
+        if (loadingElem) {
+            loadingElem.innerHTML =
+                `<span class="text-red-500">Erro ao carregar dados: ${e.message}</span>`;
+        }
+    }
+}
+
+async function obterCSVConsolidado(ano) {
+    const timestamp = new Date().getTime();
+
+    // anos antigos continuam no GIST
+    if (ano === "2025") {
+        const res = await fetch(GIST_URLS[ano] + "?t=" + timestamp);
+        if (!res.ok) throw new Error("Erro ao acessar Gist");
+        return await res.text();
+    }
+
+    // 2026 = Google Sheets
+    if (ano === "2026") {
+        const integradoUrl =
+            "https://docs.google.com/spreadsheets/d/1j33kiPqwtzZNuvkBgYDaIiXZvVMY_J0qWAtRfYGdnD8/export?format=csv&gid=1589791808";
+
+        const superiorUrl =
+            "COLOQUE_A_URL_DO_SUPERIOR";
+
+        const [csvIntegrado, csvSuperior] = await Promise.all([
+            fetch(integradoUrl + "&t=" + timestamp).then(r => r.text()),
+            fetch(superiorUrl + "&t=" + timestamp).then(r => r.text())
+        ]);
+
+        return consolidarCSVs(csvIntegrado, csvSuperior);
+    }
+
+    throw new Error(`Ano ${ano} não configurado`);
+}
+
+      function consolidarCSVs(csv1, csv2) {
+    const linhas1 = csv1.split(/\r?\n/).filter(l => l.trim());
+    const linhas2 = csv2.split(/\r?\n/).filter(l => l.trim());
+
+    if (!linhas1.length) return csv2;
+    if (!linhas2.length) return csv1;
+
+    const cabecalho1 = linhas1[0];
+    const cabecalho2 = linhas2[0];
+
+    const cols1 = cabecalho1.split(';');
+    const cols2 = cabecalho2.split(';');
+
+    // remove DATA e HORÁRIO do segundo
+    const turmasSuperior = cols2.slice(2);
+
+    const novoCabecalho = [
+        ...cols1,
+        ...turmasSuperior
+    ].join(';');
+
+    const corpo1 = linhas1.slice(1);
+    const corpo2 = linhas2.slice(1);
+
+    const maior = Math.max(corpo1.length, corpo2.length);
+
+    const linhasFinal = [novoCabecalho];
+
+    for (let i = 0; i < maior; i++) {
+        const l1 = corpo1[i]?.split(';') || [];
+        const l2 = corpo2[i]?.split(';') || [];
+
+        const novaLinha = [
+            ...(l1.length ? l1 : ["", ""]),
+            ...l2.slice(2)
+        ];
+
+        linhasFinal.push(novaLinha.join(';'));
+    }
+
+    return linhasFinal.join('\n');
+}
+/**
+ * Gera as aulas futuras projetando os horários BASE_
+ * para os dias letivos válidos do calendário selecionado.
+ */
+/**
+ * Projeta as aulas para o futuro com base nos moldes:
+ * base_int_XXX, base_sup_s1_XXX, base_sup_s2_XXX
+ */
+function gerarFuturoComBase() {
+    const yearSelect = document.getElementById('yearSelect');
+    if (!yearSelect) return;
+    
+    const ano = yearSelect.value;
+    const cal = CALENDARIO_DINAMICO[ano];
+    if (!cal || !cal.limites) {
+        console.warn(`⚠️ Calendário ou limites não encontrados para o ano ${ano}`);
+        return;
+    }
+
+    // Mapeamento para converter o sufixo da base no número do dia do JS (0-6)
+    const mapaDias = { 
+        'dom': 0, 'seg': 1, 'ter': 2, 'qua': 3, 'qui': 4, 'sex': 5, 'sab': 6 
+    };
+
+    console.log("📅 Iniciando projeção de aulas futuras...");
+
+    Object.keys(dataStore).forEach(tId => {
+        const turma = dataStore[tId];
+        
+        Object.keys(turma.discs).forEach(dId => {
+            const disc = turma.discs[dId];
+            
+            // 1. Separa o que é molde (regra) do que é manual (exceção/registro)
+            const moldes = disc.sch.filter(s => s.tipo === "MOLDE");
+            const manuais = disc.sch.filter(s => s.tipo === "MANUAL");
+
+            // 2. O array da disciplina agora conterá apenas os manuais inicialmente
+            disc.sch = [...manuais];
+
+            moldes.forEach(m => {
+                // Identificador esperado: base_int_seg ou base_sup_s1_ter
+                const partes = m.identificador.split('_'); 
+                let limites, diaRef, tipoSabado, feriasRef;
+
+                // Identifica o nível e o semestre para pegar os limites de data corretos
+                if (partes[1] === 'int') {
+                    limites = cal.limites.integrado;
+                    diaRef = mapaDias[partes[2]];
+                    tipoSabado = "integrado";
+                    feriasRef = cal.ferias_int;
+                } else if (partes[1] === 'sup') {
+                    const semestre = partes[2]; // s1 ou s2
+                    limites = cal.limites.superior[semestre];
+                    diaRef = mapaDias[partes[3]];
+                    tipoSabado = `superior_${semestre}`;
+                    feriasRef = cal.ferias_sup;
+                }
+
+                if (!limites || diaRef === undefined) return;
+
+                // Inicia o loop de datas do início ao fim do período letivo
+                let curr = new Date(limites.inicio + "T12:00:00");
+                const fim = new Date(limites.fim + "T12:00:00");
+
+                while (curr <= fim) {
+                    const isoData = curr.toISOString().split('T')[0];
+                    const diaDaSemanaAtual = curr.getDay();
+                    
+                    let deveCriarAula = false;
+                    let tagEspecial = m.tag;
+
+                    // REGRA A: Hoje é o dia da semana definido na BASE?
+                    if (diaDaSemanaAtual === diaRef) {
+                        deveCriarAula = true;
+                    } 
+
+                    // REGRA B: Hoje é um Sábado Letivo que repõe esse dia da semana?
+                    const configSabado = cal.sabados.find(s => 
+                        s.data === isoData && 
+                        s.tipo === tipoSabado && 
+                        s.referencia === diaRef
+                    );
+
+                    if (configSabado) {
+                        deveCriarAula = true;
+                        tagEspecial = "SÁBADO LETIVO";
+                    }
+
+                    // Se passou nos critérios de dia, verifica impedimentos (Feriado/Férias)
+                    if (deveCriarAula) {
+                        const ehFeriado = cal.feriados.includes(isoData);
+                        const estaEmFerias = feriasRef.some(f => isoData >= f.inicio && isoData <= f.fim);
+
+                        if (!ehFeriado && !estaEmFerias) {
+                            const dataFormatada = curr.toLocaleDateString('pt-BR');
+                            
+                            // ❗ IMPORTANTE: Só cria a aula se NÃO houver um lançamento manual 
+                            // no mesmo dia e horário (Isso permite que você mude o prof/disciplina no Gist)
+                            const jaExisteManual = manuais.some(man => 
+                                man.date === dataFormatada && man.time === m.time
+                            );
+
+                            if (!jaTemManualNoMesmoHorario(manuais, dataFormatada, m.time)) {
+                                disc.sch.push({
+                                    date: dataFormatada,
+                                    dtObj: new Date(curr),
+                                    wd: curr.toLocaleDateString('pt-BR', { weekday: 'long' }),
+                                    time: m.time,
+                                    prof: m.prof,
+                                    tag: tagEspecial,
+                                    geradaAutomaticamente: true // Flag para controle interno se precisar
+                                });
+                            }
+                        }
+                    }
+                    // Avança para o próximo dia
+                    curr.setDate(curr.getDate() + 1);
+                }
+            });
+
+            // 3. Ordenação Cronológica (Data e depois Horário)
+            disc.sch.sort((a, b) => {
+                if (a.dtObj.getTime() !== b.dtObj.getTime()) {
+                    return a.dtObj - b.dtObj;
+                }
+                return a.time.localeCompare(b.time);
+            });
+        });
+    });
+
+    console.log("✅ Projeção do calendário finalizada!");
+}
+
+// Função auxiliar para clareza do código
+function jaTemManualNoMesmoHorario(manuais, data, horario) {
+    return manuais.some(m => m.date === data && m.time === horario);
+}
+
+/**
+ * Helpers necessários para a lógica acima
+ */
+function getLimitesPorTurma(tId, ano) {
+    const cal = CALENDARIO_DINAMICO[ano];
+    if (ehSemestral(tId)) {
+        // Como o Gist pode ter turmas de S1 e S2, precisamos checar o nome
+        const nome = dataStore[tId].name.toUpperCase();
+        if (nome.includes("2º SEMESTRE") || nome.includes("S2")) {
+            return { inicio: cal.limites.superior.s2.inicio, fim: cal.limites.superior.s2.fim };
+        }
+        return { inicio: cal.limites.superior.s1.inicio, fim: cal.limites.superior.s1.fim };
+    }
+    return { inicio: cal.limites.integrado.inicio, fim: cal.limites.integrado.fim };
+}
+
+function verificarFerias(data, ehSuperior, cal) {
+    const periodos = ehSuperior ? cal.ferias_sup : cal.ferias_int;
+    return periodos.some(p => {
+        const d = data.toISOString().split('T')[0];
+        return d >= p.inicio && d <= p.fim;
+    });
+}
+
+// Função auxiliar para evitar repetição de código
+function atualizarContadores(reg, ext) {
+    const cReg = document.getElementById('cont-regular');
+    const cExt = document.getElementById('cont-extra');
+    if (cReg) cReg.textContent = reg;
+    if (cExt) cExt.textContent = ext;
+}
+
+// =====================================================
+// 🔷 CONFIGURAÇÕES DE CALENDÁRIO E DATAS
+// =====================================================
+
+function obterAnoSelecionado() {
+    return document.getElementById('yearSelect')?.value || new Date().getFullYear();
+}
+
+/**
+ * Converte um objeto Date para string YYYY-MM-DD local com segurança
+ */
+function formatarDataISO(data) {
+    if (!(data instanceof Date)) return "";
+    const y = data.getFullYear();
+    const m = String(data.getMonth() + 1).padStart(2, '0');
+    const d = String(data.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function estaEmFeriasIntegrado(data) {
+    const ano = obterAnoSelecionado();
+    const dataString = formatarDataISO(data);
+    const ferias = CALENDARIO_DINAMICO[ano]?.ferias_int || [];
+    return ferias.some(f => dataString >= f.inicio && dataString <= f.fim);
+}
+
+function estaEmFeriasSuperior(data) {
+    const ano = obterAnoSelecionado();
+    const dataString = formatarDataISO(data);
+    const ferias = CALENDARIO_DINAMICO[ano]?.ferias_sup || [];
+    return ferias.some(f => dataString >= f.inicio && dataString <= f.fim);
+}
+
+function ehFeriado(data) {
+    const ano = obterAnoSelecionado();
+    const dataString = formatarDataISO(data);
+    const lista = CALENDARIO_DINAMICO[ano]?.feriados || [];
+    return lista.includes(dataString);
+}
+
+/**
+ * Verifica se a data está dentro do período letivo oficial do campus
+ * @param {Date} data - Objeto Date a ser verificado
+ * @param {string} tipo - "integrado" ou "superior"
+ * @param {string} semestre - "s1" ou "s2" (opcional)
+ */
+function estaNoPeriodoLetivo(data, tipo, semestre = null) {
+    const ano = obterAnoSelecionado();
+    const dataString = formatarDataISO(data);
+    const limites = CALENDARIO_DINAMICO[ano]?.limites;
+    
+    if (!limites) return false;
+
+    if (tipo === "integrado") {
+        return dataString >= limites.integrado.inicio && dataString <= limites.integrado.fim;
+    } 
+    
+    if (tipo.startsWith("superior")) {
+        // Se o semestre não for passado, tenta extrair do tipo (ex: superior_s1) ou assume s1
+        const s = semestre || (tipo.includes('_') ? tipo.split('_')[1] : 's1');
+        const limiteS = limites.superior[s];
+        
+        return limiteS ? (dataString >= limiteS.inicio && dataString <= limiteS.fim) : false;
+    }
+    
+    return false;
+}
+
+// =====================================================
+// 🔷 BASE DE HORÁRIOS
+// =====================================================
+
+let BASE_HORARIOS = {
+    integrado: {},
+    superior_s1: {},
+    superior_s2: {}
+};
+
+/**
+ * Processa as linhas de configuração da Grade Base (Gabarito)
+ * @param {string} dataStr - O conteúdo da primeira coluna (ex: BASE_INT_SEG)
+ * @param {string} horario - O horário da aula (ex: 07:30)
+ * @param {string} cell - O conteúdo da célula (Disciplina - Professor)
+ * @param {string} tNome - O nome da Turma (ex: 1A AGRO)
+ */
+function processarLinhaBase(dataStr, horario, cell, tNome) {
+    if (!dataStr || typeof dataStr !== "string") return false;
+    
+    // 🔷 Filtro Inicial: Só processa se for uma linha de configuração BASE
+    if (!dataStr.startsWith("BASE_")) return false;
+
+    const partes = dataStr.split("_");
+    if (partes.length < 3) return true; // Linha mal formada, mas ignoramos como aula real
+
+    let tipo = "";
+    let diaIndex = 2; // Padrão para Integrado: BASE_INT_SEG (índice 2)
+
+    // 🔷 Identificação do Segmento e Semestre
+    const prefixoNivel = partes[1].toUpperCase();
+
+    if (prefixoNivel === "INT") {
+        tipo = "integrado";
+    } else if (prefixoNivel === "SUP") {
+        // Para Superior, esperamos: BASE_SUP_S1_TER (índice 3 para o dia)
+        const semestre = (partes[2] || "S1").toLowerCase();
+        tipo = `superior_${semestre}`;
+        diaIndex = 3; 
+    } else {
+        return true; // Tipo desconhecido (ex: BASE_EXT), pula a linha
+    }
+
+    // 🔷 Mapeamento de Dias (Conversão para JS Date.getDay())
+    const mapaDias = { 
+        "SEG": 1, "TER": 2, "QUA": 3, "QUI": 4, "SEX": 5, "SAB": 6 
+    };
+
+    const diaStr = (partes[diaIndex] || "").toUpperCase();
+    const diaSemana = mapaDias[diaStr];
+    
+    if (diaSemana === undefined) {
+        console.warn(`[BASE] Dia inválido: ${diaStr} na turma ${tNome}`);
+        return true;
+    }
+
+    // 🔷 Extração de Disciplina e Professor (Limpeza de String)
+    let disc = "";
+    let prof = "N/I";
+
+    if (cell && typeof cell === "string" && cell.trim() !== "0") {
+        const cellLimpa = cell.trim();
+        if (cellLimpa.includes(" - ")) {
+            const arr = cellLimpa.split(" - ");
+            prof = arr.pop().trim(); // Pega o último elemento como professor
+            disc = arr.join(" - ").trim(); // O restante é a disciplina
+        } else {
+            disc = cellLimpa;
+        }
+    } else {
+        return true; // Célula vazia ou "0", não há aula base aqui
+    }
+
+    // 🔷 Normalização de IDs (para bater com o dataStore)
+    const tId = tNome.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const dId = disc.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    // 🔷 Inicialização e Persistência no Objeto Global
+    if (!window.BASE_HORARIOS) window.BASE_HORARIOS = { integrado: {}, superior_s1: {}, superior_s2: {} };
+    if (!window.BASE_HORARIOS[tipo]) window.BASE_HORARIOS[tipo] = {};
+    if (!window.BASE_HORARIOS[tipo][tId]) window.BASE_HORARIOS[tipo][tId] = {};
+    if (!window.BASE_HORARIOS[tipo][tId][dId]) window.BASE_HORARIOS[tipo][tId][dId] = [];
+
+    // Tradução do Professor para nome completo
+    const nomeProf = (typeof traduzirProfessor === "function") ? traduzirProfessor(prof) : prof;
+
+    // 🔷 Adição ao Gabarito (Evitando duplicatas de processamento)
+    const existe = window.BASE_HORARIOS[tipo][tId][dId].some(a => a.diaSemana === diaSemana && a.time === horario);
+    
+    if (!existe) {
+        window.BASE_HORARIOS[tipo][tId][dId].push({
+            name: disc,
+            prof: nomeProf,
+            diaSemana: diaSemana,
+            time: horario || ""
+        });
+    }
+
+    return true; // Retorna true para interromper o processamento desta linha como "Aula Real"
+}
+
+/**
+ * Localiza a data mais recente entre todas as aulas registradas no dataStore.
+ * Útil para exibir o status de atualização do sistema no Dashboard.
+ */
+function getUltimaDataRegistrada() {
+    // 1. Verificação de Integridade
+    if (!dataStore || Object.keys(dataStore).length === 0) {
+        console.warn("dataStore vazio ou não carregado.");
+        return null;
+    }
+
+    let ultimaData = null;
+
+    // 2. Varredura Profunda (Turmas -> Disciplinas -> Aulas)
+    Object.values(dataStore).forEach(turma => {
+        if (!turma?.discs) return;
+
+        Object.values(turma.discs).forEach(disciplina => {
+            if (!Array.isArray(disciplina.sch)) return;
+
+            disciplina.sch.forEach(aula => {
+                // Consideramos apenas aulas que possuem o objeto de data (dtObj)
+                if (!aula?.dtObj) return;
+
+                // Criamos uma instância de Date para garantir a comparação numérica
+                const dataAula = new Date(aula.dtObj);
+
+                // Se for a primeira data encontrada ou for mais recente que a 'ultimaData'
+                if (!ultimaData || dataAula.getTime() > ultimaData.getTime()) {
+                    ultimaData = dataAula;
+                }
+            });
+        });
+    });
+
+    // 3. Log de Diagnóstico
+    if (!ultimaData) {
+        console.info("Nenhum registro de aula cronológica encontrado para definir a última atualização.");
+    }
+
+    return ultimaData;
+}
+
+/**
+ * Gera uma chave única e normalizada para identificação de Disciplina/Turma.
+ * Remove acentos, converte para maiúsculas e limpa espaços em branco.
+ * @param {string} disc - Nome da disciplina.
+ * @param {string} turma - Nome da turma.
+ * @returns {string} Chave única (ex: "MATEMATICA||1A AGRO").
+ */
+function gerarChave(disc, turma) {
+    // 1. Validação de entrada para evitar erros de undefined/null
+    const d = (disc || "").toString().trim();
+    const t = (turma || "").toString().trim();
+
+    // 2. Composição da string bruta
+    const rawKey = `${d}||${t}`;
+
+    // 3. Processo de Normalização:
+    return rawKey
+        .toUpperCase()                      // Tudo em maiúsculo
+        .normalize("NFD")                   // Decompõe caracteres acentuados (ex: 'á' vira 'a' + '´')
+        .replace(/[\u0300-\u036f]/g, "")    // Remove os acentos isolados pela regex
+        .replace(/\s+/g, ' ');              // Transforma múltiplos espaços em apenas um
+}
+
+// ABA 01
+// FUNÇÃO QUE GERA TODAS AULAS DE CADA DISCIPLINA
+function renderD() {
+    // 1. CAPTURA DE ELEMENTOS
+    const tSelect = document.getElementById('turmaSelect');
+    const dSelect = document.getElementById('disciplinaSelect');
+    const sSelect = document.getElementById('semestreSelect');
+    const b = document.getElementById('bodyD');
+    const resBusca = document.getElementById('resultadoBusca');
+
+    if (!tSelect || !dSelect || !b) return;
+
+    const tId = tSelect.value;
+    const dNomeOriginal = dSelect.options[dSelect.selectedIndex]?.text || "";
+    const sem = sSelect ? sSelect.value : "1";
+
+    // 2. RESET INICIAL
+    b.innerHTML = '';
+    let sR = 0, sE = 0;
+
+    if (!tId || !dNomeOriginal) return;
+
+    // 3. ACESSO AOS DADOS
+    const turma = dataStore?.[tId];
+    if (!turma || !turma.discs) {
+        b.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Turma não encontrada.</td></tr>`;
+        return;
+    }
+
+    const normalizar = (txt) => {
+        return (txt || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ");
+    };
+
+    const nomeBusca = normalizar(dNomeOriginal);
+    const disc = Object.values(turma.discs).find(d => {
+        const nomeDisc = normalizar(d.name);
+        return (nomeDisc === nomeBusca || nomeDisc.includes(nomeBusca) || nomeBusca.includes(nomeDisc));
+    });
+
+    if (!disc || !Array.isArray(disc.sch)) {
+        b.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500 italic">Sem aulas registradas para "${dNomeOriginal}".</td></tr>`;
+        resBusca?.classList.remove('hidden');
+        return;
+    }
+
+    // 5. PROCESSAMENTO E FILTRAGEM
+    disc.sch.forEach(a => {
+        if (!a || !a.dtObj) return;
+
+        // FILTRO DE SEMESTRE (Mantido)
+        if (typeof ehSemestral === "function" && ehSemestral(tId)) {
+            const dataAula = new Date(a.dtObj);
+            const anoAtual = document.getElementById('yearSelect')?.value || new Date().getFullYear();
+            const limites = CALENDARIO_DINAMICO[anoAtual]?.limites;
+
+            if (limites?.superior) {
+                const fimS1 = new Date(limites.superior.s1.fim + "T23:59:59");
+                const pertenceAoSelec = (sem === "1") ? (dataAula <= fimS1) : (dataAula > fimS1);
+                if (!pertenceAoSelec) return;
+            }
+        }
+
+        // --- LÓGICA DE TRADUÇÃO E TAG (CORRIGIDA) ---
+        let info;
+        const ehSabado = a.wd && a.wd.toLowerCase().includes("sábado");
+
+        if (ehSabado) {
+            // Se for sábado, força a tradução de Sábado Letivo (Verde)
+            info = TRADUCAO["SÁBADO LETIVO"];
+        } else {
+            // Caso contrário, busca a tag da aula ou define como NORMAL
+            info = (typeof TRADUCAO !== 'undefined' && TRADUCAO[a.tag])
+                ? TRADUCAO[a.tag]
+                : {
+                    texto: a.tag || "NORMAL",
+                    class: "bg-gray-100 text-gray-600 border-gray-200",
+                    soma: true
+                };
+        }
+
+        // Soma nos contadores
+        if (info.soma) { sR++; } else { sE++; }
+
+        // RENDERIZAÇÃO DA LINHA
+        b.innerHTML += `
+            <tr class="hover:bg-blue-50 transition-colors">
+                <td class="border p-2 text-center text-sm font-medium">
+                    ${a.date || '-'}
+                </td>
+                <td class="border p-2 uppercase text-[10px] text-gray-500 text-center">
+                    ${a.wd || '-'}
+                </td>
+                <td class="border p-2 text-center text-sm">
+                    ${a.time || '-'}
+                </td>
+                <td class="border p-2 font-semibold text-gray-700 text-sm">
+                    ${(a.prof || '-').split(' ')[0]}
+                </td>
+                <td class="border p-1 text-center">
+                    <span class="px-2 py-0.5 rounded text-[9px] font-black border ${info.class}">
+                        ${info.texto}
+                    </span>
+                </td>
+            </tr>
+        `;
+    });
+
+    if (b.innerHTML === '') {
+        b.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400 italic">Nenhuma aula encontrada.</td></tr>`;
+    }
+
+    if (typeof atualizarContadores === "function") {
+        atualizarContadores(sR, sE);
+    }
+    resBusca?.classList.remove('hidden');
+}
+
+function atualizarListaDisciplinas() {
+    const tId = document.getElementById('turmaSelect').value;
+    const sem = document.getElementById('semestreSelect').value;
+    const dS = document.getElementById('disciplinaSelect');
+    const year = document.getElementById('yearSelect').value;
+
+    if (!dS) return;
+
+    // Reset padrão
+    dS.innerHTML = '<option value="">-- SELECIONE A DISCIPLINA --</option>';
+    dS.disabled = true;
+
+    // Validação de existência da turma no Store
+    if (!tId || !dataStore[tId]) return;
+
+    // 🔷 1. CONFIGURAÇÃO DE LIMITES DO SEMESTRE
+    const dadosAno = CALENDARIO_DINAMICO[year];
+    const limites = dadosAno ? dadosAno.limites : null;
+    let limiteS1 = null;
+
+    if (limites?.superior?.s1) {
+        // Define o timestamp exato do fim do semestre 1 (23:59:59)
+        limiteS1 = new Date(limites.superior.s1.fim + "T23:59:59").getTime();
+    }
+
+    // 🔷 2. PROCESSAMENTO E FILTRAGEM DE DISCIPLINAS
+    const disciplinas = Object.keys(dataStore[tId].discs).sort((a, b) => {
+        const nomeA = dataStore[tId].discs[a].name;
+        const nomeB = dataStore[tId].discs[b].name;
+        return nomeA.localeCompare(nomeB, 'pt-BR', { sensitivity: 'base' });
+    });
+
+    disciplinas.forEach(id => {
+        const discObj = dataStore[tId].discs[id];
+        const nomeDisc = discObj.name.toUpperCase();
+
+        // 🔷 FILTRO A: Disciplinas Administrativas/Ocultas
+        if (typeof DISCIPLINAS_OCULTAR !== 'undefined' && DISCIPLINAS_OCULTAR.includes(nomeDisc)) {
+            return;
+        }
+
+        // 🔷 FILTRO B: Validação de existência de aulas no semestre selecionado
+        const temAulaNoPeriodo = discObj.sch.some(a => {
+            if (!a || !a.dtObj) return false;
+
+            // Se for curso técnico (anual), qualquer aula serve
+            if (!ehSemestral(tId) || !limiteS1) return true;
+
+            const tempoAula = a.dtObj.getTime();
+            
+            // Filtro dinâmico: S1 (até o limite) ou S2 (após o limite)
+            return (sem === "1") ? (tempoAula <= limiteS1) : (tempoAula > limiteS1);
+        });
+
+        if (temAulaNoPeriodo) {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = discObj.name;
+            dS.appendChild(option);
+        }
+    });
+
+    // Libera o select se houver disciplinas disponíveis
+    if (dS.options.length > 1) {
+        dS.disabled = false;
+    }
+
+    // 🔷 3. AUTO-RENDERIZAÇÃO
+    // Se por acaso já houver uma disciplina selecionada, dispara a renderização da tabela
+    if (dS.value && typeof renderD === "function") {
+        renderD();
+    }
+}
+
+// ==========================================
+// 🔷 EVENTO DE SELEÇÃO DE DISCIPLINA
+// ==========================================
+const disciplinaSelectEl = document.getElementById('disciplinaSelect');
+
+if (disciplinaSelectEl) {
+    disciplinaSelectEl.onchange = () => {
+        // Garante que a renderização só ocorra se houver uma disciplina válida
+        if (disciplinaSelectEl.value && typeof renderD === "function") {
+            renderD();
+        } else {
+            // Caso o usuário volte para a opção padrão, limpa os resultados
+            if (typeof limparResultados === "function") {
+                limparResultados();
+            }
+        }
+    };
+}
+
+// ABA 02
+// FUNÇÃO RESPONSÁVEL POR GERAR O RELATÓRIO DE AULAS MENSAL POR TURMA
+function renderPivo() {
+    // 1. Captura de Elementos
+    const tId = document.getElementById('turmaSelectPivo')?.value;
+    const sem = document.getElementById('semestreSelectPivo')?.value;
+    const b = document.getElementById('bodyPivo');
+    const year = document.getElementById('yearSelect')?.value;
+
+    if (!b) return;
+
+    // 2. Validação de Dados Iniciais
+    if (!tId || !dataStore[tId]) {
+        b.innerHTML = `<tr><td colspan="15" class="p-4 text-center text-gray-500 italic">Selecione uma turma para visualizar o resumo mensal.</td></tr>`;
+        return;
+    }
+
+    // 3. Configuração de Calendário e Limites
+    const dadosAno = (typeof CALENDARIO_DINAMICO !== 'undefined') ? CALENDARIO_DINAMICO[year] : null;
+    const limites = dadosAno ? dadosAno.limites : null;
+    let limiteS1 = null;
+
+    if (limites?.superior?.s1) {
+        // Define o limite exato do fim do S1 para comparação de timestamp
+        limiteS1 = new Date(limites.superior.s1.fim + "T23:59:59").getTime();
+    }
+
+    // 4. Preparação das Disciplinas (Ordenação)
+    const disciplinas = Object.values(dataStore[tId].discs).sort((a, b) =>
+        (a.name || "").localeCompare((b.name || ""), 'pt-BR', { sensitivity: 'base' })
+    );
+
+    let html = "";
+
+    // 5. Processamento por Disciplina
+    disciplinas.forEach(disc => {
+        if (!disc || !disc.sch) return;
+
+        // Filtro de Segurança: Disciplinas Ocultas
+        const nomeDiscUpper = disc.name.toUpperCase().trim();
+        if (typeof DISCIPLINAS_OCULTAR !== 'undefined' && DISCIPLINAS_OCULTAR.includes(nomeDiscUpper)) {
+            return;
+        }
+
+        let mCount = Array(12).fill(0); // Contador para os 12 meses (0=Jan, 11=Dez)
+        let aulasSabado = 0;
+        let temAulaNoPeriodo = false;
+
+        disc.sch.forEach(s => {
+            if (!s || !s.dtObj) return;
+
+            const tempoAula = s.dtObj.getTime();
+            let aulaPertenceAoPeriodo = true;
+
+            // Lógica de Filtro Semestral (Superior)
+            if (ehSemestral(tId) && limiteS1 && sem) {
+                aulaPertenceAoPeriodo = (sem === "1") 
+                    ? tempoAula <= limiteS1 
+                    : tempoAula > limiteS1;
+            }
+
+            if (aulaPertenceAoPeriodo) {
+                mCount[s.dtObj.getMonth()]++;
+                
+                // Contabiliza se for Sábado (6)
+                if (s.dtObj.getDay() === 6) {
+                    aulasSabado++;
+                }
+                temAulaNoPeriodo = true;
+            }
+        });
+
+        // Se a disciplina não tem aulas no semestre/período selecionado, pula a linha
+        if (!temAulaNoPeriodo) return;
+
+        const totalGeral = mCount.reduce((acc, val) => acc + val, 0);
+
+        // 6. Construção da Linha HTML (Tabela Pivo)
+        html += `
+            <tr class="border-b hover:bg-blue-50/50 transition-colors">
+                <td class="p-2 text-left font-bold border-r bg-gray-50 text-[#15803d] uppercase text-[10px] sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+                    ${disc.name}
+                </td>
+        `;
+
+        // Colunas de Meses (Janeiro a Dezembro)
+        mCount.forEach((qtd, idx) => {
+            // Destaca meses sem aula para facilitar leitura
+            const estiloMes = qtd === 0 ? "text-gray-300" : "text-gray-700 font-medium";
+            html += `<td class="border-r text-center p-2 text-[11px] ${estiloMes}">${qtd || '-'}</td>`;
+        });
+
+        // Colunas de Totais (Sábados e Total Geral)
+        html += `
+            <td class="bg-yellow-50 text-yellow-800 font-bold border-r text-center p-2 text-[11px]">
+                ${aulasSabado || '-'}
+            </td>
+            <td class="bg-green-100 text-green-900 font-black text-center p-2 text-xs">
+                ${totalGeral}
+            </td>
+        </tr>
+        `;
+    });
+
+    // 7. Fallback e Renderização Final
+    if (html === "") {
+        html = `<tr><td colspan="15" class="p-4 text-center text-gray-400 italic">Nenhuma aula projetada ou registrada para os critérios selecionados.</td></tr>`;
+    }
+
+    b.innerHTML = html;
+    
+    // Revela o container de resultados caso esteja oculto
+    const resPivo = document.getElementById('resultadoPivo');
+    if (resPivo) resPivo.classList.remove('hidden');
+}
+
+// ABA 03
+// FUNÇÃO RESPONSÁVEL POR GERAR O RELATÓRIO SEMANAL DO PROFESSOR
+function gerarGrade() {
+    const prof = document.getElementById('profSelect').value;
+    const week = document.getElementById('weekInput').value;
+
+    if (!prof || !week) {
+        alert("Selecione Professor e Semana");
+        return;
+    }
+
+    const profNormalizado = (typeof traduzirProfessor === "function") ? traduzirProfessor(prof) : prof;
+    const [y, w] = week.split('-W').map(Number);
+    const start = getStartOfWeek(w, y);
+    
+    // Fim da semana (Sábado) para pré-filtragem
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+
+    const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    let aulasPorDia = Array(6).fill(0);
+    let horasPermanencia = Array(6).fill(0);
+    let observacoes = [];
+
+    // --- PASSO 1: PRÉ-FILTRAGEM OTIMIZADA ---
+    // Em vez de buscar no loop da tabela, criamos um "Mapa de Aulas" do professor na semana
+    // Chave: "DATA_HORA" -> Valor: { turma, disciplina, tag }
+    const mapaAulasSemana = {};
+    const aulasOrdenadasParaPermanencia = [[], [], [], [], [], []]; // Indexado por dia da semana (0-5)
+
+    Object.keys(dataStore).forEach(tId => {
+        const turma = dataStore[tId];
+        Object.keys(turma.discs).forEach(dId => {
+            const disc = turma.discs[dId];
+            disc.sch.forEach(aula => {
+                if (!aula.dtObj || !aula.time) return;
+
+                // Pré-filtro: A aula é deste professor e está dentro desta semana?
+                const profAulaTrad = (typeof traduzirProfessor === "function") ? traduzirProfessor(aula.prof) : aula.prof;
+                
+                if (profAulaTrad === profNormalizado && aula.dtObj >= start && aula.dtObj <= end) {
+                    
+                    const dataISO = aula.dtObj.toISOString().split('T')[0];
+                    const horaPad = aula.time.split(' - ')[0].trim().padStart(5, '0');
+                    const chave = `${dataISO}_${horaPad}`;
+
+                    if (!mapaAulasSemana[chave]) mapaAulasSemana[chave] = [];
+                    
+                    mapaAulasSemana[chave].push({
+                        turmaNome: turma.name,
+                        discNome: disc.name,
+                        tag: aula.tag
+                    });
+
+                    // Para cálculo de permanência posterior
+                    const diaSemanaIndex = (aula.dtObj.getDay() + 6) % 7; // Ajuste para Seg=0
+                    if (diaSemanaIndex < 6) {
+                        const [iniH, iniM] = aula.time.split(' - ')[0].split(':').map(Number);
+                        const [fimH, fimM] = aula.time.split(' - ')[1].split(':').map(Number);
+                        aulasOrdenadasParaPermanencia[diaSemanaIndex].push({
+                            inicioDec: iniH + (iniM / 60),
+                            fimDec: fimH + (fimM / 60),
+                            dt: new Date(aula.dtObj)
+                        });
+                        aulasPorDia[diaSemanaIndex]++;
+                    }
+                }
+            });
+        });
+    });
+
+    // --- PASSO 2: RENDERIZAÇÃO DA TABELA (RÁPIDA) ---
+    let h = `<div class="overflow-x-auto"><table class="tableGS bg-white w-full border-collapse border border-gray-300" id="tableGS">
+                <thead><tr class="bg-[#15803d] text-white"><th class="w-[100px] p-2 text-[10px] border">HORÁRIO</th>`;
+    
+    for (let i = 0; i < 6; i++) {
+        const dtHead = new Date(start);
+        dtHead.setDate(dtHead.getDate() + i);
+        h += `<th class="w-[14%] p-2 border text-[10px]">${dias[i].toUpperCase()}<br>
+              <span class="opacity-80 font-normal">${dtHead.toLocaleDateString('pt-BR').slice(0, 5)}</span></th>`;
+    }
+    h += `</tr></thead><tbody>`;
+
+    GABARITO.forEach(slot => {
+        if (slot.t === "intervalo") {
+            h += `<tr class="bg-gray-100 italic text-gray-500 text-[10px] text-center">
+                    <td class="border p-1">${slot.h}</td><td colspan="6" class="border p-1">${slot.l}</td></tr>`;
+            return;
+        }
+
+        const horaSlotPad = slot.h.split(' - ')[0].padStart(5, '0');
+        h += `<tr><td class="bg-gray-50 font-bold border p-2 text-[10px] text-center">${slot.h}</td>`;
+
+        for (let i = 0; i < 6; i++) {
+            const dtRef = new Date(start);
+            dtRef.setDate(dtRef.getDate() + i);
+            const dataISO = dtRef.toISOString().split('T')[0];
+            const chaveBusca = `${dataISO}_${horaSlotPad}`;
+            
+            let cellContent = "";
+            const aulasEncontradas = mapaAulasSemana[chaveBusca];
+
+            if (aulasEncontradas) {
+                aulasEncontradas.forEach(a => {
+                    const status = TRADUCAO[a.tag] || { class: "bg-green-50 border-green-200" };
+                    cellContent += `
+                        <div class="p-1 mb-1 rounded border-l-4 ${status.class} shadow-sm">
+                            <div class="font-bold text-[9px] text-gray-800">${a.turmaNome}</div>
+                            <div class="text-[8px] text-blue-800 uppercase border-t border-blue-100 mt-1">${a.discNome}</div>
+                        </div>`;
+                });
+            }
+            h += `<td class="border p-1 align-top min-h-[50px]">${cellContent}</td>`;
+        }
+        h += `</tr>`;
+    });
+
+    // --- PASSO 3: CÁLCULO DE PERMANÊNCIA (USANDO O FILTRO PRONTO) ---
+    let ultimaAulaDoDiaAnterior = null;
+    for (let i = 0; i < 6; i++) {
+        let dia = aulasOrdenadasParaPermanencia[i];
+        if (dia.length > 0) {
+            dia.sort((a, b) => a.inicioDec - b.inicioDec);
+            let primeira = dia[0];
+            let ultima = dia[dia.length - 1];
+            let diff = ultima.fimDec - primeira.inicioDec;
+
+            if (primeira.inicioDec <= 12 && ultima.fimDec >= 14) diff -= 2;
+            horasPermanencia[i] = Math.max(0, diff).toFixed(1);
+
+            // Interjornada
+            if (ultimaAulaDoDiaAnterior) {
+                const fimAnt = new Date(ultimaAulaDoDiaAnterior.dt);
+                fimAnt.setHours(Math.floor(ultimaAulaDoDiaAnterior.fimDec), (ultimaAulaDoDiaAnterior.fimDec % 1) * 60);
+                const iniAtu = new Date(primeira.dt);
+                iniAtu.setHours(Math.floor(primeira.inicioDec), (primeira.inicioDec % 1) * 60);
+                
+                const diffInter = (iniAtu - fimAnt) / (1000 * 60 * 60);
+                if (diffInter < 11 && diffInter > 0) {
+                    observacoes.push(`${dias[i]}: ${diffInter.toFixed(1)}h de intervalo`);
+                }
+            }
+            ultimaAulaDoDiaAnterior = ultima;
+        } else {
+            ultimaAulaDoDiaAnterior = null;
+        }
+    }
+
+    // --- RODAPÉ ---
+    // (O resto do seu código de rodapé permanece igual, injetando aulasPorDia e horasPermanencia)
+    h += `<tr class="bg-gray-50 font-bold text-[10px]"><td class="border p-2">AULAS / DIA</td>`;
+    aulasPorDia.forEach(c => h += `<td class="border p-2 text-center">${c}</td>`);
+    h += `</tr><tr class="bg-blue-50 font-bold text-[10px]"><td class="border p-2">PERMANÊNCIA</td>`;
+    horasPermanencia.forEach(v => h += `<td class="border p-2 text-center text-blue-700">${v}h</td>`);
+    h += `</tr>`;
+
+    const totalSemana = aulasPorDia.reduce((a, b) => a + b, 0);
+    h += `<tr class="bg-green-100 font-black text-xs text-green-900 uppercase">
+            <td colspan="2" class="p-3 border">Total:</td><td colspan="5" class="p-3 border">${totalSemana} Aulas</td></tr>`;
+
+    const obsTexto = observacoes.length > 0 ? observacoes.join(' | ') : "Interjornada regular.";
+    h += `<tr class="text-[9px] bg-yellow-50"><td class="font-bold p-2 border">ALERTAS:</td>
+          <td colspan="6" class="p-2 border ${observacoes.length > 0 ? 'text-red-600' : 'text-gray-500'}">${obsTexto}</td>
+          </tr></tbody></table></div>`;
+
+    document.getElementById('gradeRender').innerHTML = h;
+}
+
+// ABA 04 - PROFESSOR
+// GERA O RELATORIO DO PROFESSOR POR MES - IGUAL O DA TURMA
+/**
+ * Gera o painel comparativo completo de um professor específico.
+ * Exibe tabelas de Executado, Previsto e o Saldo (Diferença).
+ */
+async function gerarRelatorioProfessorCompleto() {
+    const profInput = document.getElementById("buscaProfessorRel")?.value.trim().toUpperCase();
+    
+    const bExec = document.getElementById("bodyRelatorioProf");
+    const bPrev = document.getElementById("bodyRelatorioPrevisto");
+    const bDiff = document.getElementById("bodyRelatorioDiferenca");
+
+    if (!bExec || !bPrev || !bDiff) return;
+
+    // Limpeza inicial
+    bExec.innerHTML = ''; bPrev.innerHTML = ''; bDiff.innerHTML = '';
+    if (!profInput) return;
+
+    // 1. OBTENÇÃO DO PREVISTO (Gabarito via Moldes)
+    // Chamamos a função primeiro para garantir que temos a base de comparação
+    const previstoAll = (typeof calcularPrevistoProfessor === "function") ? calcularPrevistoProfessor() : {};
+    const previsto = previstoAll[profInput] || {};
+
+    // 2. PROCESSAMENTO DO EXECUTADO (Gist + Aulas Projetadas)
+    let executado = {};
+
+    Object.values(dataStore).forEach(turma => {
+        if (!turma.discs) return;
+
+        Object.values(turma.discs).forEach(disc => {
+            if (!disc.sch) return;
+
+            disc.sch.forEach(s => {
+                // Pulamos os moldes no executado (eles são apenas regras, não aulas dadas)
+                if (s.tipo === "MOLDE") return;
+
+                const nomeProfTraduzido = (typeof traduzirProfessor === "function") 
+                    ? traduzirProfessor(s.prof).toUpperCase().trim() 
+                    : s.prof.toUpperCase().trim();
+
+                if (nomeProfTraduzido !== profInput) return;
+
+                // CHAVE UNIFICADA: Forçamos o mesmo padrão do Previsto
+                const chave = `${disc.name.toUpperCase().trim()}||${turma.name.toUpperCase().trim()}`;
+
+                if (!executado[chave]) {
+                    executado[chave] = {
+                        disciplina: disc.name.toUpperCase(),
+                        turma: turma.name.toUpperCase(),
+                        meses: Array(12).fill(0),
+                        sabado: 0,
+                        total: 0
+                    };
+                }
+
+                const dataAula = new Date(s.dtObj);
+                const mes = dataAula.getMonth();
+                
+                executado[chave].meses[mes]++;
+                executado[chave].total++;
+                if (dataAula.getDay() === 6) executado[chave].sabado++;
+            });
+        });
+    });
+
+    // 3. UNIFICAÇÃO E RENDERIZAÇÃO
+    // Criamos um Set com todas as chaves (disciplina+turma)
+    const todasAsChaves = new Set([...Object.keys(executado), ...Object.keys(previsto)]);
+
+    todasAsChaves.forEach(chave => {
+        const dadosExec = executado[chave] || { meses: Array(12).fill(0), sabado: 0, total: 0, disciplina: "", turma: "" };
+        const dadosPrev = previsto[chave] || { meses: Array(12).fill(0), sabado: 0, total: 0, disciplina: "", turma: "" };
+
+        // Recupera nomes amigáveis para as colunas de texto
+        const dNome = (dadosExec.disciplina || dadosPrev.disciplina || chave.split("||")[0]).trim();
+        const tNome = (dadosExec.turma || dadosPrev.turma || chave.split("||")[1]).trim();
+
+        // --- RENDERIZAÇÃO EXECUTADO ---
+        let rowExec = `<tr class="hover:bg-gray-50"><td class="text-left font-bold text-[10px]">${dNome}</td><td class="bg-gray-50 text-[10px]">${tNome}</td>`;
+        dadosExec.meses.forEach(v => rowExec += `<td class="text-center">${v || '-'}</td>`);
+        rowExec += `<td class="font-bold text-center">${dadosExec.sabado || '-'}</td><td class="bg-blue-50 font-black text-center">${dadosExec.total}</td></tr>`;
+        bExec.innerHTML += rowExec;
+
+        // --- RENDERIZAÇÃO PREVISTO ---
+        let rowPrev = `<tr class="hover:bg-gray-50"><td class="text-left font-bold text-[10px]">${dNome}</td><td class="bg-gray-50 text-[10px]">${tNome}</td>`;
+        dadosPrev.meses.forEach(v => rowPrev += `<td class="text-center">${v || '-'}</td>`);
+        rowPrev += `<td class="font-bold text-center">${dadosPrev.sabado || '-'}</td><td class="bg-green-50 font-black text-center">${dadosPrev.total}</td></tr>`;
+        bPrev.innerHTML += rowPrev;
+
+        // --- RENDERIZAÇÃO DIFERENÇA ---
+        let rowDiff = `<tr class="hover:bg-gray-50"><td class="text-left font-bold text-[10px]">${dNome}</td><td class="bg-gray-50 text-[10px]">${tNome}</td>`;
+        
+        dadosPrev.meses.forEach((pVal, i) => {
+            const eVal = dadosExec.meses[i] || 0;
+            const diff = eVal - pVal;
+            const cor = diff < 0 ? 'text-red-600 font-bold' : diff > 0 ? 'text-green-600 font-bold' : 'text-gray-300';
+            rowDiff += `<td class="text-center ${cor}">${diff === 0 ? '-' : diff}</td>`;
+        });
+
+        const diffSab = (dadosExec.sabado || 0) - (dadosPrev.sabado || 0);
+        const diffTotal = (dadosExec.total || 0) - (dadosPrev.total || 0);
+
+        rowDiff += `
+            <td class="text-center ${diffSab < 0 ? 'text-red-600 font-bold' : diffSab > 0 ? 'text-green-600 font-bold' : 'text-gray-300'}">${diffSab || '-'}</td>
+            <td class="p-1 text-center"><span class="px-2 py-0.5 rounded ${diffTotal < 0 ? 'bg-red-100 text-red-700' : diffTotal > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'} font-black text-[10px]">${diffTotal}</span></td>
+        </tr>`;
+
+        bDiff.innerHTML += rowDiff;
+    });
+}
+
+function calcularPrevistoProfessor() {
+    const year = document.getElementById('yearSelect')?.value || "2026";
+    const dadosAno = CALENDARIO_DINAMICO[year];
+    
+    if (!dadosAno || !dadosAno.limites) {
+        console.error("❌ Calendário não carregado para o ano:", year);
+        return {};
+    }
+
+    const previsto = {};
+    const mapaDias = { 'seg': 1, 'ter': 2, 'qua': 3, 'qui': 4, 'sex': 5, 'sab': 6, 'dom': 0 };
+
+    console.log("🔍 Iniciando processamento do Previsto...");
+
+    Object.keys(dataStore).forEach(tId => {
+        const turma = dataStore[tId];
+        Object.keys(turma.discs).forEach(dId => {
+            const disc = turma.discs[dId];
+            
+            // Tentamos pegar os moldes. Se o .filter falhar, buscamos por string no identificador
+            const moldes = disc.sch.filter(s => s.tipo === "MOLDE" || (s.identificador && s.identificador.startsWith('base_')));
+
+            moldes.forEach(m => {
+                const partes = m.identificador.toLowerCase().split('_'); 
+                let limites, diaRef, tipoSabado, feriasRef;
+
+                // Lógica de Identificação (Integrado vs Superior)
+                if (partes.includes('int')) {
+                    limites = dadosAno.limites.integrado;
+                    diaRef = mapaDias[partes.find(p => mapaDias[p] !== undefined)];
+                    tipoSabado = "integrado";
+                    feriasRef = dadosAno.ferias_int;
+                } else if (partes.includes('sup')) {
+                    const sem = partes.find(p => p === 's1' || p === 's2') || 's1';
+                    limites = dadosAno.limites.superior[sem];
+                    diaRef = mapaDias[partes.find(p => mapaDias[p] !== undefined)];
+                    tipoSabado = `superior_${sem}`;
+                    feriasRef = dadosAno.ferias_sup;
+                }
+
+                if (!limites || diaRef === undefined) return;
+
+                let curr = new Date(limites.inicio + "T12:00:00");
+                const fim = new Date(limites.fim + "T12:00:00");
+
+                while (curr <= fim) {
+                    const iso = curr.toISOString().split('T')[0];
+                    const wDay = curr.getDay();
+                    let contar = false;
+                    let ehSab = false;
+
+                    if (wDay === diaRef) {
+                        contar = true;
+                    } else {
+                        const sabLetivo = (dadosAno.sabados || []).find(s => 
+                            s.data === iso && s.tipo === tipoSabado && s.referencia === diaRef
+                        );
+                        if (sabLetivo) { contar = true; ehSab = true; }
+                    }
+
+                    if (contar) {
+                        const feriado = (dadosAno.feriados || []).includes(iso);
+                        const ferias = (feriasRef || []).some(f => iso >= f.inicio && iso <= f.fim);
+
+                        if (!feriado && !ferias) {
+                            const pNome = (typeof traduzirProfessor === "function") 
+                                ? traduzirProfessor(m.prof).toUpperCase().trim() 
+                                : m.prof.toUpperCase().trim();
+                            
+                            const chave = `${disc.name.toUpperCase().trim()}||${turma.name.toUpperCase().trim()}`;
+
+                            if (!previsto[pNome]) previsto[pNome] = {};
+                            if (!previsto[pNome][chave]) {
+                                previsto[pNome][chave] = {
+                                    disciplina: disc.name.toUpperCase(),
+                                    turma: turma.name.toUpperCase(),
+                                    meses: Array(12).fill(0),
+                                    sabado: 0,
+                                    total: 0
+                                };
+                            }
+                            previsto[pNome][chave].meses[curr.getMonth()]++;
+                            previsto[pNome][chave].total++;
+                            if (ehSab) previsto[pNome][chave].sabado++;
+                        }
+                    }
+                    curr.setDate(curr.getDate() + 1);
+                }
+            });
+        });
+    });
+
+    return previsto;
+}
+
+/**
+ * Calcula o saldo de aulas (Previsto - Realizado).
+ * Valores positivos: Aulas pendentes (faltando).
+ * Valores negativos: Aulas excedentes (reposições extras).
+ */
+function calcularDiferencaProfessor(realizado, previsto) {
+    const diferenca = {};
+
+    // 1. Itera sobre o Gabarito (Previsto) para cobrar o que é devido
+    Object.keys(previsto).forEach(prof => {
+        const dadosPrevistosProf = previsto[prof];
+        const dadosRealizadosProf = realizado[prof] || {};
+
+        // Criamos um mapa de chaves normalizadas do 'Realizado' para busca rápida
+        const mapaRealizadoNormalizado = {};
+        Object.keys(dadosRealizadosProf).forEach(ch => {
+            const chNorm = ch.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+            mapaRealizadoNormalizado[chNorm] = dadosRealizadosProf[ch];
+        });
+
+        Object.keys(dadosPrevistosProf).forEach(chaveOriginal => {
+            const prev = dadosPrevistosProf[chaveOriginal];
+            
+            // Normalizamos a chave do Previsto para comparar com o Realizado
+            const chaveNorm = chaveOriginal.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+            const real = mapaRealizadoNormalizado[chaveNorm];
+
+            const saldoMeses = Array(12).fill(0);
+            let temDiferencaNoMes = false;
+
+            // 2. Cálculo mensal do Saldo
+            for (let i = 0; i < 12; i++) {
+                const p = prev.meses[i] || 0;
+                const r = real?.meses?.[i] || 0;
+                const diff = p - r;
+                
+                saldoMeses[i] = diff;
+                if (diff !== 0) temDiferencaNoMes = true;
+            }
+
+            const saldoTotal = (prev.total || 0) - (real?.total || 0);
+            const saldoSabado = (prev.sabados || 0) - (real?.sabados || 0);
+
+            // 3. Só incluímos no objeto final se houver discrepância
+            if (saldoTotal !== 0 || saldoSabado !== 0 || temDiferencaNoMes) {
+                if (!diferenca[prof]) diferenca[prof] = {};
+                
+                diferenca[prof][chaveOriginal] = {
+                    disciplina: prev.disciplina,
+                    turma: prev.turma,
+                    meses: saldoMeses,
+                    sabado: saldoSabado,
+                    total: saldoTotal,
+                    status: saldoTotal > 0 ? "PENDENTE" : "OK/EXCEDENTE"
+                };
+            }
+        });
+    });
+
+    return diferenca;
+}
+
+// ABA 05 - ANUAL PROFESSOR
+// GERA TODAS AS AULAS DO PROFESSOR NO ANO INTEIRO
+function gerarHorarioAnualProfessor() {
+    const profInput = document.getElementById("buscaProfessorAnual").value.trim().toUpperCase();
+    const b = document.getElementById("bodyHorarioAnual");
+    b.innerHTML = '';
+    if (!profInput) return;
+
+    let agenda = {};
+    let maxAulasPorDia = 0;
+
+    // 1. Coleta e Normalização dos Dados
+    Object.keys(dataStore).forEach(tId => {
+        Object.values(dataStore[tId].discs).forEach(disc => {
+            const agendaDisc = disc.schProjetada || disc.sch;
+
+            agendaDisc.forEach(s => {
+                if (normalizarTexto(traduzirProfessor(s.prof)) === normalizarTexto(profInput)) {
+                    const dataStr = s.dtObj.toISOString().split('T')[0];
+                    if (!agenda[dataStr]) agenda[dataStr] = [];
+
+                    const horaString = s.time.split(' - ')[0].trim();
+                    const [h, m] = horaString.split(':');
+                    const minutosDoDia = (parseInt(h) * 60) + parseInt(m);
+
+                    agenda[dataStr].push({ 
+                        turma: dataStore[tId].name, 
+                        disc: disc.name, 
+                        horario: s.time,
+                        ordem: minutosDoDia 
+                    });
+
+                    if (agenda[dataStr].length > maxAulasPorDia) {
+                        maxAulasPorDia = agenda[dataStr].length;
+                    }
+                }
+            });
+        });
+    });
+
+    // 2. Ajuste do Cabeçalho (Estilo Verde/Branco)
+    ajustarCabecalhoAnual(maxAulasPorDia);
+
+    // 3. Ordenação e Renderização
+    Object.keys(agenda).sort().forEach(data => {
+        agenda[data].sort((a, b) => a.ordem - b.ordem);
+
+        let row = `<tr><td class="border p-2 font-bold">${data}</td>`;
+        
+        agenda[data].forEach(aula => {
+            row += `<td class="border p-2">${aula.turma} / ${aula.disc} (${aula.horario})</td>`;
+        });
+
+        for (let i = agenda[data].length; i < maxAulasPorDia; i++) {
+            row += `<td class="border p-2">-</td>`;
+        }
+
+        row += `</tr>`;
+        b.innerHTML += row;
+    });
+}
+
+function ajustarCabecalhoAnual(maxAulas) {
+
+    const theadRow = document.querySelector("#tabelaHorarioAnual thead tr");
+    if (!theadRow) return; // 🔥 proteção contra erro de DOM
+    const styleClass = "border p-2 bg-[#3c764a] text-white font-bold text-[10px] uppercase";
+
+    // limpa o cabeçalho
+    theadRow.innerHTML = "";
+
+    // coluna fixa
+    const thBase = document.createElement("th");
+    thBase.className = styleClass;
+    thBase.innerText = "Dia da Aula";
+    theadRow.appendChild(thBase);
+
+    // colunas dinâmicas
+    for (let i = 1; i <= maxAulas; i++) {
+        const th = document.createElement("th");
+        th.className = styleClass;
+        th.innerText = `${i}ª AULA`;
+        theadRow.appendChild(th);
+    }
+}
+
+// ABA 06
+// FUNÇÃO RESPONSÁVEL POR GERAR A FICHA INDIVIDUAL SEMANAL POR TURMA
+function gerarGradeTurma() {
+    const tId = document.getElementById('turmaSelectSemanal').value;
+    const week = document.getElementById('weekInputTurma').value;
+
+    if (!tId || !week) {
+        alert("Por favor, selecione a Turma e a Semana desejada.");
+        return;
+    }
+
+    const [y, w] = week.split('-W').map(Number);
+    const start = getStartOfWeek(w, y);
+    const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+    // 1. Início da Tabela
+    let h = `
+    <div class="overflow-x-auto shadow-md rounded-lg">
+        <table class="tableGS bg-white w-full border-collapse" id="tableGSTurma">
+            <thead>
+                <tr class="bg-[#15803d] text-white">
+                    <th class="w-[80px] p-2 text-[10px] border border-green-700">HORÁRIO</th>`;
+
+    dias.forEach((d, i) => {
+        const dtHead = new Date(start);
+        dtHead.setDate(dtHead.getDate() + i);
+        h += `
+            <th class="p-2 border border-green-700 text-[10px]">
+                ${d.toUpperCase()}<br>
+                <span class="opacity-80 font-normal">${dtHead.toLocaleDateString('pt-BR').slice(0, 5)}</span>
+            </th>`;
+    });
+
+    h += `</tr></thead><tbody>`;
+
+    // 2. Renderização das Linhas baseadas no GABARITO (Horários da Instituição)
+    GABARITO.forEach(slot => {
+        if (slot.t === "intervalo") {
+            h += `
+                <tr class="bg-gray-100 italic text-gray-500 text-[10px] text-center">
+                    <td class="border p-1">${slot.h}</td>
+                    <td colspan="6" class="border p-1">${slot.l}</td>
+                </tr>`;
+            return;
+        }
+
+        // Normalização do horário para comparação (ex: 07:30)
+        const horaSlotPad = slot.h.split(' - ')[0].trim().padStart(5, '0');
+
+        h += `<tr><td class="bg-gray-50 font-bold border p-2 text-[10px] text-center">${slot.h}</td>`;
+
+        // Loop pelos 6 dias da semana (Segunda a Sábado)
+        for (let i = 0; i < 6; i++) {
+            const dtRef = new Date(start);
+            dtRef.setDate(dtRef.getDate() + i);
+            let cellContent = "";
+
+            if (dataStore[tId]) {
+                // Varre as disciplinas da turma selecionada
+                Object.keys(dataStore[tId].discs).forEach(dId => {
+                    const discObj = dataStore[tId].discs[dId];
+
+                    discObj.sch.forEach(aula => {
+                        if (!aula.dtObj || !aula.time) return;
+
+                        const horaAulaPad = aula.time.split(' - ')[0].trim().padStart(5, '0');
+
+                        // Comparação de Data e Hora
+                        if (aula.dtObj.getDate() === dtRef.getDate() &&
+                            aula.dtObj.getMonth() === dtRef.getMonth() &&
+                            aula.dtObj.getFullYear() === dtRef.getFullYear() &&
+                            horaAulaPad === horaSlotPad) {
+
+                            const status = TRADUCAO[aula.tag] || { class: "bg-green-50 border-green-200" };
+                            const profNome = (typeof traduzirProfessor === "function") 
+                                ? traduzirProfessor(aula.prof) 
+                                : aula.prof;
+
+                            cellContent += `
+                                <div class="p-1 mb-1 rounded border-l-4 shadow-sm ${status.class}">
+                                    <div class="font-black text-[9px] text-gray-800 leading-tight uppercase">
+                                        ${discObj.name}
+                                    </div>
+                                    <div class="border-t border-gray-200 mt-1 pt-1 italic text-[8px] text-blue-800">
+                                        ${getPrimeiroNome(profNome)}
+                                    </div>
+                                </div>`;
+                        }
+                    });
+                });
+            }
+
+            h += `<td class="border p-1 align-top min-h-[50px]">${cellContent}</td>`;
+        }
+        h += `</tr>`;
+    });
+
+    // 3. Renderização Final
+    document.getElementById('gradeTurmaRender').innerHTML = h + "</tbody></table></div>";
+}
+
+// ABA 07
+// FUNÇÃO PARA GERAR O HORÁRIO DA SEMANA - PODE FILTRAR POR PROFESSOR TAMBEM
+function gerarGradeGeral() {
+    console.log("🚀 Iniciando geração da grade geral...");
+
+    const weekInput = document.getElementById("weekInputGeral");
+    const nivelInput = document.getElementById("nivelSelect");
+    const buscaInput = document.getElementById("buscaGeral");
+    const render = document.getElementById("gradeGeralRender");
+
+    // =========================
+    // 🔎 Validação dos elementos
+    // =========================
+    if (!weekInput || !nivelInput || !render) {
+        console.error("❌ Elementos da interface não encontrados.");
+        return;
+    }
+
+    const week = weekInput.value;
+    const nivel = nivelInput.value;
+    const buscaProf = normalizarTexto(buscaInput?.value || "");
+
+    console.log("📅 Semana:", week);
+    console.log("🎓 Nível:", nivel);
+    console.log("👨‍🏫 Busca professor:", buscaProf);
+
+    // =========================
+    // 🔎 Validação dos filtros
+    // =========================
+    if (!week || !nivel) {
+        render.innerHTML = `
+            <div class="p-4 text-red-600 font-bold">
+                Selecione a semana e o nível.
+            </div>
+        `;
+        return;
+    }
+
+    // =========================
+    // 🔎 Verificação do dataStore
+    // =========================
+    if (!dataStore || Object.keys(dataStore).length === 0) {
+        console.error("❌ dataStore vazio ou inexistente.");
+        render.innerHTML = `
+            <div class="p-4 text-red-600 font-bold">
+                Nenhum dado carregado.
+            </div>
+        `;
+        return;
+    }
+
+    console.log("📚 Total de turmas:", Object.keys(dataStore).length);
+
+    // =========================
+    // 📅 Semana selecionada
+    // =========================
+    const [ano, semana] = week.split("-W").map(Number);
+    const start = getStartOfWeek(semana, ano);
+
+    if (!(start instanceof Date) || isNaN(start)) {
+        console.error("❌ Semana inválida.");
+        render.innerHTML = `
+            <div class="p-4 text-red-600 font-bold">
+                Semana inválida.
+            </div>
+        `;
+        return;
+    }
+
+    const diasSemana = [
+        "SEGUNDA",
+        "TERÇA",
+        "QUARTA",
+        "QUINTA",
+        "SEXTA",
+        "SÁBADO"
+    ];
+
+    // =========================
+    // ⏰ Horários por nível
+    // =========================
+    let horariosFiltrados = [...GABARITO];
+
+    if (nivel === "tecnico") {
+        horariosFiltrados = GABARITO.filter(slot => {
+            const horaInicio = slot.h.split(" - ")[0];
+            return horaInicio < "18:20";
+        });
+    }
+
+    // =========================
+    // 🎓 Filtrar turmas
+    // =========================
+    const turmasFiltradas = Object.keys(dataStore).filter(tId => {
+        return nivel === "superior"
+            ? turmaEhSuperior(tId)
+            : !turmaEhSuperior(tId);
+    });
+
+    console.log("📚 Turmas filtradas:", turmasFiltradas);
+
+    if (turmasFiltradas.length === 0) {
+        render.innerHTML = `
+            <div class="p-4 text-yellow-600 font-bold">
+                Nenhuma turma encontrada.
+            </div>
+        `;
+        return;
+    }
+
+    // =========================
+    // 🏗️ Montagem da tabela
+    // =========================
+    let html = "";
+
+    for (let i = 0; i < 6; i++) {
+        let dataDia = new Date(start);
+        dataDia.setDate(start.getDate() + i);
+        dataDia.setHours(0, 0, 0, 0);
+
+        html += `<div class="bloco-dia">`;
+
+        html += `
+            <h3 class="bg-[#15803d] text-white p-2 font-bold mt-6">
+                ${diasSemana[i]} - ${dataDia.toLocaleDateString("pt-BR")}
+            </h3>
+
+            <table class="tableGS bg-white mb-6">
+                <thead class="sticky top-[90px] bg-gray-100 z-10">
+                    <tr>
+                        <th style="width:70px;" class="text-[10px]">H</th>
+        `;
+
+        // Cabeçalho com turmas
+        turmasFiltradas.forEach(tId => {
+            html += `<th>${dataStore[tId].name}</th>`;
+        });
+
+        html += `</tr></thead><tbody>`;
+
+        // =========================
+        // ⏰ Linhas de horário
+        // =========================
+        horariosFiltrados.forEach(slot => {
+            if (slot.t === "intervalo") {
+                html += `
+                    <tr class="intervalo-row">
+                        <td>${slot.h}</td>
+                        <td colspan="${turmasFiltradas.length}">
+                            ${slot.l || "INTERVALO"}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const horaSlot = slot.h
+                .split(" - ")[0]
+                .substring(0, 5)
+                .trim()
+                .padStart(5, "0");
+
+            html += `
+                <tr>
+                    <td class="bg-gray-100 font-bold border">
+                        ${slot.h}
+                    </td>
+            `;
+
+            // =========================
+            // 📚 Colunas das turmas
+            // =========================
+            turmasFiltradas.forEach(tId => {
+                let conteudo = "";
+                const disciplinas = dataStore[tId].discs || {};
+
+                for (let d in disciplinas) {
+                    const disc = disciplinas[d];
+
+                    // 🔥 usa sch da versão antiga que funcionava
+                    const agenda = disc?.sch || [];
+
+                    agenda.forEach(a => {
+                        if (!a?.dtObj) return;
+
+                        const dataAula = new Date(a.dtObj);
+                        dataAula.setHours(0, 0, 0, 0);
+
+                        if (isNaN(dataAula.getTime())) return;
+
+                        const horaAula = (a.time || "")
+                            .split(" - ")[0]
+                            .substring(0, 5)
+                            .trim()
+                            .padStart(5, "0");
+
+                        const mesmaData =
+                            dataAula.toDateString() === dataDia.toDateString();
+
+                        const mesmoHorario =
+                            horaAula === horaSlot;
+
+                        if (mesmaData && mesmoHorario) {
+                            const nomeProfCompleto =
+                                traduzirProfessor(a.prof) || "";
+
+                            const nomeProfBusca =
+                                normalizarTexto(nomeProfCompleto);
+
+                            if (
+                                !buscaProf ||
+                                nomeProfBusca.includes(buscaProf)
+                            ) {
+                                conteudo += `
+                                    <div class="aula-card status-normal">
+                                        <div class="font-bold text-[11px]">
+                                            ${disc.name}
+                                        </div>
+                                        <div class="text-[10px] text-blue-800">
+                                            ${getPrimeiroNome(nomeProfCompleto)}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }
+                    });
+                }
+
+                html += `
+                    <td class="border">
+                        <div class="min-h-[40px]">
+                            ${conteudo}
+                        </div>
+                    </td>
+                `;
+            });
+
+            html += `</tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+    }
+
+    // =========================
+    // 🎯 Render final
+    // =========================
+    render.innerHTML = html;
+
+    console.log("✅ Grade geral gerada com sucesso.");
+}
+
+// ABA 08
+// FUNÇÃO RESPONSÁVEL POR GERAR OS DADOS DE TODOS OS PROFESSORES - SOMA DAS AULAS = ANUAL+SEMESTRAL
+function gerarDashboard() {
+    const container = document.getElementById('dashboardContent');
+    if (!container) {
+        console.warn("Elemento #dashboardContent não encontrado no DOM.");
+        return;
+    }
+
+    // 1. Verificação de Dados
+    if (!dataStore || Object.keys(dataStore).length === 0) {
+        container.innerHTML = `
+            <div class="p-12 text-center bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl">
+                <p class="text-gray-400 italic">Aguardando sincronização com o Gist para gerar indicadores...</p>
+            </div>`;
+        return;
+    }
+
+    // 2. Variáveis de Controle
+    let totalAulasGerais = 0;
+    let totalAulasComProfessor = 0;
+    const totalTurmas = Object.keys(dataStore).length;
+    const professoresSet = new Set();
+    const contadorProfessores = {};
+
+    // 3. Processamento Analítico
+    Object.values(dataStore).forEach(turma => {
+        if (!turma?.discs) return;
+
+        Object.values(turma.discs).forEach(disciplina => {
+            if (!Array.isArray(disciplina.sch)) return;
+
+            disciplina.sch.forEach(aula => {
+                if (!aula) return;
+
+                totalAulasGerais++;
+                const nomeRaw = (aula.prof || "").trim();
+
+                if (nomeRaw && nomeRaw !== "N/I") {
+                    totalAulasComProfessor++;
+                    
+                    // Normalização e Tradução
+                    const nomeCompleto = (typeof traduzirProfessor === "function") 
+                        ? traduzirProfessor(nomeRaw).toUpperCase() 
+                        : nomeRaw.toUpperCase();
+
+                    professoresSet.add(nomeCompleto);
+                    contadorProfessores[nomeCompleto] = (contadorProfessores[nomeCompleto] || 0) + 1;
+                }
+            });
+        });
+    });
+
+    // 4. Cálculos de Performance
+    const totalProfessores = professoresSet.size;
+    const totalAulasSemProfessor = totalAulasGerais - totalAulasComProfessor;
+    const percentualCobertura = totalAulasGerais > 0 
+        ? ((totalAulasComProfessor / totalAulasGerais) * 100).toFixed(1) 
+        : "0.0";
+
+    // Busca a última data registrada para informar o usuário
+    const ultimaData = (typeof getUltimaDataRegistrada === "function") ? getUltimaDataRegistrada() : null;
+    const dataFormatada = ultimaData ? ultimaData.toLocaleDateString('pt-BR') : "N/A";
+
+    // 5. Geração do Ranking Docente
+    const ranking = Object.entries(contadorProfessores).sort((a, b) => b[1] - a[1]);
+
+    let rankingHTML = `
+        <div class="mt-8">
+            <div class="flex justify-between items-end mb-4">
+                <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                    <span class="text-xl">🏆</span> Ranking de Carga Horária Efetiva
+                </h3>
+                <span class="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded">
+                    Dados atualizados até: ${dataFormatada}
+                </span>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+    `;
+
+    ranking.forEach(([nome, qtd], index) => {
+        const medalha = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<span class="text-gray-400">${index + 1}º</span>`;
+        const corMedalha = index < 3 ? 'bg-yellow-50' : '';
+
+        rankingHTML += `
+            <div class="flex justify-between items-center p-3 border-b border-gray-50 hover:bg-blue-50 transition-all ${corMedalha}">
+                <div class="flex items-center gap-4">
+                    <div class="w-8 font-bold text-center">${medalha}</div>
+                    <button onclick="gerarGraficoProfessor('${nome}')" 
+                            class="text-sm font-bold text-blue-600 hover:text-blue-900 transition-colors uppercase text-left">
+                        ${nome}
+                    </button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-black text-gray-700">${qtd}</span>
+                    <span class="text-[10px] text-gray-400 uppercase font-bold">aulas</span>
+                </div>
+            </div>
+        `;
+    });
+
+    rankingHTML += `</div></div>`;
+
+    // 6. Montagem Final da Interface
+    container.innerHTML = `
+        <div class="flex items-center justify-between mb-2">
+            <h2 class="text-lg font-black text-gray-800 uppercase tracking-tighter">Indicadores Institucionais</h2>
+            <button onclick="exportarDashboardPDF()" class="text-xs bg-gray-800 text-white px-3 py-1 rounded-full hover:bg-black transition-all">
+                📥 Exportar PDF
+            </button>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            ${gerarCard("Total de Aulas", totalAulasGerais, "#f8fafc", "#e2e8f0")}
+            ${gerarCard("Com Professor", totalAulasComProfessor, "#f0fdf4", "#bbf7d0")}
+            ${gerarCard("Sem Professor", totalAulasSemProfessor, "#fef2f2", "#fecaca")}
+            ${gerarCard("Turmas Ativas", totalTurmas, "#f5f3ff", "#ddd6fe")}
+            ${gerarCard("Corpo Docente", totalProfessores, "#fffbeb", "#fef3c7")}
+            ${gerarCard("Cobertura", percentualCobertura + "%", "#ecfeff", "#a5f3fc")}
+        </div>
+
+        ${rankingHTML}
+        
+        <div id="containerGraficoDashboard" class="hidden mt-8 p-6 bg-white border border-gray-200 rounded-2xl shadow-sm">
+            <canvas id="graficoProfessor" style="max-height: 400px;"></canvas>
+        </div>
+    `;
+}
+
+// Variável para controle de instância do Chart.js (se for usar)
+let chartAtual = null;
+
+function gerarGraficoProfessor(nomeProf) {
+    // 1. Verificações de Segurança
+    if (!dataStore || typeof BASE_HORARIOS === 'undefined') {
+        console.warn("Dados ou Base de Horários não carregados.");
+        return;
+    }
+
+    const containerGrafico = document.getElementById('containerGraficoDashboard');
+    const canvas = document.getElementById('graficoProfessor');
+
+    if (!canvas || !containerGrafico) {
+        console.warn("Elementos do gráfico não encontrados no Dashboard.");
+        return;
+    }
+
+    // Exibe o container do gráfico (caso esteja oculto)
+    containerGrafico.classList.remove('hidden');
+    // Scroll suave até o gráfico para o usuário ver que gerou
+    containerGrafico.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    const nomeNormalizado = (nomeProf || "").trim().toUpperCase();
+    let realizado = Array(12).fill(0);
+    let previsto = Array(12).fill(0);
+
+    // ==========================================
+    // 🔷 CÁLCULO DO REALIZADO (O que está no Gist)
+    // ==========================================
+    Object.values(dataStore).forEach(turma => {
+        Object.values(turma.discs || {}).forEach(disc => {
+            disc.sch?.forEach(a => {
+                if (!a?.dtObj) return;
+                
+                // Traduz o professor da aula para comparar com o selecionado
+                const profAulaTraduzido = (typeof traduzirProfessor === "function") 
+                    ? traduzirProfessor(a.prof).toUpperCase() 
+                    : a.prof.toUpperCase();
+
+                if (profAulaTraduzido === nomeNormalizado) {
+                    const info = TRADUCAO?.[a.tag] || { soma: true };
+                    if (info.soma) {
+                        realizado[a.dtObj.getMonth()]++;
+                    }
+                }
+            });
+        });
+    });
+
+    // ==========================================
+    // 🔷 CÁLCULO DO PREVISTO (Baseado na Grade Base)
+    // ==========================================
+    const year = document.getElementById('yearSelect').value;
+    
+    // Otimização: Filtramos a grade base apenas para o professor em questão
+    Object.keys(BASE_HORARIOS).forEach(tipo => {
+        Object.keys(BASE_HORARIOS[tipo]).forEach(tId => {
+            const ehIntegrado = !ehSemestral(tId);
+            
+            Object.values(BASE_HORARIOS[tipo][tId]).forEach(aulasBase => {
+                aulasBase.forEach(aula => {
+                    // Compara o professor da base com o nome solicitado
+                    const profBaseTrad = (typeof traduzirProfessor === "function") 
+                        ? traduzirProfessor(aula.prof).toUpperCase() 
+                        : aula.prof.toUpperCase();
+
+                    if (profBaseTrad !== nomeNormalizado) return;
+
+                    // Percorre o ano letivo para projetar as aulas
+                    let dataAtual = new Date(year, 0, 1);
+                    const dataFimAno = new Date(year, 11, 31);
+
+                    while (dataAtual <= dataFimAno) {
+                        if (dataAtual.getDay() === aula.diaSemana) {
+                            // Verifica Férias e Feriados
+                            const emFerias = ehIntegrado ? estaEmFeriasIntegrado(dataAtual) : estaEmFeriasSuperior(dataAtual);
+                            const feriado = (typeof ehFeriado === "function") ? ehFeriado(dataAtual, tipo) : false;
+
+                            if (!emFerias && !feriado) {
+                                previsto[dataAtual.getMonth()]++;
+                            }
+                            // Pula 7 dias após encontrar o dia da semana
+                            dataAtual.setDate(dataAtual.getDate() + 7);
+                        } else {
+                            dataAtual.setDate(dataAtual.getDate() + 1);
+                        }
+                    }
+                });
+            });
+        });
+    });
+
+    // ==========================================
+    // 🔷 RENDERIZAÇÃO DO CHART.JS
+    // ==========================================
+    const ctx = canvas.getContext('2d');
+    if (chartAtual) chartAtual.destroy();
+
+    chartAtual = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
+            datasets: [
+                {
+                    label: 'Previsto (Grade Ideal)',
+                    data: previsto,
+                    borderColor: '#2563eb', // Azul
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Realizado (Gist)',
+                    data: realizado,
+                    borderColor: '#dc2626', // Vermelho
+                    backgroundColor: 'transparent',
+                    borderWidth: 3,
+                    pointStyle: 'rectRounded',
+                    pointRadius: 5,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: `PROJEÇÃO VS REALIZADO: ${nomeProf.toUpperCase()}`,
+                    font: { size: 16, weight: 'bold' }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Qtd. Aulas' } }
+            }
+        }
+    });
+}
+
+/**
+ * Gera o HTML de um card de informação para o Dashboard.
+ * @param {string} titulo - O rótulo do card.
+ * @param {string|number} valor - O dado principal a ser exibido.
+ * @param {string} bg - Cor de fundo (Hex ou RGB).
+ * @param {string} border - Cor da borda (Hex ou RGB).
+ */
+function gerarCard(titulo, valor, bg, border) {
+    // Tratamento de segurança para strings e números
+    const t = (titulo || '').toString().toUpperCase();
+    const v = (valor !== undefined && valor !== null) ? valor.toString() : '0';
+
+    // Retorna o template literal com estilos inline (garante consistência independente do CSS externo)
+    return `
+        <div class="info-card shadow-sm transition-transform hover:scale-[1.02]" 
+             style="padding: 12px 8px; 
+                    background: ${bg || '#ffffff'}; 
+                    border: 1px solid ${border || '#e5e7eb'}; 
+                    border-radius: 10px; 
+                    text-align: center;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    min-height: 80px;">
+            
+            <div class="info-card-title" 
+                 style="font-size: 9px; 
+                        font-weight: 600; 
+                        color: #6b7280; 
+                        margin-bottom: 4px;
+                        letter-spacing: 0.05em;">
+                ${t}
+            </div>
+            
+            <div class="info-card-value" 
+                 style="font-size: 20px; 
+                        font-weight: 800; 
+                        color: #111827;
+                        line-height: 1.2;">
+                ${v}
+            </div>
+        </div>
+    `;
+}
+
+function popularFiltroProfessores() {
+    const dataList = document.getElementById("listaProfessores");
+    if (!dataList) return;
+
+    let nomesSet = new Set();
+
+    // 🔷 1. Professores do cadastro fixo
+    if (typeof PROFESSORES !== 'undefined') {
+        Object.values(PROFESSORES).forEach(nome => {
+            if (nome) {
+                nomesSet.add(formatarNome(nome.trim()));
+            }
+        });
+    }
+
+    // 🔷 2. Professores vindos do dataStore
+    Object.keys(dataStore).forEach(tId => {
+        Object.values(dataStore[tId].discs).forEach(disc => {
+            (disc.sch || []).forEach(aula => {
+                if (aula.prof && aula.prof !== "N/I") {
+                    const nomeTraduzido =
+                        typeof traduzirProfessor === "function"
+                            ? traduzirProfessor(aula.prof)
+                            : aula.prof;
+
+                    nomesSet.add(
+                        formatarNome(nomeTraduzido.trim())
+                    );
+                }
+            });
+        });
+    });
+
+    // 🔷 3. Ordenação
+    const nomesOrdenados = Array.from(nomesSet).sort((a, b) =>
+        a.localeCompare(b, 'pt-BR')
+    );
+
+    // 🔷 4. Renderização
+    dataList.innerHTML = '';
+
+    nomesOrdenados.forEach(nome => {
+        const option = document.createElement('option');
+        option.value = nome;
+        dataList.appendChild(option);
+    });
+}
+
+function limparResultados() {
+    // 🔷 Esconde containers de resultados
+    const idsParaEsconder = ['resultadoBusca', 'gradeGeralRender', 'resultadoPivo'];
+    idsParaEsconder.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+    });
+
+    // 🔷 Limpa corpos de tabelas e áreas de renderização
+    const containersParaLimpar = [
+        'bodyD', 
+        'bodyPivo', 
+        'bodyRelatorioProf', 
+        'bodyRelatorioPrevisto', 
+        'bodyRelatorioDiferenca',
+        'gradeRender', 
+        'gradeTurmaRender'
+    ];
+    containersParaLimpar.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+    });
+
+    // 🔷 Reset de Selects Dependentes
+    const disciplinaSelect = document.getElementById('disciplinaSelect');
+    if (disciplinaSelect) {
+        disciplinaSelect.disabled = true;
+        disciplinaSelect.innerHTML = '<option value="">Selecione a Turma Primeiro</option>';
+    }
+
+    // 🔷 Reset de Contadores
+    const contRegular = document.getElementById('cont-regular');
+    if (contRegular) contRegular.textContent = '0';
+    const contExtra = document.getElementById('cont-extra');
+    if (contExtra) contExtra.textContent = '0';
+
+    // 🔷 Esconde seletores de semestre
+    const semestres = ['semestreSelect', 'semestreSelectPivo'];
+    semestres.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+    });
+}
+
+function popularSelects() {
+    // Captura de elementos com segurança individual
+    const t1 = document.getElementById('turmaSelect');
+    const t2 = document.getElementById('turmaSelectPivo');
+    const t3 = document.getElementById('turmaSelectSemanal');
+    const ps = document.getElementById('profSelect');
+
+    // 🔷 1. PROCESSAMENTO DE TURMAS
+    // Ordena as turmas pelo nome legível, não pelo ID técnico
+    const turmasOrdenadas = Object.keys(dataStore).sort((a, b) => {
+        const nomeA = dataStore[a]?.name || "";
+        const nomeB = dataStore[b]?.name || "";
+        return nomeA.localeCompare(nomeB);
+    });
+
+    const optionsTurmasHtml = '<option value="">-- SELECIONE A TURMA --</option>' +
+        turmasOrdenadas
+            .map(id => `<option value="${id}">${dataStore[id].name}</option>`)
+            .join('');
+
+    // Preenche apenas os elementos que existirem na página atual
+    if (t1) t1.innerHTML = optionsTurmasHtml;
+    if (t2) t2.innerHTML = optionsTurmasHtml;
+    if (t3) t3.innerHTML = optionsTurmasHtml;
+
+    // 🔷 2. PROCESSAMENTO DE PROFESSORES (PADRONIZADO)
+    if (ps) {
+        const profs = new Set();
+
+        Object.keys(dataStore).forEach(tId => {
+            Object.values(dataStore[tId].discs).forEach(disc => {
+                disc.sch.forEach(aula => {
+                    // Só adiciona se o professor não for "N/I" (Não Informado)
+                    if (aula.prof && aula.prof !== "N/I") {
+                        // Garante o nome completo através da tradução
+                        const nomeCompleto = (typeof traduzirProfessor === "function") 
+                            ? traduzirProfessor(aula.prof) 
+                            : aula.prof;
+                        
+                        profs.add(nomeCompleto.trim());
+                    }
+                });
+            });
+        });
+
+        // Converte o Set em Array e ordena alfabeticamente
+        const profsOrdenados = Array.from(profs).sort((a, b) => a.localeCompare(b));
+
+        ps.innerHTML = '<option value="">-- SELECIONE O PROFESSOR --</option>' +
+            profsOrdenados.map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+}
+
+// ==========================================
+// 🔷 EVENTOS DE INTERFACE (COM PROTEÇÃO)
+// ==========================================
+const turmaSelectEl = document.getElementById('turmaSelect');
+const semestreSelectEl = document.getElementById('semestreSelect');
+
+if (turmaSelectEl) {
+    turmaSelectEl.onchange = (e) => {
+        const tId = e.target.value;
+        const semS = document.getElementById('semestreSelect');
+        const discS = document.getElementById('disciplinaSelect');
+
+        // 1. Controle de Visibilidade do Semestre
+        if (ehSemestral(tId)) {
+            semS?.classList.remove('hidden');
+        } else {
+            semS?.classList.add('hidden');
+            // Reset do valor caso mude para uma turma anual
+            if (semS) semS.value = "1"; 
+        }
+
+        // 2. Limpeza do seletor de disciplinas ao trocar a turma
+        if (discS) {
+            discS.innerHTML = '<option value="">-- CARREGANDO... --</option>';
+            discS.disabled = true;
+        }
+
+        // 3. Atualização em cascata
+        if (typeof atualizarListaDisciplinas === "function") {
+            atualizarListaDisciplinas();
+        }
+    };
+}
+
+if (semestreSelectEl) {
+    semestreSelectEl.onchange = () => {
+        if (typeof atualizarListaDisciplinas === "function") {
+            atualizarListaDisciplinas();
+        }
+    };
+}
+
+function getStartOfWeek(week, year) {
+    // Validação básica
+    if (!week || !year || isNaN(week) || isNaN(year)) {
+        console.warn("Semana ou ano inválido:", week, year);
+        return new Date();
+    }
+
+    // ISO 8601:
+    // A semana 1 é a semana que contém 4 de janeiro
+    const jan4 = new Date(year, 0, 4);
+
+    // Converte domingo (0) para 7
+    const dayOfWeek = jan4.getDay() === 0 ? 7 : jan4.getDay();
+
+    // Segunda-feira da semana 1
+    const mondayWeek1 = new Date(jan4);
+    mondayWeek1.setDate(jan4.getDate() - dayOfWeek + 1);
+
+    // Soma as semanas desejadas
+    const startDate = new Date(mondayWeek1);
+    startDate.setDate(mondayWeek1.getDate() + (week - 1) * 7);
+
+    // Zera horário para evitar problemas na comparação
+    startDate.setHours(0, 0, 0, 0);
+
+    console.log(
+        `📅 Semana ${week}/${year} começa em: ${startDate.toLocaleDateString('pt-BR')}`
+    );
+
+    return startDate;
+}
+
+// FUNÇÃO RESPONSÁVEL POR GERAR O CABEÇALHO PADRÃO DOS DOCUMENTOS EM PDF EXPORTADOS
+function gerarCabecalhoPadrao(doc) {
+    // Título Principal
+    doc.setFont("helvetica", "bold"); 
+    doc.setFontSize(14);
+    doc.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", 105, 15, { align: "center" });
+    
+    // Subtítulo Campus
+    doc.setFontSize(12); 
+    doc.text("CAMPUS CACOAL", 105, 22, { align: "center" });
+    
+    // Departamentos e Coordenações
+    doc.setFontSize(10); 
+    doc.setFont("helvetica", "normal");
+    doc.text("DEPARTAMENTO DE APOIO AO ENSINO", 105, 30, { align: "center" });
+    doc.text("COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS", 105, 35, { align: "center" });
+    
+    // Linha Divisória Verde (RGB correspondente ao Tailwind green-700)
+    doc.setDrawColor(21, 128, 61); 
+    doc.setLineWidth(0.5); 
+    doc.line(14, 38, 196, 38);
+}
+
+// FUNÇÃO RESPONSÁVEL POR GERAR O RODAPÉ PADRÃO DOS DOCUMENTOS EM PDF EXPORTADOS
+function gerarRodapePadrao(doc) {
+    const pageCount = doc.internal.getNumberOfPages();
+    
+    for (let i = 1; i <= pageCount; i++) {
+        // Seleciona a página para aplicar o rodapé
+        doc.setPage(i); 
+        doc.setFontSize(8); 
+        doc.setTextColor(100); 
+        
+        // Linha de fechamento no rodapé
+        doc.setDrawColor(200); // Cinza claro para a linha do rodapé
+        doc.line(14, 285, 196, 285);
+        
+        // Endereço e Contato (Centralizados)
+        doc.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 2182-9642", 105, 289, { align: "center" });
+        
+        // E-mail e Paginação
+        const textoPagina = `E-mail: dape.cacoal@ifro.edu.br | Página ${i} de ${pageCount}`;
+        doc.text(textoPagina, 105, 293, { align: "center" });
+    }
+}
+
+// EXPORTADOR DE PDF DO RELATORIO DE DISCIPLINA DA ABA 01
+function exportarDisciplinaPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+
+    // ==========================================
+    // 🔷 CAPTURA E VALIDAÇÃO DE DADOS
+    // ==========================================
+    const tId = document.getElementById('turmaSelect')?.value;
+    const dId = document.getElementById('disciplinaSelect')?.value;
+    const sem = document.getElementById('semestreSelect')?.value;
+    const year = document.getElementById('yearSelect')?.value;
+
+    const turma = dataStore?.[tId];
+    const disc = turma?.discs?.[dId];
+
+    if (!turma || !disc || !Array.isArray(disc.sch)) {
+        alert("Não há dados disponíveis para exportar este relatório.");
+        return;
+    }
+
+    // ==========================================
+    // 🔷 LÓGICA DE CALENDÁRIO E FILTROS
+    // ==========================================
+    const dadosAno = (typeof CALENDARIO_DINAMICO !== 'undefined') ? CALENDARIO_DINAMICO[year] : null;
+    const limites = dadosAno?.limites;
+    
+    // Timestamp de corte para cursos semestrais
+    let limiteS1 = null;
+    if (limites?.superior?.s1) {
+        limiteS1 = new Date(limites.superior.s1.fim + "T23:59:59").getTime();
+    }
+
+    // Filtragem das aulas para o documento
+    const aulasFiltradas = disc.sch.filter(a => {
+        if (!a || !a.dtObj) return false;
+        
+        const tempoAula = new Date(a.dtObj).getTime();
+
+        // Filtro de Semestre (Superior)
+        if (ehSemestral(tId) && limiteS1) {
+            return (sem === "1") ? tempoAula <= limiteS1 : tempoAula > limiteS1;
+        }
+        return true;
+    });
+
+    if (aulasFiltradas.length === 0) {
+        alert("O período selecionado não possui aulas projetadas.");
+        return;
+    }
+
+    // ==========================================
+    // 🔷 PROCESSAMENTO DE CABEÇALHO TÉCNICO
+    // ==========================================
+    // 1. Lista de Professores Únicos
+    const listaProfs = [...new Set(
+        aulasFiltradas
+            .map(a => (typeof traduzirProfessor === "function") ? traduzirProfessor(a.prof) : a.prof)
+            .filter(p => p && p !== "N/I")
+    )].join(" / ");
+
+    // 2. Contagem de Carga Horária Efetiva (Soma=True na TRADUCAO)
+    const totalAulasEfetivas = aulasFiltradas.filter(a => {
+        const info = (typeof TRADUCAO !== 'undefined') ? TRADUCAO[a.tag] : null;
+        return !a.tag || (info ? info.soma : true);
+    }).length;
+
+    // 3. Aplicação do Template Institucional
+    if (typeof gerarCabecalhoPadrao === "function") {
+        gerarCabecalhoPadrao(doc);
+    }
+
+    // Títulos e Metadados do Relatório
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    
+    const txtSemestre = (ehSemestral(tId)) ? ` - SEMESTRE: ${sem}º` : '';
+    doc.text(`TURMA: ${turma.name || tId}${txtSemestre}`, 14, 45);
+    doc.text(`DISCIPLINA: ${disc.name || dId}`, 14, 50);
+    doc.text(`DOCENTE(S): ${listaProfs || 'NÃO INFORMADO'}`, 14, 55);
+    
+    doc.setFillColor(245, 245, 245);
+    doc.rect(14, 58, 182, 7, 'F');
+    doc.text(`CARGA HORÁRIA TOTAL NO PERÍODO: ${totalAulasEfetivas} AULAS`, 16, 63);
+
+    // ==========================================
+    // 🔷 GERAÇÃO DA TABELA (AUTO-TABLE)
+    // ==========================================
+    if (typeof doc.autoTable === "function") {
+        doc.autoTable({
+            html: '#tableD', // Usa a tabela já renderizada no DOM
+            startY: 68,
+            theme: 'grid',
+            headStyles: { 
+                fillColor: [21, 128, 61], 
+                textColor: [255, 255, 255], 
+                fontStyle: 'bold', 
+                halign: 'center' 
+            },
+            bodyStyles: { fontSize: 8, textColor: [50, 50, 50] },
+            columnStyles: {
+                0: { cellWidth: 25, halign: 'center' }, // Data
+                1: { cellWidth: 30, halign: 'center' }, // Dia
+                2: { cellWidth: 25, halign: 'center' }, // Horário
+                3: { halign: 'left' },                  // Professor
+                4: { cellWidth: 30, halign: 'center' }  // Status
+            },
+            margin: { bottom: 20 }
+        });
+    }
+
+    // ==========================================
+    // 🔷 RODAPÉ E SALVAMENTO
+    // ==========================================
+    if (typeof gerarRodapePadrao === "function") {
+        gerarRodapePadrao(doc);
+    }
+
+    const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+    const nomeArquivo = `Relatorio_${disc.name}_${turma.name}_${dataEmissao}`
+        .replace(/\s+/g, '_')
+        .replace(/[\\/:*?"<>|]/g, '');
+
+    doc.save(`${nomeArquivo}.pdf`);
+}
+
+// EXPORTADOR DE PDF DO RELATORIO DE DISCIPLINA DA ABA 02
+function exportarPivoPDF() {
+    const { jsPDF } = window.jspdf;
+    
+    // 1. Captura e Validação
+    const tId = document.getElementById('turmaSelectPivo')?.value;
+    const sem = document.getElementById('semestreSelectPivo')?.value;
+
+    if (!tId || !dataStore[tId]) {
+        alert("Por favor, selecione uma turma antes de exportar.");
+        return;
+    }
+
+    // 2. Configuração do Documento
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const turmaNome = dataStore[tId].name || tId;
+    const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+
+    // 3. Cabeçalho Institucional
+    if (typeof gerarCabecalhoPadrao === "function") {
+        gerarCabecalhoPadrao(doc);
+    }
+
+    // 4. Títulos e Subtítulos
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    
+    const textoSemestre = (ehSemestral(tId) && sem) ? ` (${sem}º SEMESTRE)` : '';
+    doc.text(`RELATÓRIO DE DISTRIBUIÇÃO MENSAL DE AULAS`, 14, 45);
+    
+    doc.setFontSize(10);
+    doc.text(`TURMA: ${turmaNome.toUpperCase()}${textoSemestre}`, 14, 51);
+
+    // 5. Geração da Tabela (AutoTable)
+    if (typeof doc.autoTable === "function") {
+        doc.autoTable({
+            html: '#tablePivo',
+            startY: 56,
+            theme: 'grid',
+            styles: { 
+                fontSize: 7, 
+                halign: 'center',
+                valign: 'middle',
+                cellPadding: 1
+            },
+            headStyles: { 
+                fillColor: [21, 128, 61], // Verde IFRO
+                textColor: [255, 255, 255],
+                fontStyle: 'bold'
+            },
+            columnStyles: {
+                0: { halign: 'left', fontStyle: 'bold', cellWidth: 40 } // Nome da Disciplina
+            },
+            // Garante que o rodapé não sobreponha a tabela em múltiplas páginas
+            margin: { bottom: 25 }
+        });
+    }
+
+    // 6. Rodapé Institucional (Aplica em todas as páginas)
+    if (typeof gerarRodapePadrao === "function") {
+        gerarRodapePadrao(doc);
+    }
+
+    // 7. Salvamento com Nome Seguro
+    const nomeArquivo = `Resumo_Mensal_${turmaNome.replace(/\s+/g, '_')}_${dataEmissao}`
+        .replace(/[\\/:*?"<>|]/g, '');
+
+    doc.save(`${nomeArquivo}.pdf`);
+}
+
+// EXPORTADOR DE PDF DO RELATORIO SEMANAL POR PROFESSOR DA ABA 03
+function exportarGradePDF() {
+    const { jsPDF } = window.jspdf;
+    
+    // 1. Captura e Validação de Elementos
+    const profRaw = document.getElementById('profSelect')?.value;
+    const week = document.getElementById('weekInput')?.value;
+    const tabelaElement = document.getElementById('tableGS');
+
+    if (!profRaw || !week) {
+        alert("Selecione o Professor e a Semana antes de exportar.");
+        return;
+    }
+
+    if (!tabelaElement) {
+        alert("Gere a grade na tela antes de tentar exportar o PDF.");
+        return;
+    }
+
+    // 2. Processamento de Datas e Nomes
+    const profNome = (typeof traduzirProfessor === "function") ? traduzirProfessor(profRaw) : profRaw;
+    const [y, w] = week.split('-W').map(Number);
+    const start = getStartOfWeek(w, y);
+
+    if (!start || isNaN(start.getTime())) {
+        alert("Data de início da semana inválida.");
+        return;
+    }
+
+    const end = new Date(start);
+    end.setDate(end.getDate() + 5); // Sexta/Sábado
+
+    // 3. Configuração do Documento PDF
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+
+    // 4. Cabeçalho Institucional
+    if (typeof gerarCabecalhoPadrao === "function") {
+        gerarCabecalhoPadrao(doc);
+    }
+
+    // 5. Metadados do Relatório
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text(`RELATÓRIO SEMANAL DE ATIVIDADES DOCENTES`, 105, 43, { align: "center" });
+
+    doc.setFontSize(9);
+    doc.text(`DOCENTE: ${profNome.toUpperCase()}`, 14, 50);
+    doc.text(`PERÍODO: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')} (SEMANA ${w})`, 14, 55);
+
+    // 6. Geração da Tabela (AutoTable)
+    if (typeof doc.autoTable === "function") {
+        doc.autoTable({
+            html: '#tableGS',
+            startY: 60,
+            theme: 'grid',
+            styles: {
+                fontSize: 6.5,
+                cellPadding: 1,
+                halign: 'center',
+                valign: 'middle',
+                overflow: 'linebreak',
+                lineWidth: 0.1
+            },
+            headStyles: { 
+                fillColor: [21, 128, 61], 
+                textColor: [255, 255, 255],
+                fontStyle: 'bold'
+            },
+            // Ajuste preciso de larguras para A4 (Total ~182mm entre margens)
+            columnStyles: {
+                0: { cellWidth: 22, fontStyle: 'bold', fillColor: [245, 245, 245] }, // Horário
+                1: { cellWidth: 27 }, // Seg
+                2: { cellWidth: 27 }, // Ter
+                3: { cellWidth: 27 }, // Qua
+                4: { cellWidth: 27 }, // Qui
+                5: { cellWidth: 27 }, // Sex
+                6: { cellWidth: 27 }  // Sáb
+            },
+            // Estilização especial para as linhas de resumo (Totais, Permanência, Alertas)
+            didParseCell: function(data) {
+                const totalRows = data.table.body.length;
+                // As últimas 4 linhas são o rodapé da tabela (Totais e Alertas)
+                if (data.row.index >= totalRows - 4) {
+                    data.cell.styles.fillColor = [240, 248, 240]; // Verde bem claro
+                    data.cell.styles.fontStyle = 'bold';
+                    data.cell.styles.fontSize = 7;
+                    
+                    // Se for a última linha (Observações/Alertas), alinha à esquerda
+                    if (data.row.index === totalRows - 1 && data.column.index === 1) {
+                        data.cell.styles.halign = 'left';
+                        data.cell.styles.textColor = [180, 0, 0]; // Vermelho para alertas
+                    }
+                }
+            },
+            margin: { bottom: 25 }
+        });
+    }
+
+    // 7. Rodapé Institucional
+    if (typeof gerarRodapePadrao === "function") {
+        gerarRodapePadrao(doc);
+    }
+
+    // 8. Nome de Arquivo Seguro e Download
+    const nomeLimpo = profNome.replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '');
+    doc.save(`Ficha_Semanal_${nomeLimpo}_Semana_${w}.pdf`);
+}
+
+// EXPORTADOR DE PDF DO RELATORIO MENSAL DO PROFESSOR DA ABA 04
+function exportarRelatorioProfessorPDF() {
+    const { jsPDF } = window.jspdf;
+
+    const profRaw = document.getElementById('buscaProfessorRel').value;
+    const anoLetivo = document.getElementById('yearSelect').value;
+    const dataEmissao = new Date().toLocaleDateString('pt-BR');
+    const dataArquivo = dataEmissao.replace(/\//g, '-');
+
+    if (!profRaw) return alert("Selecione um professor na busca!");
+
+    // Tradução para nome completo oficial
+    const profNomeCompleto = traduzirProfessor(profRaw);
+
+    const doc = new jsPDF('l', 'mm', 'a4');
+    const pageWidth = 297;
+
+    // --- HEADER PADRÃO IFRO ---
+    function drawHeader(d) {
+        d.setFillColor(255, 255, 255);
+        d.rect(0, 0, pageWidth, 40, 'F');
+        
+        d.setFont("helvetica", "bold"); 
+        d.setFontSize(14);
+        d.setTextColor(0, 0, 0);
+        d.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", pageWidth / 2, 12, { align: "center" });
+
+        d.setFontSize(11);
+        d.text("CAMPUS CACOAL", pageWidth / 2, 18, { align: "center" });
+
+        d.setFontSize(9); 
+        d.setFont("helvetica", "normal");
+        d.text("DEPARTAMENTO DE APOIO AO ENSINO", pageWidth / 2, 25, { align: "center" });
+        d.text("COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS", pageWidth / 2, 30, { align: "center" });
+
+        d.setDrawColor(21, 128, 61); // Verde institucional
+        d.setLineWidth(0.5);
+        d.line(14, 34, 283, 34);
+    }
+
+    // --- FOOTER PADRÃO ---
+    function drawFooter(d) {
+        const pageCount = d.internal.getNumberOfPages();
+        d.setFontSize(7);
+        d.setTextColor(100);
+        d.line(14, 195, 283, 195);
+        d.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 2182-9642", pageWidth / 2, 200, { align: "center" });
+        d.text(`E-mail: dape.cacoal@ifro.edu.br | Página ${d.internal.getCurrentPageInfo().pageNumber} de ${pageCount}`, pageWidth / 2, 204, { align: "center" });
+    }
+
+    // Início do Documento
+    drawHeader(doc);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`RELATÓRIO DOCENTE: ${profNomeCompleto.toUpperCase()}`, 14, 42);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`ANO LETIVO: ${anoLetivo} | EMISSÃO: ${dataEmissao}`, 283, 42, { align: "right" });
+
+    const commonStyles = {
+        fontSize: 6.5,
+        halign: 'center',
+        cellPadding: 1.5,
+        lineWidth: 0.1
+    };
+
+    const commonHead = [[
+        "DISCIPLINA", "TURMA", "JAN", "FEV", "MAR", "ABR", "MAI", "JUN",
+        "JUL", "AGO", "SET", "OUT", "NOV", "DEZ", "SÁB", "TOTAL"
+    ]];
+
+    // 1. TABELA EXECUTADO
+    doc.setFont("helvetica", "bold"); doc.text("1. CARGA HORÁRIA EXECUTADA (GIST)", 14, 50);
+    doc.autoTable({
+        html: '#bodyRelatorioProf',
+        startY: 53,
+        theme: 'grid',
+        styles: commonStyles,
+        head: commonHead,
+        headStyles: { fillColor: [30, 58, 138] }, // Azul para Executado
+        margin: { top: 45, bottom: 20 },
+        didDrawPage: () => { drawHeader(doc); drawFooter(doc); }
+    });
+
+    // 2. TABELA PREVISTO
+    let posY = doc.lastAutoTable.finalY + 8;
+    doc.text("2. CARGA HORÁRIA PREVISTA (CALENDÁRIO ACADÊMICO)", 14, posY);
+    doc.autoTable({
+        html: '#bodyRelatorioPrevisto',
+        startY: posY + 3,
+        theme: 'grid',
+        styles: commonStyles,
+        head: commonHead,
+        headStyles: { fillColor: [21, 128, 61] }, // Verde para Previsto
+        margin: { top: 45, bottom: 20 },
+        didDrawPage: () => { drawHeader(doc); drawFooter(doc); }
+    });
+
+    // 3. TABELA DIFERENÇA
+    posY = doc.lastAutoTable.finalY + 8;
+    doc.text("3. BALANÇO FINAL (DIFERENÇA)", 14, posY);
+    doc.autoTable({
+        html: '#bodyRelatorioDiferenca',
+        startY: posY + 3,
+        theme: 'grid',
+        styles: commonStyles,
+        head: commonHead,
+        headStyles: { fillColor: [31, 41, 55] }, // Cinza escuro para Balanço
+        margin: { top: 45, bottom: 20 },
+        
+        // 🔥 Lógica para capturar as cores de Diferença (Verde/Vermelho)
+        didParseCell: function(data) {
+            if (data.section === 'body') {
+                const text = data.cell.raw.innerText || data.cell.raw;
+                if (typeof text === 'string') {
+                    if (text.includes('+')) {
+                        data.cell.styles.textColor = [21, 128, 61]; // Verde
+                        data.cell.styles.fontStyle = 'bold';
+                    } else if (text.includes('-') && text.length > 1) {
+                        data.cell.styles.textColor = [185, 28, 28]; // Vermelho
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                }
+            }
+        },
+        didDrawPage: () => { drawHeader(doc); drawFooter(doc); }
+    });
+
+    // Salvar
+    const nomeLimpo = profNomeCompleto.replace(/\s/g, '_');
+    doc.save(`Relatorio_Docente_${nomeLimpo}_${dataArquivo}.pdf`);
+}
+
+/**
+ * Gera e baixa automaticamente um PDF individual para cada professor
+ * contendo todo o histórico de aulas registradas no dataStore.
+ */
+async function exportarTodosProfessoresPDF() {
+    const { jsPDF } = window.jspdf;
+
+    if (!dataStore || Object.keys(dataStore).length === 0) {
+        return alert("Não há dados carregados para gerar relatórios.");
+    }
+
+    const professores = {};
+
+    // 1. AGRUPAMENTO E TRIAGEM DE DADOS
+    Object.values(dataStore).forEach(turma => {
+        Object.values(turma.discs || {}).forEach(disc => {
+            if (!disc.sch) return;
+
+            disc.sch.forEach(aula => {
+                if (!aula.prof || !aula.dtObj) return;
+
+                // Filtra apenas eventos que compõem carga horária (info.soma)
+                const info = (typeof TRADUCAO !== "undefined" && TRADUCAO[aula.tag]) || { soma: true };
+                if (!info.soma) return;
+
+                // Traduz o nome para garantir que o agrupamento use o nome completo
+                const nomeProf = (typeof traduzirProfessor === "function") 
+                    ? traduzirProfessor(aula.prof).toUpperCase() 
+                    : aula.prof.toUpperCase();
+
+                if (!professores[nomeProf]) {
+                    professores[nomeProf] = [];
+                }
+
+                professores[nomeProf].push({
+                    turma: turma.name,
+                    disciplina: disc.name,
+                    data: aula.date,
+                    dtObj: new Date(aula.dtObj),
+                    tag: aula.tag
+                });
+            });
+        });
+    });
+
+    // 2. GERAÇÃO INDIVIDUAL POR DOCENTE
+    const listaProfessores = Object.keys(professores).sort();
+
+    for (const prof of listaProfessores) {
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const aulasDoProf = professores[prof];
+
+        // Ordenação cronológica global do professor
+        aulasDoProf.sort((a, b) => a.dtObj - b.dtObj);
+
+        // Cabeçalho Institucional
+        if (typeof gerarCabecalhoPadrao === "function") gerarCabecalhoPadrao(doc);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.text(`RELATÓRIO INDIVIDUAL DE ATIVIDADES DOCENTES`, 105, 40, { align: "center" });
+        
+        doc.setFontSize(10);
+        doc.text(`PROFESSOR(A): ${prof}`, 14, 48);
+        doc.setDrawColor(200);
+        doc.line(14, 50, 196, 50);
+
+        // 3. AGRUPAMENTO POR DISCIPLINA + TURMA PARA O PDF
+        const grupos = {};
+        aulasDoProf.forEach(a => {
+            const chave = `${a.disciplina.toUpperCase()} [${a.turma.toUpperCase()}]`;
+            if (!grupos[chave]) grupos[chave] = [];
+            grupos[chave].push(a);
+        });
+
+        let posY = 56;
+
+        for (const [identificador, listaAulas] of Object.entries(grupos)) {
+            // Verifica quebra de página antes de cada novo bloco de disciplina
+            if (posY > 250) {
+                if (typeof gerarRodapePadrao === "function") gerarRodapePadrao(doc);
+                doc.addPage();
+                if (typeof gerarCabecalhoPadrao === "function") gerarCabecalhoPadrao(doc);
+                posY = 45;
+            }
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(9);
+            doc.setTextColor(21, 128, 61); // Verde IFRO
+            doc.text(identificador, 14, posY);
+            posY += 3;
+
+            const corpoTabela = listaAulas.map(a => {
+                const tipoTexto = (typeof TRADUCAO !== "undefined" && TRADUCAO[a.tag]?.texto) || "AULA NORMAL";
+                const mesNome = a.dtObj.toLocaleString('pt-BR', { month: 'long' }).toUpperCase();
+                return [a.data, mesNome, tipoTexto];
+            });
+
+            doc.autoTable({
+                startY: posY,
+                head: [["DATA", "MÊS", "DESCRIÇÃO DO EVENTO"]],
+                body: corpoTabela,
+                theme: 'grid',
+                styles: { fontSize: 7, halign: 'center', cellPadding: 1.5 },
+                headStyles: { fillColor: [60, 60, 60], textColor: [255, 255, 255] },
+                margin: { left: 14, right: 14 }
+            });
+
+            posY = doc.lastAutoTable.finalY + 8;
+            doc.setTextColor(0); // Reseta cor para preto
+        }
+
+        // Rodapé Institucional
+        if (typeof gerarRodapePadrao === "function") gerarRodapePadrao(doc);
+
+        // Nome de arquivo limpo (sem caracteres especiais)
+        const nomeArquivo = `Relatorio_Docente_${prof.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+        doc.save(nomeArquivo);
+
+        // 🔥 Pausa controlada para não travar o navegador (especialmente se houver 50+ profs)
+        await new Promise(r => setTimeout(r, 250));
+    }
+
+    alert("Exportação concluída! Os relatórios foram gerados individualmente.");
+}
+
+/**
+ * Gera relatórios mensais consolidados (Grade de Janeiro a Dezembro)
+ * Ideal para conferência de carga horária mensal e sábados letivos.
+ */
+async function exportarTodosProfessoresMensalPDF() {
+    const { jsPDF } = window.jspdf;
+
+    if (!dataStore || Object.keys(dataStore).length === 0) {
+        alert("Dados não carregados.");
+        return;
+    }
+
+    const professores = {};
+    const ocultarLista = (typeof DISCIPLINAS_OCULTAR !== "undefined") ? DISCIPLINAS_OCULTAR : [];
+
+    // 1. CONSOLIDAÇÃO DOS DADOS MENSALIZADOS
+    Object.values(dataStore).forEach(turma => {
+        Object.values(turma.discs || {}).forEach(disc => {
+            // Filtro de Disciplinas Ocultas (ex: "COORDENAÇÃO")
+            if (ocultarLista.includes(disc.name.toUpperCase().trim())) return;
+
+            if (!disc.sch) return;
+
+            disc.sch.forEach(aula => {
+                if (!aula.prof || !aula.dtObj) return;
+
+                const info = (typeof TRADUCAO !== "undefined" && TRADUCAO[aula.tag]) || { soma: true };
+                
+                // Só processa se somar carga horária ou se for Sábado Letivo específico
+                if (!info.soma && aula.tag !== "SÁBADO LETIVO") return;
+
+                // Tradução do nome do Professor
+                const nomeProf = (typeof traduzirProfessor === "function") 
+                    ? traduzirProfessor(aula.prof).toUpperCase() 
+                    : aula.prof.toUpperCase();
+
+                const chaveDisciplinaTurma = `${disc.name}||${turma.name}`;
+
+                if (!professores[nomeProf]) professores[nomeProf] = {};
+                if (!professores[nomeProf][chaveDisciplinaTurma]) {
+                    professores[nomeProf][chaveDisciplinaTurma] = {
+                        disciplina: disc.name.toUpperCase(),
+                        turma: turma.name.toUpperCase(),
+                        meses: Array(12).fill(0),
+                        sabado: 0,
+                        total: 0
+                    };
+                }
+
+                const registro = professores[nomeProf][chaveDisciplinaTurma];
+                const dataAula = new Date(aula.dtObj);
+                const mesIndex = dataAula.getMonth();
+
+                // Contagem de Aulas Efetivas
+                if (info.soma) {
+                    registro.meses[mesIndex]++;
+                    registro.total++;
+                }
+
+                // Contagem separada de Sábados Letivos (conforme sua regra)
+                if (aula.tag === "SÁBADO LETIVO") {
+                    registro.sabado++;
+                }
+            });
+        });
+    });
+
+    // 2. GERAÇÃO DOS ARQUIVOS (LOTE)
+    const listaDocentes = Object.keys(professores).sort();
+
+    for (const prof of listaDocentes) {
+        // 'l' para Landscape é vital para caber 15 colunas
+        const doc = new jsPDF('l', 'mm', 'a4'); 
+        const pageWidth = 297;
+
+        if (typeof gerarCabecalhoPadrao === "function") gerarCabecalhoPadrao(doc);
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text("CONSOLIDADO MENSAL DE CARGA HORÁRIA DOCENTE", pageWidth / 2, 40, { align: "center" });
+        
+        doc.setFontSize(10);
+        doc.text(`PROFESSOR(A): ${prof}`, 14, 48);
+
+        // Ordenação das disciplinas do professor
+        const dadosTabela = Object.values(professores[prof])
+            .sort((a, b) => a.disciplina.localeCompare(b.disciplina, 'pt-BR'))
+            .map(item => [
+                item.disciplina,
+                item.turma,
+                ...item.meses.map(v => v === 0 ? '-' : v),
+                item.sabado || '-',
+                item.total
+            ]);
+
+        // Renderização da Tabela
+        doc.autoTable({
+            startY: 52,
+            head: [[
+                "DISCIPLINA", "TURMA",
+                "JAN","FEV","MAR","ABR","MAI","JUN",
+                "JUL","AGO","SET","OUT","NOV","DEZ",
+                "SÁB","TOTAL"
+            ]],
+            body: dadosTabela,
+            theme: 'grid',
+            styles: { 
+                fontSize: 6, 
+                halign: 'center', 
+                valign: 'middle',
+                cellPadding: 1.5 
+            },
+            headStyles: { 
+                fillColor: [21, 128, 61], // Verde Institucional
+                fontSize: 6 
+            },
+            columnStyles: {
+                0: { halign: 'left', cellWidth: 45 }, // Disciplina alinhada à esquerda
+                1: { cellWidth: 20 }                  // Turma compacta
+            }
+        });
+
+        if (typeof gerarRodapePadrao === "function") gerarRodapePadrao(doc);
+
+        const nomeArquivo = `Mensal_${prof.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+        doc.save(nomeArquivo);
+
+        // Delay para evitar sobrecarga no processador/browser
+        await new Promise(r => setTimeout(r, 300));
+    }
+
+    alert("Relatórios Mensais gerados com sucesso!");
+}
+
+// FUNÇÁO QUE EXPORTA O RELATORIO ANUAL DO PROFESSOR - ABA 05
+function exportarHorarioAnualPDF() {
+    const { jsPDF } = window.jspdf;
+    const profRaw = document.getElementById('buscaProfessorAnual').value;
+
+    if (!profRaw) {
+        alert("Selecione um professor na busca!");
+        return;
+    }
+
+    const profNomeCompleto = traduzirProfessor(profRaw);
+    const dataEmissao = new Date().toLocaleDateString('pt-BR');
+    const dataArquivo = dataEmissao.replace(/\//g, '-');
+
+    const tabela = document.querySelector('#tabelaHorarioAnual');
+    if (!tabela || tabela.rows.length <= 1) {
+        alert("Não há dados na tabela para exportar!");
+        return;
+    }
+
+    const doc = new jsPDF('l', 'mm', 'a4');
+    const pageWidth = 297;
+
+    function drawHeader(d) {
+        d.setFillColor(255, 255, 255);
+        d.rect(0, 0, pageWidth, 45, 'F');
+
+        d.setFont("helvetica", "bold");
+        d.setFontSize(14);
+        d.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", pageWidth / 2, 15, { align: "center" });
+
+        d.setFontSize(12);
+        d.text("CAMPUS CACOAL", pageWidth / 2, 22, { align: "center" });
+
+        d.setFontSize(10);
+        d.setFont("helvetica", "normal");
+        d.text("DEPARTAMENTO DE APOIO AO ENSINO", pageWidth / 2, 30, { align: "center" });
+        d.text("COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS", pageWidth / 2, 36, { align: "center" });
+
+        d.setDrawColor(60, 118, 74);
+        d.setLineWidth(0.5);
+        d.line(14, 40, 283, 40);
+
+        d.setFont("helvetica", "bold");
+        d.setFontSize(11);
+        d.text(`PROFESSOR(A): ${profNomeCompleto.toUpperCase()}`, 14, 48);
+
+        d.setFont("helvetica", "normal");
+        d.setFontSize(9);
+        d.text(`EMISSÃO: ${dataEmissao}`, 283, 48, { align: "right" });
+    }
+
+    function drawFooterAllPages(d) {
+        const totalPages = d.internal.getNumberOfPages();
+
+        for (let i = 1; i <= totalPages; i++) {
+            d.setPage(i);
+
+            d.setFontSize(8);
+            d.setTextColor(100);
+            d.setDrawColor(200);
+
+            d.line(14, 195, 283, 195);
+
+            d.text(
+                "BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 2182-9642",
+                pageWidth / 2,
+                200,
+                { align: "center" }
+            );
+
+            d.text(
+                `E-mail: dape.cacoal@ifro.edu.br | Página ${i} de ${totalPages}`,
+                pageWidth / 2,
+                205,
+                { align: "center" }
+            );
+        }
+    }
+
+    doc.autoTable({
+        html: '#tabelaHorarioAnual',
+        startY: 55,
+        theme: 'grid',
+        styles: {
+            fontSize: 7,
+            cellPadding: 2,
+            valign: 'middle'
+        },
+        headStyles: {
+            fillColor: [60, 118, 74],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            halign: 'center'
+        },
+        columnStyles: {
+            0: { cellWidth: 25, halign: 'center', fontStyle: 'bold' }
+        },
+        margin: { top: 50, bottom: 20 },
+
+        didDrawPage: function () {
+            drawHeader(doc);
+        }
+    });
+
+    // 🔥 RODAPÉ SOMENTE DEPOIS DA TABELA
+    drawFooterAllPages(doc);
+
+    const nomeArquivo = profNomeCompleto.replace(/\s/g, '_');
+    doc.save(`Horario_Anual_${nomeArquivo}_${dataArquivo}.pdf`);
+}
+
+// EXPORTADOR DE PDF DO RELATORIO SEMANAL POR TURMA DA ABA 06
+function exportarGradeTurmaPDF() {
+    const { jsPDF } = window.jspdf;
+    
+    // 1. Captura e Validação de Elementos
+    const tId = document.getElementById('turmaSelectSemanal')?.value;
+    const week = document.getElementById('weekInputTurma')?.value;
+    const tabelaHTML = document.getElementById('tableGSTurma');
+
+    if (!tId || !week || !dataStore[tId]) {
+        return alert("Por favor, selecione a Turma e a Semana antes de exportar.");
+    }
+
+    if (!tabelaHTML) {
+        return alert("Gere a grade da turma na tela antes de exportar.");
+    }
+
+    // 2. Processamento de Datas e Nomes
+    const turmaNome = dataStore[tId].name || tId;
+    const [y, w] = week.split('-W').map(Number);
+    const start = getStartOfWeek(w, y);
+    
+    const end = new Date(start);
+    end.setDate(end.getDate() + 5); // Exibe até Sábado
+
+    const dataEmissao = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+
+    // 3. Configuração do PDF
+    const doc = new jsPDF('p', 'mm', 'a4');
+
+    // 4. Cabeçalho Institucional
+    if (typeof gerarCabecalhoPadrao === "function") {
+        gerarCabecalhoPadrao(doc);
+    }
+
+    // 5. Metadados do Relatório
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(`HORÁRIO SEMANAL DE AULAS - TURMA`, 105, 43, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.text(`TURMA: ${turmaNome.toUpperCase()}`, 14, 50);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(
+        `PERÍODO: ${start.toLocaleDateString('pt-BR')} a ${end.toLocaleDateString('pt-BR')} (SEMANA ${w})`,
+        14,
+        55
+    );
+
+    // 6. Geração da Tabela (AutoTable)
+    if (typeof doc.autoTable === "function") {
+        doc.autoTable({
+            html: '#tableGSTurma',
+            startY: 60,
+            theme: 'grid',
+            styles: {
+                fontSize: 6.5,
+                cellPadding: 1.5,
+                halign: 'center',
+                valign: 'middle',
+                overflow: 'linebreak',
+                lineWidth: 0.1
+            },
+            headStyles: { 
+                fillColor: [21, 128, 61], 
+                textColor: [255, 255, 255],
+                fontStyle: 'bold'
+            },
+            // Distribuição equilibrada das colunas para A4
+            columnStyles: {
+                0: { cellWidth: 20, fontStyle: 'bold', fillColor: [245, 245, 245] }, // Horário
+                1: { cellWidth: 27 }, // Segunda
+                2: { cellWidth: 27 }, // Terça
+                3: { cellWidth: 27 }, // Quarta
+                4: { cellWidth: 27 }, // Quinta
+                5: { cellWidth: 27 }, // Sexta
+                6: { cellWidth: 27 }  // Sábado
+            },
+            margin: { bottom: 25 },
+            // Evita quebra de linha feia dentro dos cards de aula
+            didParseCell: function(data) {
+                if (data.section === 'body' && data.column.index > 0) {
+                    data.cell.styles.fontSize = 6; // Reduz levemente o texto das aulas se necessário
+                }
+            }
+        });
+    }
+
+    // 7. Rodapé Institucional
+    if (typeof gerarRodapePadrao === "function") {
+        gerarRodapePadrao(doc);
+    }
+
+    // 8. Nome de Arquivo Seguro e Download
+    const nomeSeguro = turmaNome.replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '');
+    doc.save(`Grade_Semanal_${nomeSeguro}_Semana_${w}.pdf`);
+}
+        
+// EXPORTADOR DE PDF DO RELATORIO ANUAL POR TURMA DA ABA 07
+function exportarGradeGeralPDF() {
+    const { jsPDF } = window.jspdf;
+    // Orientação Paisagem ('l') é obrigatória para este volume de dados
+    const doc = new jsPDF('l', 'mm', 'a4'); 
+
+    const week = document.getElementById("weekInputGeral")?.value;
+    const nivel = document.getElementById("nivelSelect")?.value;
+
+    if (!week || !nivel) {
+        alert("Selecione Semana e Nível primeiro.");
+        return;
+    }
+
+    const blocos = document.querySelectorAll('.bloco-dia');
+    if (!blocos || blocos.length === 0) {
+        alert("Gere a grade antes de exportar.");
+        return;
+    }
+
+    const [y, w] = week.split('-W').map(Number);
+    const start = getStartOfWeek(w, y);
+    const pageWidth = 297;
+
+    blocos.forEach((bloco, index) => {
+        if (index > 0) doc.addPage();
+
+        // --- CABEÇALHO ULTRA COMPACTO ---
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(11);
+        doc.text("INSTITUTO FEDERAL DE RONDÔNIA - CAMPUS CACOAL", pageWidth / 2, 8, { align: "center" });
+        
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        const tituloDia = bloco.querySelector('h3')?.innerText.toUpperCase() || "";
+        doc.text(`GRADE HORÁRIA: ${nivel.toUpperCase()} - ${tituloDia} (Semana ${w})`, pageWidth / 2, 13, { align: "center" });
+
+        doc.setDrawColor(21, 128, 61);
+        doc.setLineWidth(0.3);
+        doc.line(10, 15, 287, 15);
+
+        const tabelaHTML = bloco.querySelector('.tableGS');
+        if (!tabelaHTML) return;
+
+        // --- TABELA COM FOCO EM ECONOMIA VERTICAL ---
+        doc.autoTable({
+            html: tabelaHTML,
+            startY: 18,
+            theme: 'grid',
+            styles: {
+                fontSize: 5,           // Fonte reduzida para caber Manhã/Tarde/Noite
+                cellPadding: 0.4,      // Padding mínimo para achatar as linhas
+                halign: 'center',
+                valign: 'middle',
+                overflow: 'linebreak',
+                lineWidth: 0.02,       // Linhas da grade bem finas
+                minCellHeight: 3       // Força a linha a ser o mais baixa possível
+            },
+            headStyles: {
+                fillColor: [21, 128, 61],
+                fontSize: 5.5,
+                textColor: [255, 255, 255],
+                cellPadding: 0.6
+            },
+            columnStyles: {
+                0: { cellWidth: 16, fontStyle: 'bold', fillColor: [245, 245, 245] } // Coluna de Horário
+            },
+            margin: { left: 10, right: 10, bottom: 8 },
+            
+            // Lógica para colorir e achatar os intervalos
+            didParseCell: function(data) {
+                const texto = data.cell.text.join(' ').toLowerCase();
+                
+                // Se for linha de intervalo, diminui ainda mais a fonte
+                if (texto.includes('intervalo')) {
+                    data.cell.styles.fillColor = [235, 235, 235];
+                    data.cell.styles.fontSize = 4.5;
+                    data.cell.styles.fontStyle = 'italic';
+                }
+                
+                // Se o texto for muito longo, tenta reduzir a fonte para não aumentar a altura da linha
+                if (data.cell.text.length > 2) {
+                    data.cell.styles.fontSize = 4.5;
+                }
+            }
+        });
+
+        // --- RODAPÉ SIMPLIFICADO ---
+        const totalPages = doc.internal.getNumberOfPages();
+        doc.setFontSize(6);
+        doc.setTextColor(150);
+        doc.text(`Gerado em: ${new Date().toLocaleString()} | Página ${index + 1}`, 10, 205);
+    });
+
+    const nomeArquivo = `Grade_Geral_${nivel}_W${w}.pdf`;
+    doc.save(nomeArquivo);
+}
+
+// EXPORTADOR DE PDF DO DASHBOARD DA ABA 08
+function exportarDashboardPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+
+    // 1. Validação de Dados
+    if (!dataStore || Object.keys(dataStore).length === 0) {
+        alert("Não há dados carregados para gerar o relatório institucional.");
+        return;
+    }
+
+    const year = document.getElementById('yearSelect')?.value || new Date().getFullYear();
+    const dataEmissao = new Date().toLocaleDateString('pt-BR');
+
+    // 2. Processamento dos Indicadores (KPIs)
+    let totalAulasGerais = 0;
+    let totalAulasComProfessor = 0;
+    const totalTurmas = Object.keys(dataStore).length;
+    const professoresSet = new Set();
+    const contadorProfessores = {};
+
+    Object.values(dataStore).forEach(turma => {
+        Object.values(turma.discs || {}).forEach(disc => {
+            disc.sch?.forEach(aula => {
+                if (!aula) return;
+                totalAulasGerais++;
+
+                const nomeRaw = (aula.prof || "").trim();
+                if (nomeRaw && nomeRaw !== "N/I") {
+                    totalAulasComProfessor++;
+                    // Traduz para nome completo antes de somar no PDF
+                    const nomeCompleto = (typeof traduzirProfessor === "function") 
+                        ? traduzirProfessor(nomeRaw).toUpperCase() 
+                        : nomeRaw.toUpperCase();
+
+                    professoresSet.add(nomeCompleto);
+                    contadorProfessores[nomeCompleto] = (contadorProfessores[nomeCompleto] || 0) + 1;
+                }
+            });
+        });
+    });
+
+    const percentualCobertura = totalAulasGerais > 0
+        ? ((totalAulasComProfessor / totalAulasGerais) * 100).toFixed(1)
+        : "0.0";
+
+    const ranking = Object.entries(contadorProfessores).sort((a, b) => b[1] - a[1]);
+
+    // 3. Renderização do Cabeçalho e Título
+    if (typeof gerarCabecalhoPadrao === "function") gerarCabecalhoPadrao(doc);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text(`RELATÓRIO INSTITUCIONAL DE CARGA HORÁRIA - ANO ${year}`, 105, 48, { align: "center" });
+
+    // 4. Bloco de Indicadores com Moldura Sutil
+    doc.setDrawColor(230);
+    doc.setFillColor(250, 250, 250);
+    doc.roundedRect(14, 55, 182, 45, 2, 2, 'FD');
+
+    doc.setFontSize(10);
+    doc.setTextColor(50);
+    const col1 = 20;
+    const col2 = 110;
+
+    doc.text(`Total Geral de Aulas: ${totalAulasGerais}`, col1, 63);
+    doc.text(`Aulas com Professor: ${totalAulasComProfessor}`, col1, 70);
+    doc.text(`Aulas sem Professor: ${totalAulasGerais - totalAulasComProfessor}`, col1, 77);
+    doc.text(`Índice de Cobertura: ${percentualCobertura}%`, col1, 84);
+
+    doc.text(`Total de Turmas: ${totalTurmas}`, col2, 63);
+    doc.text(`Professores Ativos: ${professoresSet.size}`, col2, 70);
+    doc.text(`Data de Emissão: ${dataEmissao}`, col2, 77);
+
+    // 5. Listagem do Ranking (Com controle de página)
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(0);
+    doc.text("DISTRIBUIÇÃO DE CARGA HORÁRIA POR DOCENTE (ORDEM DECRESCENTE):", 14, 110);
+    
+    doc.setDrawColor(21, 128, 61);
+    doc.line(14, 112, 196, 112);
+
+    doc.setFont("helvetica", "normal");
+    let linhaY = 120;
+
+    ranking.forEach(([nome, qtd], index) => {
+        // Verifica se precisa de nova página antes de escrever
+        if (linhaY > 275) {
+            if (typeof gerarRodapePadrao === "function") gerarRodapePadrao(doc);
+            doc.addPage();
+            if (typeof gerarCabecalhoPadrao === "function") gerarCabecalhoPadrao(doc);
+            doc.setFont("helvetica", "normal");
+            linhaY = 50;
+        }
+
+        const medalha = (index < 3) ? ">> " : "   ";
+        doc.text(`${medalha}${index + 1}º - ${nome}`, 18, linhaY);
+        doc.text(`${qtd} aulas`, 190, linhaY, { align: "right" });
+
+        // Linha pontilhada de guia
+        doc.setDrawColor(240);
+        doc.line(18, linhaY + 2, 190, linhaY + 2);
+
+        linhaY += 7;
+    });
+
+    // 6. Finalização
+    if (typeof gerarRodapePadrao === "function") gerarRodapePadrao(doc);
+
+    const nomeArquivo = `Relatorio_Dashboard_${year}_${dataEmissao.replace(/\//g, '-')}.pdf`;
+    doc.save(nomeArquivo);
+}
+
+function initTabs() {
+    const botoes = document.querySelectorAll('.tab-btn');
+    const abas = document.querySelectorAll('.tab-pane');
+
+    if (!botoes.length || !abas.length) {
+        console.warn("Estrutura de abas não encontrada no DOM.");
+        return;
+    }
+
+    botoes.forEach(botao => {
+        botao.addEventListener('click', () => {
+            const targetId = botao.dataset.tab;
+
+            if (!targetId) return;
+
+            const abaAlvo = document.getElementById(targetId);
+            if (!abaAlvo) return;
+
+            // 1. LIMPEZA DE ESTADOS ANTERIORES
+            botoes.forEach(b => b.classList.remove('active'));
+            abas.forEach(a => {
+                a.classList.remove('active');
+                // Esconde por segurança (caso seu CSS use display:none na falta de .active)
+                a.style.display = 'none'; 
+            });
+
+            // 2. ATIVAÇÃO DA ABA ATUAL
+            botao.classList.add('active');
+            abaAlvo.classList.add('active');
+            abaAlvo.style.display = 'block';
+
+            // 3. LÓGICA ESPECÍFICA DE SAÍDA DO DASHBOARD
+            // Se a aba clicada NÃO for o Dashboard, limpamos o gráfico
+            if (targetId !== "dashboardTab") {
+                const containerGrafico = document.getElementById('containerGraficoDashboard');
+                if (containerGrafico) {
+                    containerGrafico.classList.add('hidden'); // Esconde o container
+                }
+                
+                if (chartAtual) {
+                    chartAtual.destroy(); // Libera memória do Chart.js
+                    chartAtual = null;    // Reseta a variável global
+                }
+            }
+
+            // 4. CARREGAMENTO SOB DEMANDA (ENTRADA)
+            if (targetId === "dashboardTab") {
+                try {
+                    // Pequeno delay para garantir que o DOM da aba esteja visível antes de renderizar
+                    setTimeout(() => {
+                        gerarDashboard();
+                    }, 50);
+                } catch (e) {
+                    console.error("Erro ao gerar dashboard:", e);
+                }
+            }
+        });
+    });
+}
+
+</script>
+
+</div>
+</div>
+</body>
+</html>
 
