@@ -1225,21 +1225,39 @@ function consolidarCSVs(csvIntegrado, csvSuperior) {
     const cabecalhoInt = linhasInt[0].split(separador);
     const cabecalhoSup = linhasSup[0].split(separador);
 
-    // usa o cabeçalho do integrado + turmas do superior
+    // cabeçalho unificado
     const novoCabecalho = [
         ...cabecalhoInt,
         ...cabecalhoSup.slice(2)
     ].join(separador);
 
-    const corpoInt = linhasInt.slice(1);
-    const corpoSup = linhasSup.slice(1);
+    const linhasFinais = [novoCabecalho];
 
-    // concatena tudo embaixo
-    const linhasFinais = [
-        novoCabecalho,
-        ...corpoInt.map(l => l + separador.repeat(cabecalhoSup.length - 2)),
-        ...corpoSup.map(l => separador.repeat(cabecalhoInt.length) + l.split(separador).slice(2).join(separador))
-    ];
+    // linhas do integrado: completa com vazios do superior
+    linhasInt.slice(1).forEach(linha => {
+        const cols = linha.split(separador);
+
+        const novaLinha = [
+            ...cols,
+            ...new Array(cabecalhoSup.length - 2).fill("")
+        ];
+
+        linhasFinais.push(novaLinha.join(separador));
+    });
+
+    // linhas do superior: preserva DATA + HORÁRIO e desloca turmas corretamente
+    linhasSup.slice(1).forEach(linha => {
+        const cols = linha.split(separador);
+
+        const novaLinha = [
+            cols[0] || "",
+            cols[1] || "",
+            ...new Array(cabecalhoInt.length - 2).fill(""),
+            ...cols.slice(2)
+        ];
+
+        linhasFinais.push(novaLinha.join(separador));
+    });
 
     console.log("CSV consolidado final:", linhasFinais.slice(0, 10));
 
