@@ -1130,7 +1130,7 @@ async function obterCSVConsolidado(ano) {
             "https://docs.google.com/spreadsheets/d/1j33kiPqwtzZNuvkBgYDaIiXZvVMY_J0qWAtRfYGdnD8/export?format=csv&gid=1589791808";
 
         const superiorUrl =
-            "https://docs.google.com/spreadsheets/d/14ALXZgFIT68ee9ajuIdG63SpGVm0HyTjwp63-J6vRyg/edit?gid=1194734446#gid=1194734446";
+            "https://docs.google.com/spreadsheets/d/14ALXZgFIT68ee9ajuIdG63SpGVm0HyTjwp63-J6vRyg/export?format=csv&gid=1194734446";
 
         const [csvIntegrado, csvSuperior] = await Promise.all([
             fetch(integradoUrl + "&t=" + timestamp).then(r => r.text()),
