@@ -1008,7 +1008,9 @@ async function carregarDados() {
         // carrega o CSV consolidado
         const csv = await obterCSVConsolidado(yearSelected);
 
-        const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
+        const lines = csv
+            .split(/\r?\n/)
+            .filter(l => l.trim().length > 0);
 
         if (lines.length < 1) {
             throw new Error("Arquivo CSV vazio.");
@@ -1025,15 +1027,31 @@ async function carregarDados() {
         console.log("Primeira linha:", lines[0]);
 
         // cabeçalho
-        const headers = lines[0].split(separador).map(h => h.trim());
+        const headers = lines[0]
+            .split(separador)
+            .map(h => h.trim());
+
         const turmasHeaders = headers.slice(2);
 
         console.log("Turmas detectadas:", turmasHeaders);
 
         let lastDate = "";
 
+        // função auxiliar para gerar IDs seguros
+        function gerarIdSeguro(texto) {
+            return texto
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]/g, '_')
+                .replace(/_+/g, '_')
+                .replace(/^_|_$/g, '');
+        }
+
         lines.slice(1).forEach(line => {
-            const cols = line.split(separador).map(c => c?.trim());
+            const cols = line
+                .split(separador)
+                .map(c => c?.trim());
 
             const primeiraColuna = cols[0]
                 ? cols[0].toLowerCase()
@@ -1061,11 +1079,8 @@ async function carregarDados() {
                     return;
                 }
 
-                const tId = tNome
-                    .toLowerCase()
-                    .normalize("NFD")
-                    .replace(/[\u0300-\u036f]/g, "")
-                    .replace(/[^a-z0-9]/g, '');
+                // ID seguro da turma
+                const tId = gerarIdSeguro(tNome);
 
                 if (!dataStore[tId]) {
                     dataStore[tId] = {
@@ -1074,6 +1089,7 @@ async function carregarDados() {
                     };
                 }
 
+                // extrai tags [..]
                 const tagM = cell.match(/\[(.*?)\]/);
                 const tag = tagM ? tagM[1].toUpperCase() : null;
 
@@ -1092,11 +1108,8 @@ async function carregarDados() {
                     profNome = "N/I";
                 }
 
-                const dId = discNome
-                    .toLowerCase()
-                    .normalize("NFD")
-                    .replace(/[\u0300-\u036f]/g, "")
-                    .replace(/[^a-z0-9]/g, '');
+                // ID seguro da disciplina
+                const dId = gerarIdSeguro(discNome);
 
                 if (!dataStore[tId].discs[dId]) {
                     dataStore[tId].discs[dId] = {
@@ -1105,7 +1118,7 @@ async function carregarDados() {
                     };
                 }
 
-                // linhas BASE = molde
+                // BASE = molde
                 if (primeiraColuna.startsWith("base_")) {
                     dataStore[tId].discs[dId].sch.push({
                         tipo: "MOLDE",
@@ -1116,7 +1129,7 @@ async function carregarDados() {
                     });
                 }
 
-                // linhas com data real = manual
+                // DATA REAL = manual
                 else {
                     const p = lastDate.split('/');
 
