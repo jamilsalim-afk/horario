@@ -1275,75 +1275,89 @@ function consolidarCSVs(csvIntegrado, csvSuperior) {
 function gerarFuturoComBase() {
     const yearSelect = document.getElementById('yearSelect');
     if (!yearSelect) return;
-    
+
     const ano = yearSelect.value;
     const cal = CALENDARIO_DINAMICO[ano];
+
     if (!cal || !cal.limites) {
         console.warn(`⚠️ Calendário ou limites não encontrados para o ano ${ano}`);
         return;
     }
 
-    // Mapeamento para converter o sufixo da base no número do dia do JS (0-6)
-    const mapaDias = { 
-        'dom': 0, 'seg': 1, 'ter': 2, 'qua': 3, 'qui': 4, 'sex': 5, 'sab': 6 
+    const mapaDias = {
+        dom: 0,
+        seg: 1,
+        ter: 2,
+        qua: 3,
+        qui: 4,
+        sex: 5,
+        sab: 6
     };
 
     console.log("📅 Iniciando projeção de aulas futuras...");
 
     Object.keys(dataStore).forEach(tId => {
         const turma = dataStore[tId];
-        
+
         Object.keys(turma.discs).forEach(dId => {
             const disc = turma.discs[dId];
-            
-            // 1. Separa o que é molde (regra) do que é manual (exceção/registro)
+
             const moldes = disc.sch.filter(s => s.tipo === "MOLDE");
             const manuais = disc.sch.filter(s => s.tipo === "MANUAL");
 
-            // 2. O array da disciplina agora conterá apenas os manuais inicialmente
+            // mantém inicialmente apenas os manuais
             disc.sch = [...manuais];
 
             moldes.forEach(m => {
-                // Identificador esperado: base_int_seg ou base_sup_s1_ter
-                const partes = m.identificador.split('_'); 
-                let limites, diaRef, tipoSabado, feriasRef;
+                const partes = m.identificador.toLowerCase().split('_');
 
-                // Identifica o nível e o semestre para pegar os limites de data corretos
+                let limites = null;
+                let diaRef = null;
+                let tipoSabado = null;
+                let feriasRef = [];
+
+                // integrado
                 if (partes[1] === 'int') {
                     limites = cal.limites.integrado;
                     diaRef = mapaDias[partes[2]];
                     tipoSabado = "integrado";
-                    feriasRef = cal.ferias_int;
-                } else if (partes[1] === 'sup') {
-                    const semestre = partes[2]; // s1 ou s2
-                    limites = cal.limites.superior[semestre];
-                    diaRef = mapaDias[partes[3]];
-                    tipoSabado = `superior_${semestre}`;
-                    feriasRef = cal.ferias_sup;
+                    feriasRef = cal.ferias_int || [];
                 }
 
-                if (!limites || diaRef === undefined) return;
+                // superior
+                else if (partes[1] === 'sup') {
+                    const semestre = partes[2]; // s1 ou s2
 
-                // Inicia o loop de datas do início ao fim do período letivo
+                    limites = cal.limites.superior?.[semestre];
+                    diaRef = mapaDias[partes[3]];
+                    tipoSabado = `superior_${semestre}`;
+                    feriasRef = cal.ferias_sup || [];
+                }
+
+                if (!limites || diaRef === undefined) {
+                    console.warn("Molde ignorado:", m.identificador);
+                    return;
+                }
+
                 let curr = new Date(limites.inicio + "T12:00:00");
                 const fim = new Date(limites.fim + "T12:00:00");
 
                 while (curr <= fim) {
                     const isoData = curr.toISOString().split('T')[0];
-                    const diaDaSemanaAtual = curr.getDay();
-                    
+                    const diaAtual = curr.getDay();
+
                     let deveCriarAula = false;
                     let tagEspecial = m.tag;
 
-                    // REGRA A: Hoje é o dia da semana definido na BASE?
-                    if (diaDaSemanaAtual === diaRef) {
+                    // dia normal da base
+                    if (diaAtual === diaRef) {
                         deveCriarAula = true;
-                    } 
+                    }
 
-                    // REGRA B: Hoje é um Sábado Letivo que repõe esse dia da semana?
-                    const configSabado = cal.sabados.find(s => 
-                        s.data === isoData && 
-                        s.tipo === tipoSabado && 
+                    // sábado letivo
+                    const configSabado = (cal.sabados || []).find(s =>
+                        s.data === isoData &&
+                        s.tipo === tipoSabado &&
                         s.referencia === diaRef
                     );
 
@@ -1352,43 +1366,52 @@ function gerarFuturoComBase() {
                         tagEspecial = "SÁBADO LETIVO";
                     }
 
-                    // Se passou nos critérios de dia, verifica impedimentos (Feriado/Férias)
                     if (deveCriarAula) {
-                        const ehFeriado = cal.feriados.includes(isoData);
-                        const estaEmFerias = feriasRef.some(f => isoData >= f.inicio && isoData <= f.fim);
+                        const ehFeriado =
+                            (cal.feriados || []).includes(isoData);
 
-                        if (!ehFeriado && !estaEmFerias) {
-                            const dataFormatada = curr.toLocaleDateString('pt-BR');
-                            
-                            // ❗ IMPORTANTE: Só cria a aula se NÃO houver um lançamento manual 
-                            // no mesmo dia e horário (Isso permite que você mude o prof/disciplina no Gist)
-                            const jaExisteManual = manuais.some(man => 
-                                man.date === dataFormatada && man.time === m.time
+                        const estaEmFerias =
+                            feriasRef.some(f =>
+                                isoData >= f.inicio &&
+                                isoData <= f.fim
                             );
 
-                            if (!jaTemManualNoMesmoHorario(manuais, dataFormatada, m.time)) {
+                        if (!ehFeriado && !estaEmFerias) {
+                            const dataFormatada =
+                                curr.toLocaleDateString('pt-BR');
+
+                            const jaExisteManual =
+                                manuais.some(man =>
+                                    man.date === dataFormatada &&
+                                    man.time === m.time
+                                );
+
+                            if (!jaExisteManual) {
                                 disc.sch.push({
                                     date: dataFormatada,
                                     dtObj: new Date(curr),
-                                    wd: curr.toLocaleDateString('pt-BR', { weekday: 'long' }),
+                                    wd: curr.toLocaleDateString('pt-BR', {
+                                        weekday: 'long'
+                                    }),
                                     time: m.time,
                                     prof: m.prof,
                                     tag: tagEspecial,
-                                    geradaAutomaticamente: true // Flag para controle interno se precisar
+                                    geradaAutomaticamente: true
                                 });
                             }
                         }
                     }
-                    // Avança para o próximo dia
+
                     curr.setDate(curr.getDate() + 1);
                 }
             });
 
-            // 3. Ordenação Cronológica (Data e depois Horário)
+            // ordenação final
             disc.sch.sort((a, b) => {
                 if (a.dtObj.getTime() !== b.dtObj.getTime()) {
                     return a.dtObj - b.dtObj;
                 }
+
                 return a.time.localeCompare(b.time);
             });
         });
