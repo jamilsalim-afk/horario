@@ -1293,11 +1293,16 @@ function gerarFuturoComBase() {
     const ano = yearSelect.value;
     const cal = CALENDARIO_DINAMICO[ano];
 
-    if (!cal || !cal.limites) return;
+    if (!cal || !cal.limites) {
+        console.warn("Calendário não encontrado:", ano);
+        return;
+    }
 
     const mapaDias = {
         dom: 0, seg: 1, ter: 2, qua: 3, qui: 4, sex: 5, sab: 6
     };
+
+    console.log("📅 Iniciando projeção...");
 
     Object.keys(dataStore).forEach(tId => {
         const turma = dataStore[tId];
@@ -1308,22 +1313,27 @@ function gerarFuturoComBase() {
             const moldes = disc.sch.filter(s => s.tipo === "MOLDE");
             const manuais = disc.sch.filter(s => s.tipo === "MANUAL");
 
+            // mantém só os manuais inicialmente
             disc.sch = [...manuais];
 
             moldes.forEach(m => {
-                const partes = m.identificador.split('_');
+                const partes = m.identificador.toLowerCase().split('_');
 
                 let limites = null;
                 let diaRef = null;
                 let tipoSabado = null;
                 let feriasRef = [];
 
+                // INTEGRADO
                 if (partes[1] === 'int') {
                     limites = cal.limites.integrado;
                     diaRef = mapaDias[normalizarDia(partes[2])];
                     tipoSabado = "integrado";
                     feriasRef = cal.ferias_int || [];
-                } else if (partes[1] === 'sup') {
+                }
+
+                // SUPERIOR
+                else if (partes[1] === 'sup') {
                     const semestre = partes[2];
                     limites = cal.limites.superior?.[semestre];
                     diaRef = mapaDias[normalizarDia(partes[3])];
@@ -1336,7 +1346,18 @@ function gerarFuturoComBase() {
                     return;
                 }
 
-                let curr = new Date(limites.inicio + "T12:00:00");
+                // 🔥 INÍCIO REAL (primeira aula manual)
+                let dataInicioReal = limites.inicio;
+
+                if (manuais.length > 0) {
+                    const primeiraManual = manuais
+                        .map(m => m.dtObj)
+                        .sort((a, b) => a - b)[0];
+
+                    dataInicioReal = primeiraManual.toISOString().split('T')[0];
+                }
+
+                let curr = new Date(dataInicioReal + "T12:00:00");
                 const fim = new Date(limites.fim + "T12:00:00");
 
                 while (curr <= fim) {
@@ -1346,10 +1367,12 @@ function gerarFuturoComBase() {
                     let deveCriar = false;
                     let tagEspecial = m.tag;
 
+                    // dia normal
                     if (diaAtual === diaRef) {
                         deveCriar = true;
                     }
 
+                    // sábado letivo
                     const configSabado = (cal.sabados || []).find(s =>
                         s.data === isoData &&
                         s.tipo === tipoSabado &&
@@ -1362,24 +1385,35 @@ function gerarFuturoComBase() {
                     }
 
                     if (deveCriar) {
-                        const ehFeriado = (cal.feriados || []).includes(isoData);
-                        const estaEmFerias = feriasRef.some(f =>
-                            isoData >= f.inicio && isoData <= f.fim
-                        );
 
-                        if (!ehFeriado && !estaEmFerias) {
-                            const dataFormatada = curr.toLocaleDateString('pt-BR');
+                        const ehFeriado =
+                            (cal.feriados || []).includes(isoData);
 
-                            const jaExiste = manuais.some(man =>
-                                man.date === dataFormatada &&
-                                man.time === m.time
+                        const estaEmFerias =
+                            feriasRef.some(f =>
+                                isoData >= f.inicio &&
+                                isoData <= f.fim
                             );
 
-                            if (!jaExiste) {
+                        if (!ehFeriado && !estaEmFerias) {
+
+                            const dataFormatada =
+                                curr.toLocaleDateString('pt-BR');
+
+                            // 🔥 evita duplicar aula manual
+                            const jaExisteManual =
+                                manuais.some(man =>
+                                    man.date === dataFormatada &&
+                                    man.time === m.time
+                                );
+
+                            if (!jaExisteManual) {
                                 disc.sch.push({
                                     date: dataFormatada,
                                     dtObj: new Date(curr),
-                                    wd: curr.toLocaleDateString('pt-BR', { weekday: 'long' }),
+                                    wd: curr.toLocaleDateString('pt-BR', {
+                                        weekday: 'long'
+                                    }),
                                     time: m.time,
                                     prof: m.prof,
                                     tag: tagEspecial,
@@ -1393,6 +1427,7 @@ function gerarFuturoComBase() {
                 }
             });
 
+            // ordena tudo
             disc.sch.sort((a, b) => {
                 if (a.dtObj.getTime() !== b.dtObj.getTime()) {
                     return a.dtObj - b.dtObj;
@@ -1402,7 +1437,7 @@ function gerarFuturoComBase() {
         });
     });
 
-    console.log("✅ Projeção concluída");
+    console.log("✅ Projeção finalizada!");
 }
 
 // Função auxiliar para clareza do código
