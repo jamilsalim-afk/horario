@@ -993,6 +993,52 @@ function ehSemestral(tId) {
     );
 }
 
+function parseCSV(csv, separador) {
+    const linhas = [];
+    let atual = '';
+    let dentroAspas = false;
+    let linha = [];
+
+    for (let i = 0; i < csv.length; i++) {
+        const char = csv[i];
+
+        if (char === '"') {
+            dentroAspas = !dentroAspas;
+        } else if (char === separador && !dentroAspas) {
+            linha.push(atual.trim());
+            atual = '';
+        } else if ((char === '\n' || char === '\r') && !dentroAspas) {
+            if (atual || linha.length) {
+                linha.push(atual.trim());
+                linhas.push(linha);
+                linha = [];
+                atual = '';
+            }
+        } else {
+            atual += char;
+        }
+    }
+
+    if (atual || linha.length) {
+        linha.push(atual.trim());
+        linhas.push(linha);
+    }
+
+    return linhas;
+}
+
+function normalizarDia(dia) {
+    if (!dia) return null;
+
+    return dia
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace("-feira", "")
+        .trim()
+        .substring(0, 3); // seg, ter, qua, qui...
+}
+
 async function carregarDados() {
     try {
         const yearSelected = document.getElementById('yearSelect').value;
@@ -1000,66 +1046,54 @@ async function carregarDados() {
 
         if (loadingElem) loadingElem.classList.remove('hidden');
 
-        // limpa o banco temporário
         window.dataStore = {};
 
-        // carrega o CSV consolidado
         const csv = await obterCSVConsolidado(yearSelected);
 
-        const lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
-
-        if (lines.length < 1) {
-            throw new Error("Arquivo CSV vazio.");
-        }
-
-        // detecta automaticamente o separador
-        const separador = lines[0].includes('\t')
+        // detectar separador
+        const primeiraLinha = csv.split(/\r?\n/)[0];
+        const separador = primeiraLinha.includes('\t')
             ? '\t'
-            : lines[0].includes(';')
+            : primeiraLinha.includes(';')
             ? ';'
             : ',';
 
-        console.log("Separador detectado:", JSON.stringify(separador));
-        console.log("Primeira linha:", lines[0]);
+        // 🔥 usa parser correto
+        const rows = parseCSV(csv, separador);
 
-        // cabeçalho
-        const headers = lines[0].split(separador).map(h => h.trim());
+        if (rows.length < 2) {
+            throw new Error("CSV inválido ou vazio");
+        }
+
+        const headers = rows[0];
         const turmasHeaders = headers.slice(2);
-
-        console.log("Turmas detectadas:", turmasHeaders);
 
         let lastDate = "";
 
-        lines.slice(1).forEach(line => {
-            const cols = line.split(separador).map(c => c?.trim());
+        rows.slice(1).forEach(cols => {
+            if (!cols || cols.length < 2) return;
 
             const primeiraColuna = cols[0]
                 ? cols[0].toLowerCase()
                 : "";
 
-            // atualiza a data quando não for linha base
+            // atualiza data
             if (cols[0] && !primeiraColuna.startsWith("base_")) {
                 lastDate = cols[0].replace(/\./g, '/');
             }
 
-            // ignora linhas inválidas
             if (!cols[1] || (!primeiraColuna.startsWith("base_") && !lastDate)) {
                 return;
             }
 
-            // ignora intervalos
-            if (cols[1]?.toUpperCase() === "INTERVALO") {
-                return;
-            }
+            if (cols[1]?.toUpperCase() === "INTERVALO") return;
 
             turmasHeaders.forEach((tNome, idx) => {
                 const cell = cols[idx + 2];
 
-                if (!cell || cell === "" || cell === "0" || cell.length < 3) {
-                    return;
-                }
+                // 🔥 corrigido (REMOVIDO length < 3)
+                if (!cell || cell.trim() === "" || cell === "0") return;
 
-                // ID DA TURMA
                 const tId = tNome
                     .toLowerCase()
                     .normalize("NFD")
@@ -1091,11 +1125,7 @@ async function carregarDados() {
                     profNome = "N/I";
                 }
 
-                // 🔥 CORREÇÃO PRINCIPAL AQUI
-                // ID único por turma + disciplina
-                const dId = (
-                    tId + "_" + discNome
-                )
+                const dId = (tId + "_" + discNome)
                     .toLowerCase()
                     .normalize("NFD")
                     .replace(/[\u0300-\u036f]/g, "")
@@ -1108,7 +1138,7 @@ async function carregarDados() {
                     };
                 }
 
-                // linhas BASE = molde
+                // BASE (molde)
                 if (primeiraColuna.startsWith("base_")) {
                     dataStore[tId].discs[dId].sch.push({
                         tipo: "MOLDE",
@@ -1117,13 +1147,12 @@ async function carregarDados() {
                         prof: traduzirProfessor?.(profNome) || profNome,
                         tag
                     });
-                }
-
-                // linhas com data real = manual
-                else {
+                } else {
                     const p = lastDate.split('/');
-
                     if (p.length !== 3) return;
+
+                    const anoData = p[2];
+                    if (anoData !== yearSelected) return;
 
                     const dt = new Date(
                         parseInt(p[2]),
@@ -1132,29 +1161,22 @@ async function carregarDados() {
                         12, 0, 0
                     );
 
-                    if (lastDate.includes(`/${yearSelected}`)) {
-                        dataStore[tId].discs[dId].sch.push({
-                            tipo: "MANUAL",
-                            date: lastDate,
-                            dtObj: dt,
-                            wd: dt.toLocaleDateString('pt-BR', {
-                                weekday: 'long'
-                            }),
-                            time: cols[1],
-                            prof: traduzirProfessor?.(profNome) || profNome,
-                            tag
-                        });
-                    }
+                    dataStore[tId].discs[dId].sch.push({
+                        tipo: "MANUAL",
+                        date: lastDate,
+                        dtObj: dt,
+                        wd: dt.toLocaleDateString('pt-BR', { weekday: 'long' }),
+                        time: cols[1],
+                        prof: traduzirProfessor?.(profNome) || profNome,
+                        tag
+                    });
                 }
             });
         });
 
         console.log("📊 Dados processados:", dataStore);
-        console.log("📊 Total de turmas:", Object.keys(dataStore));
 
-        console.log("📅 Iniciando projeção de aulas futuras...");
         gerarFuturoComBase();
-        console.log("✅ Projeção do calendário finalizada!");
 
         popularSelects?.();
         limparResultados?.();
@@ -1162,19 +1184,8 @@ async function carregarDados() {
 
         if (loadingElem) loadingElem.classList.add('hidden');
 
-        setTimeout(() => {
-            window.dispatchEvent(new Event('resize'));
-        }, 300);
-
     } catch (e) {
-        console.error("Erro Crítico no Carregamento:", e);
-
-        const loadingElem = document.getElementById('loading');
-
-        if (loadingElem) {
-            loadingElem.innerHTML =
-                `<span class="text-red-500">Erro ao carregar dados: ${e.message}</span>`;
-        }
+        console.error("Erro:", e);
     }
 }
 
@@ -1282,22 +1293,11 @@ function gerarFuturoComBase() {
     const ano = yearSelect.value;
     const cal = CALENDARIO_DINAMICO[ano];
 
-    if (!cal || !cal.limites) {
-        console.warn(`⚠️ Calendário ou limites não encontrados para o ano ${ano}`);
-        return;
-    }
+    if (!cal || !cal.limites) return;
 
     const mapaDias = {
-        dom: 0,
-        seg: 1,
-        ter: 2,
-        qua: 3,
-        qui: 4,
-        sex: 5,
-        sab: 6
+        dom: 0, seg: 1, ter: 2, qua: 3, qui: 4, sex: 5, sab: 6
     };
-
-    console.log("📅 Iniciando projeção de aulas futuras...");
 
     Object.keys(dataStore).forEach(tId => {
         const turma = dataStore[tId];
@@ -1308,37 +1308,31 @@ function gerarFuturoComBase() {
             const moldes = disc.sch.filter(s => s.tipo === "MOLDE");
             const manuais = disc.sch.filter(s => s.tipo === "MANUAL");
 
-            // mantém inicialmente apenas os manuais
             disc.sch = [...manuais];
 
             moldes.forEach(m => {
-                const partes = m.identificador.toLowerCase().split('_');
+                const partes = m.identificador.split('_');
 
                 let limites = null;
                 let diaRef = null;
                 let tipoSabado = null;
                 let feriasRef = [];
 
-                // integrado
                 if (partes[1] === 'int') {
                     limites = cal.limites.integrado;
-                    diaRef = mapaDias[partes[2]];
+                    diaRef = mapaDias[normalizarDia(partes[2])];
                     tipoSabado = "integrado";
                     feriasRef = cal.ferias_int || [];
-                }
-
-                // superior
-                else if (partes[1] === 'sup') {
-                    const semestre = partes[2]; // s1 ou s2
-
+                } else if (partes[1] === 'sup') {
+                    const semestre = partes[2];
                     limites = cal.limites.superior?.[semestre];
-                    diaRef = mapaDias[partes[3]];
+                    diaRef = mapaDias[normalizarDia(partes[3])];
                     tipoSabado = `superior_${semestre}`;
                     feriasRef = cal.ferias_sup || [];
                 }
 
                 if (!limites || diaRef === undefined) {
-                    console.warn("Molde ignorado:", m.identificador);
+                    console.warn("Molde inválido:", m.identificador);
                     return;
                 }
 
@@ -1349,15 +1343,13 @@ function gerarFuturoComBase() {
                     const isoData = curr.toISOString().split('T')[0];
                     const diaAtual = curr.getDay();
 
-                    let deveCriarAula = false;
+                    let deveCriar = false;
                     let tagEspecial = m.tag;
 
-                    // dia normal da base
                     if (diaAtual === diaRef) {
-                        deveCriarAula = true;
+                        deveCriar = true;
                     }
 
-                    // sábado letivo
                     const configSabado = (cal.sabados || []).find(s =>
                         s.data === isoData &&
                         s.tipo === tipoSabado &&
@@ -1365,37 +1357,29 @@ function gerarFuturoComBase() {
                     );
 
                     if (configSabado) {
-                        deveCriarAula = true;
+                        deveCriar = true;
                         tagEspecial = "SÁBADO LETIVO";
                     }
 
-                    if (deveCriarAula) {
-                        const ehFeriado =
-                            (cal.feriados || []).includes(isoData);
-
-                        const estaEmFerias =
-                            feriasRef.some(f =>
-                                isoData >= f.inicio &&
-                                isoData <= f.fim
-                            );
+                    if (deveCriar) {
+                        const ehFeriado = (cal.feriados || []).includes(isoData);
+                        const estaEmFerias = feriasRef.some(f =>
+                            isoData >= f.inicio && isoData <= f.fim
+                        );
 
                         if (!ehFeriado && !estaEmFerias) {
-                            const dataFormatada =
-                                curr.toLocaleDateString('pt-BR');
+                            const dataFormatada = curr.toLocaleDateString('pt-BR');
 
-                            const jaExisteManual =
-                                manuais.some(man =>
-                                    man.date === dataFormatada &&
-                                    man.time === m.time
-                                );
+                            const jaExiste = manuais.some(man =>
+                                man.date === dataFormatada &&
+                                man.time === m.time
+                            );
 
-                            if (!jaExisteManual) {
+                            if (!jaExiste) {
                                 disc.sch.push({
                                     date: dataFormatada,
                                     dtObj: new Date(curr),
-                                    wd: curr.toLocaleDateString('pt-BR', {
-                                        weekday: 'long'
-                                    }),
+                                    wd: curr.toLocaleDateString('pt-BR', { weekday: 'long' }),
                                     time: m.time,
                                     prof: m.prof,
                                     tag: tagEspecial,
@@ -1409,18 +1393,16 @@ function gerarFuturoComBase() {
                 }
             });
 
-            // ordenação final
             disc.sch.sort((a, b) => {
                 if (a.dtObj.getTime() !== b.dtObj.getTime()) {
                     return a.dtObj - b.dtObj;
                 }
-
                 return a.time.localeCompare(b.time);
             });
         });
     });
 
-    console.log("✅ Projeção do calendário finalizada!");
+    console.log("✅ Projeção concluída");
 }
 
 // Função auxiliar para clareza do código
