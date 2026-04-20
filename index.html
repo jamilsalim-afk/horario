@@ -733,14 +733,16 @@ const MAPA_PROFESSORES = Object.fromEntries(
 );
 
 function traduzirProfessor(nome) {
-    // Tratamento para células vazias ou nulas do Gist
     if (!nome || nome.trim() === "") return "Não Identificado";
 
-    const chave = normalizarTexto(nome);
+    // 🔥 remove * antes de qualquer coisa
+    const nomeLimpo = nome
+        .replace(/\*/g, '')
+        .trim();
 
-    // Se estiver no mapa, usa o nome completo. 
-    // Se não estiver (ex: professor novo), ele formata o nome curto (Ex: "JOAO" -> "Joao")
-    return MAPA_PROFESSORES[chave] || formatarNome(nome);
+    const chave = normalizarTexto(nomeLimpo);
+
+    return MAPA_PROFESSORES[chave] || formatarNome(nomeLimpo);
 }
 
 // =========================
