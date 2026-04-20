@@ -3855,10 +3855,10 @@ function exportarRelatorioProfessorPDF() {
     drawHeader(doc);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.text(`RELATÓRIO DOCENTE: ${profNomeCompleto.toUpperCase()}`, 14, 42);
+    doc.text(`RELATÓRIO DOCENTE: ${profNomeCompleto.toUpperCase()}`, 14, 45);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text(`ANO LETIVO: ${anoLetivo} | EMISSÃO: ${dataEmissao}`, 283, 42, { align: "right" });
+    doc.text(`ANO LETIVO: ${anoLetivo} | EMISSÃO: ${dataEmissao}`, 283, 45, { align: "right" });
 
     const commonStyles = {
         fontSize: 6.5,
@@ -3873,7 +3873,7 @@ function exportarRelatorioProfessorPDF() {
     ]];
 
     // 1. TABELA EXECUTADO
-    doc.setFont("helvetica", "bold"); doc.text("1. CARGA HORÁRIA EXECUTADA (GIST)", 14, 50);
+    doc.setFont("helvetica", "bold"); doc.text("1. CARGA HORÁRIA EXECUTADA (GIST)", 14, 52);
     doc.autoTable({
         html: '#bodyRelatorioProf',
         startY: 53,
