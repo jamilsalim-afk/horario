@@ -246,6 +246,7 @@
                 <div class="flex gap-4 mb-6">
                     <button onclick="exportarTodosProfessoresPDF()" class="bg-blue-700 text-white px-4 rounded-lg font-bold hover:bg-blue-900 transition shadow-md uppercase">Exportar Todos PDF</button>
                     <button onclick="exportarTodosProfessoresMensalPDF()" class="bg-blue-700 text-white px-4 rounded-lg font-bold hover:bg-blue-900 transition shadow-md uppercase">Exportar Todos (Mensal) PDF</button>
+                    <button onclick="gerarRelatorioMultiplasDisciplinas()" class="bg-blue-600 text-white px-3 py-1 rounded text-xs">Gerar Relatório das Selecionadas</button>
                 </div>
 
                 <h3 class="font-bold mt-6 mb-2">EXECUTADO</h3>
@@ -2286,11 +2287,30 @@ async function gerarRelatorioProfessorCompleto() {
         const dNome = (dadosExec.disciplina || dadosPrev.disciplina || chave.split("||")[0]).trim();
         const tNome = (dadosExec.turma || dadosPrev.turma || chave.split("||")[1]).trim();
 
-        // --- RENDERIZAÇÃO EXECUTADO ---
-        let rowExec = `<tr class="hover:bg-gray-50"><td class="text-left font-bold text-[10px]">${dNome}</td><td class="bg-gray-50 text-[10px]">${tNome}</td>`;
-        dadosExec.meses.forEach(v => rowExec += `<td class="text-center">${v || '-'}</td>`);
-        rowExec += `<td class="font-bold text-center">${dadosExec.sabado || '-'}</td><td class="bg-blue-50 font-black text-center">${dadosExec.total}</td></tr>`;
-        bExec.innerHTML += rowExec;
+        // --- RENDERIZAÇÃO EXECUTADO (COM SELEÇÃO) ---
+const rowId = "row-" + btoa(chave);
+
+let rowExec = `
+<tr 
+    id="${rowId}"
+    class="hover:bg-blue-50 cursor-pointer transition-colors"
+    onclick="toggleDisciplina('${chave}')"
+>
+    <td class="text-left font-bold text-[10px]">${dNome}</td>
+    <td class="bg-gray-50 text-[10px]">${tNome}</td>
+`;
+
+dadosExec.meses.forEach(v => {
+    rowExec += `<td class="text-center">${v || '-'}</td>`;
+});
+
+rowExec += `
+    <td class="font-bold text-center">${dadosExec.sabado || '-'}</td>
+    <td class="bg-blue-50 font-black text-center">${dadosExec.total}</td>
+</tr>
+`;
+
+bExec.innerHTML += rowExec;
 
         // --- RENDERIZAÇÃO PREVISTO ---
         let rowPrev = `<tr class="hover:bg-gray-50"><td class="text-left font-bold text-[10px]">${dNome}</td><td class="bg-gray-50 text-[10px]">${tNome}</td>`;
@@ -2319,7 +2339,70 @@ async function gerarRelatorioProfessorCompleto() {
         bDiff.innerHTML += rowDiff;
     });
 }
+        
+function toggleDisciplina(chave) {
+    const id = "row-" + btoa(chave);
+    const el = document.getElementById(id);
 
+    if (!el) return;
+
+    if (disciplinasSelecionadas.has(chave)) {
+        disciplinasSelecionadas.delete(chave);
+        el.classList.remove("bg-blue-200");
+    } else {
+        disciplinasSelecionadas.add(chave);
+        el.classList.add("bg-blue-200");
+    }
+}
+
+        function gerarRelatorioMultiplasDisciplinas() {
+    if (!disciplinasSelecionadas.size) {
+        alert("Selecione pelo menos uma disciplina");
+        return;
+    }
+
+    const lista = Array.from(disciplinasSelecionadas);
+
+    console.log("Gerando relatório para:", lista);
+
+    lista.forEach(chave => {
+        const [disciplina, turma] = chave.split("||");
+
+        // 🔥 aqui você reaproveita seu fluxo existente
+        selecionarDisciplinaERenderizar(disciplina, turma);
+    });
+}
+
+        function selecionarDisciplinaERenderizar(nomeDisc, nomeTurma) {
+
+    const tSelect = document.getElementById('turmaSelect');
+    const dSelect = document.getElementById('disciplinaSelect');
+
+    if (!tSelect || !dSelect) return;
+
+    // selecionar turma
+    for (let i = 0; i < tSelect.options.length; i++) {
+        if (tSelect.options[i].text.toUpperCase().trim() === nomeTurma) {
+            tSelect.selectedIndex = i;
+            break;
+        }
+    }
+
+    // atualizar disciplinas
+    popularDisciplinas?.();
+
+    // selecionar disciplina
+    for (let i = 0; i < dSelect.options.length; i++) {
+        if (dSelect.options[i].text.toUpperCase().trim() === nomeDisc) {
+            dSelect.selectedIndex = i;
+            break;
+        }
+    }
+
+    // renderizar
+    renderD();
+}
+        
 function calcularPrevistoProfessor() {
     const year = document.getElementById('yearSelect')?.value || "2026";
     const dadosAno = CALENDARIO_DINAMICO[year];
