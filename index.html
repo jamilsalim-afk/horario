@@ -216,26 +216,47 @@
         </section>
 
         <section id="tab-geral" class="tab-pane">
-            <div class="bg-white p-6 rounded-xl shadow-sm border">
-                <div class="filtros-geral">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <input type="week" id="weekInputGeral" class="p-3 border rounded-lg">
-                        <select id="nivelSelect" class="p-3 border rounded-lg hidden">
-                            <option value="">-- SELECIONE O NÍVEL --</option>
-                            <option value="tecnico">TÉCNICO</option>
-                            <option value="superior">SUPERIOR</option>
-                        </select>
-                        <input list="listaProfessores" id="buscaGeral" oninput="gerarGradeGeral()" class="border p-2" placeholder="Digite o nome do professor...">
-                        <datalist id="listaProfessores"></datalist>
-                    </div>
-                    <button onclick="gerarGradeGeral()" class="bg-blue-700 text-white px-4 py-2 rounded-lg mb-4">Atualizar Grade</button>
-                    <button onclick="exportarGradeGeralPDF()" class="bg-green-700 text-white px-4 py-2 rounded-lg mb-4">Exporta Grade PDF</button>
-                </div>
-                <div class="grade-scroll">
-                    <div id="gradeGeralRender" class="overflow-x-auto border rounded-lg"></div>
-                </div>
+    <div class="bg-white p-6 rounded-xl shadow-sm border">
+
+        <div class="filtros-geral">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+
+                <!-- Semana -->
+                <input type="week" id="weekInputGeral" class="p-3 border rounded-lg">
+
+                <!-- 🔥 Agora com valor padrão -->
+                <select id="nivelSelect" class="p-3 border rounded-lg">
+                    <option value="tecnico" selected>TÉCNICO</option>
+                    <option value="superior">SUPERIOR</option>
+                </select>
+
+                <!-- Busca -->
+                <input 
+                    list="listaProfessores" 
+                    id="buscaGeral"
+                    oninput="if(this.value.length >= 2) gerarGradeGeral()"
+                    class="border p-2"
+                    placeholder="Digite o nome do professor..."
+                >
+                <datalist id="listaProfessores"></datalist>
+
             </div>
-        </section>
+
+            <button onclick="gerarGradeGeral()" class="bg-blue-700 text-white px-4 py-2 rounded-lg mb-4">
+                Atualizar Grade
+            </button>
+
+            <button onclick="exportarGradeGeralPDF()" class="bg-green-700 text-white px-4 py-2 rounded-lg mb-4">
+                Exportar PDF
+            </button>
+        </div>
+
+        <div class="grade-scroll">
+            <div id="gradeGeralRender" class="overflow-x-auto border rounded-lg"></div>
+        </div>
+
+    </div>
+</section>
 
         <section id="tab-professor" class="tab-pane">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
@@ -2879,84 +2900,42 @@ function gerarGradeTurma() {
 // ABA 07
 // FUNÇÃO PARA GERAR O HORÁRIO DA SEMANA - PODE FILTRAR POR PROFESSOR TAMBEM
 function gerarGradeGeral() {
-    console.log("🚀 Iniciando geração da grade geral...");
+    console.log("🚀 Gerando grade geral...");
 
     const weekInput = document.getElementById("weekInputGeral");
     const nivelInput = document.getElementById("nivelSelect");
     const buscaInput = document.getElementById("buscaGeral");
     const render = document.getElementById("gradeGeralRender");
 
-    // =========================
-    // 🔎 Validação dos elementos
-    // =========================
     if (!weekInput || !nivelInput || !render) {
-        console.error("❌ Elementos da interface não encontrados.");
+        console.error("❌ Elementos não encontrados");
         return;
     }
 
     const week = weekInput.value;
-    const nivel = nivelInput.value;
+    const nivel = nivelInput.value || "tecnico";
     const buscaProf = normalizarTexto(buscaInput?.value || "");
 
-    console.log("📅 Semana:", week);
-    console.log("🎓 Nível:", nivel);
-    console.log("👨‍🏫 Busca professor:", buscaProf);
-
-    // =========================
-    // 🔎 Validação dos filtros
-    // =========================
-    if (!week || !nivel) {
-        render.innerHTML = `
-            <div class="p-4 text-red-600 font-bold">
-                Selecione a semana e o nível.
-            </div>
-        `;
+    if (!week) {
+        render.innerHTML = `<div class="p-4 text-red-600 font-bold">Selecione a semana.</div>`;
         return;
     }
 
-    // =========================
-    // 🔎 Verificação do dataStore
-    // =========================
     if (!dataStore || Object.keys(dataStore).length === 0) {
-        console.error("❌ dataStore vazio ou inexistente.");
-        render.innerHTML = `
-            <div class="p-4 text-red-600 font-bold">
-                Nenhum dado carregado.
-            </div>
-        `;
+        render.innerHTML = `<div class="p-4 text-red-600 font-bold">Nenhum dado carregado.</div>`;
         return;
     }
 
-    console.log("📚 Total de turmas:", Object.keys(dataStore).length);
-
-    // =========================
-    // 📅 Semana selecionada
-    // =========================
     const [ano, semana] = week.split("-W").map(Number);
     const start = getStartOfWeek(semana, ano);
 
     if (!(start instanceof Date) || isNaN(start)) {
-        console.error("❌ Semana inválida.");
-        render.innerHTML = `
-            <div class="p-4 text-red-600 font-bold">
-                Semana inválida.
-            </div>
-        `;
+        render.innerHTML = `<div class="p-4 text-red-600 font-bold">Semana inválida.</div>`;
         return;
     }
 
-    const diasSemana = [
-        "SEGUNDA",
-        "TERÇA",
-        "QUARTA",
-        "QUINTA",
-        "SEXTA",
-        "SÁBADO"
-    ];
+    const diasSemana = ["SEGUNDA","TERÇA","QUARTA","QUINTA","SEXTA","SÁBADO"];
 
-    // =========================
-    // ⏰ Horários por nível
-    // =========================
     let horariosFiltrados = [...GABARITO];
 
     if (nivel === "tecnico") {
@@ -2966,39 +2945,27 @@ function gerarGradeGeral() {
         });
     }
 
-    // =========================
-    // 🎓 Filtrar turmas
-    // =========================
     const turmasFiltradas = Object.keys(dataStore).filter(tId => {
         return nivel === "superior"
             ? turmaEhSuperior(tId)
             : !turmaEhSuperior(tId);
     });
 
-    console.log("📚 Turmas filtradas:", turmasFiltradas);
-
     if (turmasFiltradas.length === 0) {
-        render.innerHTML = `
-            <div class="p-4 text-yellow-600 font-bold">
-                Nenhuma turma encontrada.
-            </div>
-        `;
+        render.innerHTML = `<div class="p-4 text-yellow-600 font-bold">Nenhuma turma encontrada.</div>`;
         return;
     }
 
-    // =========================
-    // 🏗️ Montagem da tabela
-    // =========================
     let html = "";
 
     for (let i = 0; i < 6; i++) {
+
         let dataDia = new Date(start);
         dataDia.setDate(start.getDate() + i);
-        dataDia.setHours(0, 0, 0, 0);
-
-        html += `<div class="bloco-dia">`;
+        dataDia.setHours(0,0,0,0);
 
         html += `
+        <div class="bloco-dia">
             <h3 class="bg-[#15803d] text-white p-2 font-bold mt-6">
                 ${diasSemana[i]} - ${dataDia.toLocaleDateString("pt-BR")}
             </h3>
@@ -3007,109 +2974,74 @@ function gerarGradeGeral() {
                 <thead class="sticky top-[90px] bg-gray-100 z-10">
                     <tr>
                         <th style="width:70px;" class="text-[10px]">H</th>
+                        ${turmasFiltradas.map(tId => `<th>${dataStore[tId].name}</th>`).join("")}
+                    </tr>
+                </thead>
+                <tbody>
         `;
 
-        // Cabeçalho com turmas
-        turmasFiltradas.forEach(tId => {
-            html += `<th>${dataStore[tId].name}</th>`;
-        });
-
-        html += `</tr></thead><tbody>`;
-
-        // =========================
-        // ⏰ Linhas de horário
-        // =========================
         horariosFiltrados.forEach(slot => {
+
             if (slot.t === "intervalo") {
                 html += `
-                    <tr class="intervalo-row">
-                        <td>${slot.h}</td>
-                        <td colspan="${turmasFiltradas.length}">
-                            ${slot.l || "INTERVALO"}
-                        </td>
-                    </tr>
-                `;
+                <tr class="intervalo-row">
+                    <td>${slot.h}</td>
+                    <td colspan="${turmasFiltradas.length}">
+                        ${slot.l || "INTERVALO"}
+                    </td>
+                </tr>`;
                 return;
             }
 
-            const horaSlot = slot.h
-                .split(" - ")[0]
-                .substring(0, 5)
-                .trim()
-                .padStart(5, "0");
+            const horaSlot = slot.h.split(" - ")[0].substring(0,5).padStart(5,"0");
 
-            html += `
-                <tr>
-                    <td class="bg-gray-100 font-bold border">
-                        ${slot.h}
-                    </td>
-            `;
+            html += `<tr>
+                <td class="bg-gray-100 font-bold border">${slot.h}</td>`;
 
-            // =========================
-            // 📚 Colunas das turmas
-            // =========================
             turmasFiltradas.forEach(tId => {
+
                 let conteudo = "";
                 const disciplinas = dataStore[tId].discs || {};
 
-                for (let d in disciplinas) {
-                    const disc = disciplinas[d];
-                    const agenda = disc?.sch || [];
+                Object.values(disciplinas).forEach(disc => {
 
-                    agenda.forEach(a => {
+                    (disc.sch || []).forEach(a => {
 
-                        // 🔥 PROTEÇÃO NOVA
-                        if (!a || !a.dtObj || !a.time) return;
+                        if (!a?.dtObj) return;
 
                         const dataAula = new Date(a.dtObj);
-                        dataAula.setHours(0, 0, 0, 0);
+                        dataAula.setHours(0,0,0,0);
 
-                        if (isNaN(dataAula.getTime())) return;
-
-                        // 🔥 CORREÇÃO PRINCIPAL (SEM toDateString)
-                        const mesmaData =
-                            dataAula.getFullYear() === dataDia.getFullYear() &&
-                            dataAula.getMonth() === dataDia.getMonth() &&
-                            dataAula.getDate() === dataDia.getDate();
-
-                        const horaAula = a.time
+                        const horaAula = (a.time || "")
                             .split(" - ")[0]
-                            .substring(0, 5)
-                            .trim()
-                            .padStart(5, "0");
+                            .substring(0,5)
+                            .padStart(5,"0");
 
-                        const mesmoHorario = horaAula === horaSlot;
+                        if (
+                            dataAula.getTime() === dataDia.getTime() &&
+                            horaAula === horaSlot
+                        ) {
 
-                        if (mesmaData && mesmoHorario) {
-                            const nomeProfCompleto =
-                                traduzirProfessor(a.prof) || "";
+                            const nomeProf = traduzirProfessor?.(a.prof) || "";
+                            const nomeBusca = normalizarTexto(nomeProf);
 
-                            const nomeProfBusca =
-                                normalizarTexto(nomeProfCompleto);
-
-                            if (!buscaProf || nomeProfBusca.includes(buscaProf)) {
+                            if (!buscaProf || nomeBusca.includes(buscaProf)) {
                                 conteudo += `
-                                    <div class="aula-card status-normal">
-                                        <div class="font-bold text-[11px]">
-                                            ${disc.name}
-                                        </div>
-                                        <div class="text-[10px] text-blue-800">
-                                            ${getPrimeiroNome(nomeProfCompleto)}
-                                        </div>
+                                <div class="border p-1 mb-1 rounded bg-gray-50">
+                                    <div class="font-bold text-[11px]">${disc.name}</div>
+                                    <div class="text-[10px] text-blue-800">
+                                        ${getPrimeiroNome(nomeProf)}
                                     </div>
-                                `;
+                                </div>`;
                             }
                         }
                     });
-                }
+                });
 
                 html += `
-                    <td class="border">
-                        <div class="min-h-[40px]">
-                            ${conteudo}
-                        </div>
-                    </td>
-                `;
+                <td class="border align-top">
+                    <div class="min-h-[40px]">${conteudo}</div>
+                </td>`;
             });
 
             html += `</tr>`;
@@ -3120,7 +3052,7 @@ function gerarGradeGeral() {
 
     render.innerHTML = html;
 
-    console.log("✅ Grade geral gerada com sucesso.");
+    console.log("✅ Grade renderizada!");
 }
 
 // ABA 08
