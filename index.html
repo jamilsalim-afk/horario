@@ -2903,17 +2903,15 @@ function gerarGradeGeral() {
     console.log("🚀 Gerando grade geral...");
 
     const weekInput = document.getElementById("weekInputGeral");
-    const nivelInput = document.getElementById("nivelSelect");
     const buscaInput = document.getElementById("buscaGeral");
     const render = document.getElementById("gradeGeralRender");
 
-    if (!weekInput || !nivelInput || !render) {
+    if (!weekInput || !render) {
         console.error("❌ Elementos não encontrados");
         return;
     }
 
     const week = weekInput.value;
-    const nivel = nivelInput.value || "tecnico";
     const buscaProf = normalizarTexto(buscaInput?.value || "");
 
     if (!week) {
@@ -2926,6 +2924,9 @@ function gerarGradeGeral() {
         return;
     }
 
+    // =========================
+    // 📅 Semana selecionada
+    // =========================
     const [ano, semana] = week.split("-W").map(Number);
     const start = getStartOfWeek(semana, ano);
 
@@ -2936,26 +2937,26 @@ function gerarGradeGeral() {
 
     const diasSemana = ["SEGUNDA","TERÇA","QUARTA","QUINTA","SEXTA","SÁBADO"];
 
-    let horariosFiltrados = [...GABARITO];
+    // =========================
+    // ⏰ Horários
+    // =========================
+    const horariosFiltrados = [...GABARITO];
 
-    if (nivel === "tecnico") {
-        horariosFiltrados = GABARITO.filter(slot => {
-            const horaInicio = slot.h.split(" - ")[0];
-            return horaInicio < "18:20";
-        });
-    }
-
-    const turmasFiltradas = Object.keys(dataStore).filter(tId => {
-        return nivel === "superior"
-            ? turmaEhSuperior(tId)
-            : !turmaEhSuperior(tId);
-    });
+    // =========================
+    // 🎓 TURMAS (SEM FILTRO PROBLEMÁTICO)
+    // =========================
+    const turmasFiltradas = Object.keys(dataStore);
 
     if (turmasFiltradas.length === 0) {
         render.innerHTML = `<div class="p-4 text-yellow-600 font-bold">Nenhuma turma encontrada.</div>`;
         return;
     }
 
+    console.log("📚 Turmas usadas:", turmasFiltradas);
+
+    // =========================
+    // 🏗️ Montagem da grade
+    // =========================
     let html = "";
 
     for (let i = 0; i < 6; i++) {
@@ -2980,6 +2981,9 @@ function gerarGradeGeral() {
                 <tbody>
         `;
 
+        // =========================
+        // ⏰ Linhas de horário
+        // =========================
         horariosFiltrados.forEach(slot => {
 
             if (slot.t === "intervalo") {
@@ -2998,6 +3002,9 @@ function gerarGradeGeral() {
             html += `<tr>
                 <td class="bg-gray-100 font-bold border">${slot.h}</td>`;
 
+            // =========================
+            // 📚 Colunas (TURMAS = SEMESTRES)
+            // =========================
             turmasFiltradas.forEach(tId => {
 
                 let conteudo = "";
@@ -3011,6 +3018,8 @@ function gerarGradeGeral() {
 
                         const dataAula = new Date(a.dtObj);
                         dataAula.setHours(0,0,0,0);
+
+                        if (isNaN(dataAula.getTime())) return;
 
                         const horaAula = (a.time || "")
                             .split(" - ")[0]
@@ -3050,9 +3059,12 @@ function gerarGradeGeral() {
         html += `</tbody></table></div>`;
     }
 
+    // =========================
+    // 🎯 Render final
+    // =========================
     render.innerHTML = html;
 
-    console.log("✅ Grade renderizada!");
+    console.log("✅ Grade renderizada com sucesso!");
 }
 
 // ABA 08
