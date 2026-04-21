@@ -2356,21 +2356,41 @@ function toggleDisciplina(chave) {
     }
 }
 
-        function gerarRelatorioMultiplasDisciplinas() {
-    if (!disciplinasSelecionadas.size) {
+        async function gerarRelatorioMultiplasDisciplinas() {
+    if (!window.disciplinasSelecionadas.size) {
         alert("Selecione pelo menos uma disciplina");
         return;
     }
 
-    const lista = Array.from(disciplinasSelecionadas);
+    const lista = Array.from(window.disciplinasSelecionadas);
 
-    console.log("Gerando relatório para:", lista);
-
-    lista.forEach(chave => {
+    for (const chave of lista) {
         const [disciplina, turma] = chave.split("||");
 
-        // 🔥 aqui você reaproveita seu fluxo existente
+        // troca seleção
         selecionarDisciplinaERenderizar(disciplina, turma);
+
+        // ⏳ espera render REAL (não só timeout)
+        await esperarTabelaRenderizada();
+
+        // 🔥 CHAMA A FUNÇÃO CORRETA
+        exportarDisciplinaPDF();
+
+        // pequeno intervalo entre downloads (evita travar navegador)
+        await new Promise(r => setTimeout(r, 500));
+    }
+}
+
+        function esperarTabelaRenderizada() {
+    return new Promise(resolve => {
+        const intervalo = setInterval(() => {
+            const tabela = document.querySelector('#tableD tbody');
+
+            if (tabela && tabela.children.length > 0) {
+                clearInterval(intervalo);
+                resolve();
+            }
+        }, 100);
     });
 }
 
