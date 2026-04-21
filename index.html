@@ -1926,6 +1926,27 @@ if (disciplinaSelectEl) {
     };
 }
 
+        function popularDisciplinas() {
+    const tSelect = document.getElementById('turmaSelect');
+    const dSelect = document.getElementById('disciplinaSelect');
+
+    if (!tSelect || !dSelect) return;
+
+    const tId = tSelect.value;
+    const turma = dataStore?.[tId];
+
+    dSelect.innerHTML = '<option value="">Selecione</option>';
+
+    if (!turma || !turma.discs) return;
+
+    Object.values(turma.discs).forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.name;
+        opt.textContent = d.name;
+        dSelect.appendChild(opt);
+    });
+}
+        
 // ABA 02
 // FUNÇÃO RESPONSÁVEL POR GERAR O RELATÓRIO DE AULAS MENSAL POR TURMA
 function renderPivo() {
