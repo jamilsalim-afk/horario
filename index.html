@@ -1320,6 +1320,15 @@ function gerarFuturoComBase() {
             const moldes = disc.sch.filter(s => s.tipo === "MOLDE");
             const manuais = disc.sch.filter(s => s.tipo === "MANUAL");
 
+            // 🔴 DESCOBRE A ÚLTIMA DATA MANUAL
+            let ultimaDataManual = null;
+
+            if (manuais.length > 0) {
+                ultimaDataManual = new Date(
+                    Math.max(...manuais.map(m => new Date(m.dtObj)))
+                );
+            }
+
             // mantém só os manuais inicialmente
             disc.sch = [...manuais];
 
@@ -1353,21 +1362,17 @@ function gerarFuturoComBase() {
                     return;
                 }
 
-                // 🔥 INÍCIO REAL (primeira aula manual)
-                let dataInicioReal = limites.inicio;
-
-                if (manuais.length > 0) {
-                    const primeiraManual = manuais
-                        .map(m => m.dtObj)
-                        .sort((a, b) => a - b)[0];
-
-                    dataInicioReal = primeiraManual.toISOString().split('T')[0];
-                }
-
-                let curr = new Date(dataInicioReal + "T12:00:00");
+                let curr = new Date(limites.inicio + "T12:00:00");
                 const fim = new Date(limites.fim + "T12:00:00");
 
                 while (curr <= fim) {
+
+                    // 🔥 REGRA PRINCIPAL
+                    if (ultimaDataManual && curr <= ultimaDataManual) {
+                        curr.setDate(curr.getDate() + 1);
+                        continue;
+                    }
+
                     const isoData = curr.toISOString().split('T')[0];
                     const diaAtual = curr.getDay();
 
@@ -1407,11 +1412,10 @@ function gerarFuturoComBase() {
                             const dataFormatada =
                                 curr.toLocaleDateString('pt-BR');
 
-                            // 🔥 evita duplicar aula manual
+                            // 🔴 evita QUALQUER conflito no mesmo dia
                             const jaExisteManual =
                                 manuais.some(man =>
-                                    man.date === dataFormatada &&
-                                    man.time === m.time
+                                    man.date === dataFormatada
                                 );
 
                             if (!jaExisteManual) {
@@ -1434,7 +1438,7 @@ function gerarFuturoComBase() {
                 }
             });
 
-            // ordena tudo
+            // ordenação final
             disc.sch.sort((a, b) => {
                 if (a.dtObj.getTime() !== b.dtObj.getTime()) {
                     return a.dtObj - b.dtObj;
