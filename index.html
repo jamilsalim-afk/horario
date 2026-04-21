@@ -1925,27 +1925,6 @@ if (disciplinaSelectEl) {
         }
     };
 }
-
-        function popularDisciplinas() {
-    const tSelect = document.getElementById('turmaSelect');
-    const dSelect = document.getElementById('disciplinaSelect');
-
-    if (!tSelect || !dSelect) return;
-
-    const tId = tSelect.value;
-    const turma = dataStore?.[tId];
-
-    dSelect.innerHTML = '<option value="">Selecione</option>';
-
-    if (!turma || !turma.discs) return;
-
-    Object.values(turma.discs).forEach(d => {
-        const opt = document.createElement('option');
-        opt.value = d.name;
-        opt.textContent = d.name;
-        dSelect.appendChild(opt);
-    });
-}
         
 // ABA 02
 // FUNÇÃO RESPONSÁVEL POR GERAR O RELATÓRIO DE AULAS MENSAL POR TURMA
@@ -2410,19 +2389,22 @@ function toggleDisciplina(chave) {
         }
     }
 
-    // atualizar disciplinas
-    popularDisciplinas?.();
-
-    // selecionar disciplina
-    for (let i = 0; i < dSelect.options.length; i++) {
-        if (dSelect.options[i].text.toUpperCase().trim() === nomeDisc) {
-            dSelect.selectedIndex = i;
-            break;
-        }
+    // 🔥 USA SUA FUNÇÃO REAL
+    if (typeof atualizarListaDisciplinas === "function") {
+        atualizarListaDisciplinas();
     }
 
-    // renderizar
-    renderD();
+    // ⚠️ pequeno delay para garantir que o select foi populado
+    setTimeout(() => {
+        for (let i = 0; i < dSelect.options.length; i++) {
+            if (dSelect.options[i].text.toUpperCase().trim() === nomeDisc) {
+                dSelect.selectedIndex = i;
+                break;
+            }
+        }
+
+        renderD();
+    }, 50);
 }
         
 function calcularPrevistoProfessor() {
