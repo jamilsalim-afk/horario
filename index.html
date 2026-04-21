@@ -2446,6 +2446,17 @@ function toggleDisciplina(chave) {
     atualizarCheckAll();
 }
 
+        function atualizarCheckAll() {
+    const totalLinhas = document.querySelectorAll('#bodyRelatorioProf tr').length;
+    const totalSelecionadas = window.disciplinasSelecionadas.size;
+
+    const master = document.getElementById("checkAllDisciplinas");
+
+    if (!master) return;
+
+    master.checked = totalLinhas > 0 && totalSelecionadas === totalLinhas;
+}
+
         async function gerarRelatorioMultiplasDisciplinas() {
     if (!window.disciplinasSelecionadas.size) {
         alert("Selecione pelo menos uma disciplina");
