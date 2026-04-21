@@ -4614,7 +4614,7 @@ function exportarGradeGeralPDF() {
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
         const tituloDia = bloco.querySelector('h3')?.innerText.toUpperCase() || "";
-        doc.text(`GRADE HORÁRIA: ${nivel.toUpperCase()} - ${tituloDia} (Semana ${w})`, pageWidth / 2, 13, { align: "center" });
+        doc.text(`GRADE HORÁRIA: ${nivel.toUpperCase()} - ${tituloDia} (Semana ${w})`, pageWidth / 2, 13, { align: "center", maxWidth: 260 });
 
         doc.setDrawColor(21, 128, 61);
         doc.setLineWidth(0.3);
