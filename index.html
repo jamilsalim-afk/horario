@@ -3054,29 +3054,31 @@ function gerarGradeGeral() {
 
                 for (let d in disciplinas) {
                     const disc = disciplinas[d];
-
-                    // 🔥 usa sch da versão antiga que funcionava
                     const agenda = disc?.sch || [];
 
                     agenda.forEach(a => {
-                        if (!a?.dtObj) return;
+
+                        // 🔥 PROTEÇÃO NOVA
+                        if (!a || !a.dtObj || !a.time) return;
 
                         const dataAula = new Date(a.dtObj);
                         dataAula.setHours(0, 0, 0, 0);
 
                         if (isNaN(dataAula.getTime())) return;
 
-                        const horaAula = (a.time || "")
+                        // 🔥 CORREÇÃO PRINCIPAL (SEM toDateString)
+                        const mesmaData =
+                            dataAula.getFullYear() === dataDia.getFullYear() &&
+                            dataAula.getMonth() === dataDia.getMonth() &&
+                            dataAula.getDate() === dataDia.getDate();
+
+                        const horaAula = a.time
                             .split(" - ")[0]
                             .substring(0, 5)
                             .trim()
                             .padStart(5, "0");
 
-                        const mesmaData =
-                            dataAula.toDateString() === dataDia.toDateString();
-
-                        const mesmoHorario =
-                            horaAula === horaSlot;
+                        const mesmoHorario = horaAula === horaSlot;
 
                         if (mesmaData && mesmoHorario) {
                             const nomeProfCompleto =
@@ -3085,10 +3087,7 @@ function gerarGradeGeral() {
                             const nomeProfBusca =
                                 normalizarTexto(nomeProfCompleto);
 
-                            if (
-                                !buscaProf ||
-                                nomeProfBusca.includes(buscaProf)
-                            ) {
+                            if (!buscaProf || nomeProfBusca.includes(buscaProf)) {
                                 conteudo += `
                                     <div class="aula-card status-normal">
                                         <div class="font-bold text-[11px]">
@@ -3119,9 +3118,6 @@ function gerarGradeGeral() {
         html += `</tbody></table></div>`;
     }
 
-    // =========================
-    // 🎯 Render final
-    // =========================
     render.innerHTML = html;
 
     console.log("✅ Grade geral gerada com sucesso.");
