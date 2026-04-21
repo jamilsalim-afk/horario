@@ -4020,50 +4020,51 @@ function exportarRelatorioProfessorPDF() {
 
     if (!profRaw) return alert("Selecione um professor na busca!");
 
-    // Tradução para nome completo oficial
     const profNomeCompleto = traduzirProfessor(profRaw);
 
     const doc = new jsPDF('l', 'mm', 'a4');
     const pageWidth = 297;
 
-    // --- HEADER PADRÃO IFRO ---
+    // ================= HEADER =================
     function drawHeader(d) {
         d.setFillColor(255, 255, 255);
         d.rect(0, 0, pageWidth, 40, 'F');
-        
-        d.setFont("helvetica", "bold"); 
+
+        d.setFont("helvetica", "bold");
         d.setFontSize(14);
-        d.setTextColor(0, 0, 0);
         d.text("INSTITUTO FEDERAL DE RONDÔNIA - IFRO", pageWidth / 2, 12, { align: "center" });
 
         d.setFontSize(11);
         d.text("CAMPUS CACOAL", pageWidth / 2, 18, { align: "center" });
 
-        d.setFontSize(9); 
+        d.setFontSize(9);
         d.setFont("helvetica", "normal");
         d.text("DEPARTAMENTO DE APOIO AO ENSINO", pageWidth / 2, 25, { align: "center" });
         d.text("COORDENAÇÃO DE DESENVOLVIMENTO DE FERRAMENTAS PEDAGÓGICAS", pageWidth / 2, 30, { align: "center" });
 
-        d.setDrawColor(21, 128, 61); // Verde institucional
+        d.setDrawColor(21, 128, 61);
         d.setLineWidth(0.5);
         d.line(14, 34, 283, 34);
     }
 
-    // --- FOOTER PADRÃO ---
+    // ================= FOOTER =================
     function drawFooter(d) {
         const pageCount = d.internal.getNumberOfPages();
         d.setFontSize(7);
         d.setTextColor(100);
+
         d.line(14, 195, 283, 195);
         d.text("BR-364, Km 228, Lote 2-A, Zona Rural, Cacoal - RO | Tel: (69) 2182-9642", pageWidth / 2, 200, { align: "center" });
         d.text(`E-mail: dape.cacoal@ifro.edu.br | Página ${d.internal.getCurrentPageInfo().pageNumber} de ${pageCount}`, pageWidth / 2, 204, { align: "center" });
     }
 
-    // Início do Documento
+    // ================= INÍCIO =================
     drawHeader(doc);
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.text(`RELATÓRIO DOCENTE: ${profNomeCompleto.toUpperCase()}`, 14, 45);
+
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.text(`ANO LETIVO: ${anoLetivo} | EMISSÃO: ${dataEmissao}`, 283, 45, { align: "right" });
@@ -4080,65 +4081,97 @@ function exportarRelatorioProfessorPDF() {
         "JUL", "AGO", "SET", "OUT", "NOV", "DEZ", "SÁB", "TOTAL"
     ]];
 
-    // 1. TABELA EXECUTADO
-    doc.setFont("helvetica", "bold"); doc.text("1. CARGA HORÁRIA EXECUTADA (GIST)", 14, 52);
+    // ================= FUNÇÃO PARA EXTRAIR TABELA =================
+    function extrairTabela(selector, ignorarPrimeiraColuna = false) {
+        const body = [];
+
+        document.querySelectorAll(selector + ' tr').forEach(tr => {
+            const row = [];
+
+            tr.querySelectorAll('td').forEach((td, index) => {
+                if (ignorarPrimeiraColuna && index === 0) return;
+                row.push(td.innerText.trim());
+            });
+
+            if (row.length) body.push(row);
+        });
+
+        return body;
+    }
+
+    // ================= 1. EXECUTADO =================
+    doc.setFont("helvetica", "bold");
+    doc.text("1. CARGA HORÁRIA EXECUTADA (GIST)", 14, 52);
+
+    const bodyExec = extrairTabela('#bodyRelatorioProf', true);
+
     doc.autoTable({
-        html: '#bodyRelatorioProf',
+        head: commonHead,
+        body: bodyExec,
         startY: 53,
         theme: 'grid',
         styles: commonStyles,
-        head: commonHead,
-        headStyles: { fillColor: [30, 58, 138] }, // Azul para Executado
+        headStyles: { fillColor: [30, 58, 138] },
         margin: { top: 45, bottom: 20 },
         didDrawPage: () => { drawHeader(doc); drawFooter(doc); }
     });
 
-    // 2. TABELA PREVISTO
+    // ================= 2. PREVISTO =================
     let posY = doc.lastAutoTable.finalY + 8;
+
     doc.text("2. CARGA HORÁRIA PREVISTA (CALENDÁRIO ACADÊMICO)", 14, posY);
+
+    const bodyPrev = extrairTabela('#bodyRelatorioPrevisto');
+
     doc.autoTable({
-        html: '#bodyRelatorioPrevisto',
+        head: commonHead,
+        body: bodyPrev,
         startY: posY + 3,
         theme: 'grid',
         styles: commonStyles,
-        head: commonHead,
-        headStyles: { fillColor: [21, 128, 61] }, // Verde para Previsto
+        headStyles: { fillColor: [21, 128, 61] },
         margin: { top: 45, bottom: 20 },
         didDrawPage: () => { drawHeader(doc); drawFooter(doc); }
     });
 
-    // 3. TABELA DIFERENÇA
+    // ================= 3. DIFERENÇA =================
     posY = doc.lastAutoTable.finalY + 8;
+
     doc.text("3. BALANÇO FINAL (DIFERENÇA)", 14, posY);
+
+    const bodyDiff = extrairTabela('#bodyRelatorioDiferenca');
+
     doc.autoTable({
-        html: '#bodyRelatorioDiferenca',
+        head: commonHead,
+        body: bodyDiff,
         startY: posY + 3,
         theme: 'grid',
         styles: commonStyles,
-        head: commonHead,
-        headStyles: { fillColor: [31, 41, 55] }, // Cinza escuro para Balanço
+        headStyles: { fillColor: [31, 41, 55] },
         margin: { top: 45, bottom: 20 },
-        
-        // 🔥 Lógica para capturar as cores de Diferença (Verde/Vermelho)
-        didParseCell: function(data) {
+
+        didParseCell: function (data) {
             if (data.section === 'body') {
-                const text = data.cell.raw.innerText || data.cell.raw;
+                const text = data.cell.raw;
+
                 if (typeof text === 'string') {
                     if (text.includes('+')) {
-                        data.cell.styles.textColor = [21, 128, 61]; // Verde
+                        data.cell.styles.textColor = [21, 128, 61];
                         data.cell.styles.fontStyle = 'bold';
                     } else if (text.includes('-') && text.length > 1) {
-                        data.cell.styles.textColor = [185, 28, 28]; // Vermelho
+                        data.cell.styles.textColor = [185, 28, 28];
                         data.cell.styles.fontStyle = 'bold';
                     }
                 }
             }
         },
+
         didDrawPage: () => { drawHeader(doc); drawFooter(doc); }
     });
 
-    // Salvar
+    // ================= SALVAR =================
     const nomeLimpo = profNomeCompleto.replace(/\s/g, '_');
+
     doc.save(`Relatorio_Docente_${nomeLimpo}_${dataArquivo}.pdf`);
 }
 
