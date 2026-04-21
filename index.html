@@ -253,6 +253,9 @@
                 <table class="w-full border-collapse border text-center">
                     <thead class="bg-gray-100 font-bold text-[10px]">
                         <tr>
+                            <th class="text-center">
+    <input type="checkbox" id="checkAllDisciplinas" onclick="toggleTodasDisciplinas(this)">
+</th>
                             <th class="border p-2">Disciplina</th><th class="border p-2">Turma</th>
                             <th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Jun</th>
                             <th>Jul</th><th>Ago</th><th>Set</th><th>Out</th><th>Nov</th><th>Dez</th>
@@ -2396,6 +2399,30 @@ if (!profInput) return;
         bDiff.innerHTML += rowDiff;
     });
 }
+
+function toggleTodasDisciplinas(masterCheckbox) {
+    const marcar = masterCheckbox.checked;
+
+    const linhas = document.querySelectorAll('#bodyRelatorioProf tr');
+
+    linhas.forEach(tr => {
+        const id = tr.id;
+        if (!id) return;
+
+        const chave = atob(id.replace("row-", ""));
+        const checkbox = tr.querySelector('input[type="checkbox"]');
+
+        if (marcar) {
+            window.disciplinasSelecionadas.add(chave);
+            tr.classList.add("bg-blue-200");
+            if (checkbox) checkbox.checked = true;
+        } else {
+            window.disciplinasSelecionadas.delete(chave);
+            tr.classList.remove("bg-blue-200");
+            if (checkbox) checkbox.checked = false;
+        }
+    });
+}
         
 function toggleDisciplina(chave) {
     const id = "row-" + btoa(chave);
@@ -2414,6 +2441,9 @@ function toggleDisciplina(chave) {
         el.classList.add("bg-blue-200");
         if (checkbox) checkbox.checked = true;
     }
+
+    // 🔥 atualiza checkbox geral
+    atualizarCheckAll();
 }
 
         async function gerarRelatorioMultiplasDisciplinas() {
