@@ -2226,11 +2226,14 @@ async function gerarRelatorioProfessorCompleto() {
     if (!bExec || !bPrev || !bDiff) return;
 
     // Limpeza inicial
-    bExec.innerHTML = ''; 
-    bPrev.innerHTML = ''; 
-    bDiff.innerHTML = '';
+bExec.innerHTML = ''; 
+bPrev.innerHTML = ''; 
+bDiff.innerHTML = '';
 
-    if (!profInput) return;
+// 🔥 LIMPA SELEÇÃO ANTERIOR
+window.disciplinasSelecionadas = new Set();
+
+if (!profInput) return;
 
     // 🔷 Garante que o Set existe
     if (!window.disciplinasSelecionadas) {
