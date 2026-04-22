@@ -2575,7 +2575,7 @@ function calcularPrevistoProfessor() {
         Object.keys(turma.discs).forEach(dId => {
             const disc = turma.discs[dId];
             
-            // Pega tudo que for MOLDE ou que tenha BASE no identificador
+            // Filtro flexível para capturar moldes e bases (independente de maiúsculas)
             const moldes = (disc.sch || []).filter(s => {
                 const iden = String(s.identificador || "").toUpperCase();
                 return s.tipo === "MOLDE" || iden.includes('BASE');
@@ -2585,11 +2585,11 @@ function calcularPrevistoProfessor() {
                 const idenLow = String(m.identificador || "").toLowerCase();
                 let limites, diaRef, tipoSabado, feriasRef;
 
-                // Identifica o dia da semana
+                // 1. Identificar o Dia da Semana (mesmo com vírgulas do CSV)
                 const diaEncontrado = Object.keys(mapaDias).find(d => idenLow.includes(d));
                 diaRef = mapaDias[diaEncontrado];
 
-                // Identifica Integrado ou Superior
+                // 2. Identificar Modalidade (Integrado vs Superior)
                 if (idenLow.includes('int')) {
                     limites = dadosAno.limites.integrado;
                     tipoSabado = "integrado";
@@ -2603,28 +2603,26 @@ function calcularPrevistoProfessor() {
 
                 if (!limites || diaRef === undefined) return;
 
-                // --- TRATAMENTO DO NOME DO PROFESSOR ---
-                // Se m.prof estiver vazio, tentamos extrair de m.nome ou disc.name
-                let nomeBruto = m.prof || "";
+                // 3. Extração Robusta do Nome do Professor
+                // Tenta m.prof, se vazio tenta m.nome, se não, tenta extrair do que estiver após o " - "
+                let nomeBruto = (m.prof || m.nome || "").trim();
                 
-                // Se o professor veio no formato "Disciplina - Professor"
-                if (nomeBruto.includes(" - ")) {
-                    nomeBruto = nomeBruto.split(" - ")[1];
+                if (!nomeBruto && disc.name.includes(" - ")) {
+                    nomeBruto = disc.name.split(" - ")[1];
                 }
 
-                if (!nomeBruto || nomeBruto.trim() === "") return;
+                // Se ainda estiver vazio ou for INTERVALO, ignora
+                if (!nomeBruto || nomeBruto.toUpperCase() === "INTERVALO") return;
 
                 const pNome = (typeof traduzirProfessor === "function") 
                     ? traduzirProfessor(nomeBruto).toUpperCase().trim() 
                     : nomeBruto.toUpperCase().trim();
                 
-                // Pular se for intervalo ou PPS sem professor definido
-                if (pNome === "INTERVALO" || pNome === "") return;
+                const chave = `${disc.name.toUpperCase().trim()}||${turma.name.toUpperCase().trim()}`;
 
+                // 4. Cálculo do Calendário
                 let curr = new Date(limites.inicio + "T00:00:00");
                 const fim = new Date(limites.fim + "T00:00:00");
-
-                const chave = `${disc.name.toUpperCase().trim()}||${turma.name.toUpperCase().trim()}`;
 
                 while (curr <= fim) {
                     const y = curr.getFullYear();
