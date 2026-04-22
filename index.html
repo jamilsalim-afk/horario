@@ -2560,10 +2560,8 @@ function extrairDadosDoMolde(m, discName) {
     const iden = String(m.identificador || "").toLowerCase();
     const mapaDias = { 'seg': 1, 'ter': 2, 'qua': 3, 'qui': 4, 'sex': 5, 'sab': 6, 'dom': 0 };
     
-    // Encontra o dia (seg, ter, etc) dentro do identificador
     const diaChave = Object.keys(mapaDias).find(d => iden.includes(d));
     
-    // Tenta pegar o professor: 1º do campo prof, 2º do nome da disciplina
     let profRaw = (m.prof || discName || "").toUpperCase();
     if (profRaw.includes(" - ")) profRaw = profRaw.split(" - ")[1];
 
@@ -2584,14 +2582,13 @@ function projetarDatasVaildas(inicio, fim, diaAlvo, feriados, ferias, sabadosLet
         const iso = atual.toISOString().split('T')[0];
         const wDay = atual.getDay();
 
-        // É o dia da semana original ou um sábado letivo que substitui esse dia?
-        const ehSabadoSubstituto = sabadosLetivos.some(s => 
+        const ehSabadoSubstituto = (sabadosLetivos || []).some(s => 
             s.data === iso && s.tipo === tipoSabado && s.referencia === diaAlvo
         );
 
         if (wDay === diaAlvo || ehSabadoSubstituto) {
-            const ehFeriado = feriados.includes(iso);
-            const ehFerias = ferias.some(f => iso >= f.inicio && iso <= f.fim);
+            const ehFeriado = (feriados || []).includes(iso);
+            const ehFerias = (ferias || []).some(f => iso >= f.inicio && iso <= f.fim);
 
             if (!ehFeriado && !ehFerias) {
                 datas.push(new Date(atual));
@@ -2607,45 +2604,25 @@ function calcularPrevistoProfessor() {
     const dadosAno = CALENDARIO_DINAMICO[year];
     const previsto = {};
 
-    // --- LOG DE DIAGNÓSTICO ---
-    console.log("DADOS NO DATASTORE:", dataStore);
-    
-    const todasAsTurmas = Object.values(dataStore);
-    if (todasAsTurmas.length === 0) {
-        console.warn("⚠️ O dataStore está vazio!");
+    if (!dadosAno) {
+        console.error("❌ Calendário não encontrado para o ano:", year);
         return {};
     }
 
-    todasAsTurmas.forEach(turma => {
-        Object.values(turma.discs || {}).forEach(disc => {
-            const sch = disc.sch || [];
-            // Vamos ver se existe ALGUM item com "BASE" ou "MOLDE"
-            const temMolde = sch.some(s => 
-                String(s.tipo).toUpperCase() === "MOLDE" || 
-                String(s.identificador).toUpperCase().includes("BASE")
-            );
-
-            if (!temMolde && sch.length > 0) {
-                console.log(`Turma: ${turma.name} | Disc: ${disc.name} -> Não tem moldes, apenas ${sch.length} aulas reais.`);
-            }
-
-    if (!dadosAno) return {};
-
     Object.values(dataStore).forEach(turma => {
-        Object.values(turma.discs).forEach(disc => {
-            // Filtra o que é molde/base
-            const moldes = (disc.sch || []).filter(s => 
-                String(s.tipo).toUpperCase() === "MOLDE" || 
-                String(s.identificador).toUpperCase().includes("BASE")
-            );
+        Object.values(turma.discs || {}).forEach(disc => {
+            
+            // Filtra o que tem "BASE" no identificador ou tipo "MOLDE"
+            const moldes = (disc.sch || []).filter(s => {
+                const iden = String(s.identificador || "").toUpperCase();
+                return String(s.tipo).toUpperCase() === "MOLDE" || iden.includes("BASE");
+            });
 
             moldes.forEach(m => {
                 const info = extrairDadosDoMolde(m, disc.name);
                 
-                // Se não achou o dia ou é intervalo, pula
                 if (info.diaSemana === undefined || info.professor === "INTERVALO" || info.professor === "") return;
 
-                // Define as regras do calendário para este molde específico
                 const limites = info.modalidade === 'integrado' ? 
                                dadosAno.limites.integrado : 
                                dadosAno.limites.superior?.[info.semestre];
@@ -2656,18 +2633,16 @@ function calcularPrevistoProfessor() {
 
                 if (!limites) return;
 
-                // Chama o motor para gerar as datas
                 const datasProjetadas = projetarDatasVaildas(
                     limites.inicio, 
                     limites.fim, 
                     info.diaSemana, 
-                    dadosAno.feriados || [], 
-                    ferias || [], 
-                    dadosAno.sabados || [], 
+                    dadosAno.feriados, 
+                    ferias, 
+                    dadosAno.sabados, 
                     info.modalidade === 'integrado' ? 'integrado' : `superior_${info.semestre}`
                 );
 
-                // Organiza no objeto final por Professor -> Disciplina||Turma
                 const chave = `${disc.name.toUpperCase()}||${turma.name.toUpperCase()}`;
                 
                 if (!previsto[info.professor]) previsto[info.professor] = {};
@@ -2690,7 +2665,7 @@ function calcularPrevistoProfessor() {
         });
     });
 
-    console.log("🚀 Nova Projeção Concluída. Professores:", Object.keys(previsto));
+    console.log("🚀 Projeção Concluída. Professores encontrados:", Object.keys(previsto));
     return previsto;
 }
         
