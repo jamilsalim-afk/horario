@@ -2607,6 +2607,28 @@ function calcularPrevistoProfessor() {
     const dadosAno = CALENDARIO_DINAMICO[year];
     const previsto = {};
 
+    // --- LOG DE DIAGNÓSTICO ---
+    console.log("DADOS NO DATASTORE:", dataStore);
+    
+    const todasAsTurmas = Object.values(dataStore);
+    if (todasAsTurmas.length === 0) {
+        console.warn("⚠️ O dataStore está vazio!");
+        return {};
+    }
+
+    todasAsTurmas.forEach(turma => {
+        Object.values(turma.discs || {}).forEach(disc => {
+            const sch = disc.sch || [];
+            // Vamos ver se existe ALGUM item com "BASE" ou "MOLDE"
+            const temMolde = sch.some(s => 
+                String(s.tipo).toUpperCase() === "MOLDE" || 
+                String(s.identificador).toUpperCase().includes("BASE")
+            );
+
+            if (!temMolde && sch.length > 0) {
+                console.log(`Turma: ${turma.name} | Disc: ${disc.name} -> Não tem moldes, apenas ${sch.length} aulas reais.`);
+            }
+
     if (!dadosAno) return {};
 
     Object.values(dataStore).forEach(turma => {
