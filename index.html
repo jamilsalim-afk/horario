@@ -2575,14 +2575,14 @@ function calcularPrevistoProfessor() {
         Object.keys(turma.discs).forEach(dId => {
             const disc = turma.discs[dId];
             
-            // Tentamos pegar os moldes. Se o .filter falhar, buscamos por string no identificador
             const moldes = disc.sch.filter(s => s.tipo === "MOLDE" || (s.identificador && s.identificador.startsWith('base_')));
 
             moldes.forEach(m => {
-                const partes = m.identificador.toLowerCase().split('_'); 
+                const identificador = (m.identificador || "").toLowerCase();
+                const partes = identificador.split('_'); 
                 let limites, diaRef, tipoSabado, feriasRef;
 
-                // Lógica de Identificação (Integrado vs Superior)
+                // Identificação da Modalidade
                 if (partes.includes('int')) {
                     limites = dadosAno.limites.integrado;
                     diaRef = mapaDias[partes.find(p => mapaDias[p] !== undefined)];
@@ -2590,19 +2590,29 @@ function calcularPrevistoProfessor() {
                     feriasRef = dadosAno.ferias_int;
                 } else if (partes.includes('sup')) {
                     const sem = partes.find(p => p === 's1' || p === 's2') || 's1';
-                    limites = dadosAno.limites.superior[sem];
+                    limites = dadosAno.limites.superior?.[sem];
                     diaRef = mapaDias[partes.find(p => mapaDias[p] !== undefined)];
                     tipoSabado = `superior_${sem}`;
                     feriasRef = dadosAno.ferias_sup;
                 }
 
-                if (!limites || diaRef === undefined) return;
+                // Se não encontrar limites ou dia, registra no console para correção manual
+                if (!limites || diaRef === undefined) {
+                    console.warn(`⚠️ Molde na turma [${turma.name}] disciplina [${disc.name}] ignorado. Identificador inválido: ${identificador}`);
+                    return;
+                }
 
-                let curr = new Date(limites.inicio + "T12:00:00");
-                const fim = new Date(limites.fim + "T12:00:00");
+                // Garantir data correta ignorando fuso horário local
+                let curr = new Date(limites.inicio + "T00:00:00");
+                const fim = new Date(limites.fim + "T00:00:00");
 
                 while (curr <= fim) {
-                    const iso = curr.toISOString().split('T')[0];
+                    // Formatação manual YYYY-MM-DD para bater com array de feriados
+                    const y = curr.getFullYear();
+                    const m_month = String(curr.getMonth() + 1).padStart(2, '0');
+                    const d = String(curr.getDate()).padStart(2, '0');
+                    const iso = `${y}-${m_month}-${d}`;
+                    
                     const wDay = curr.getDay();
                     let contar = false;
                     let ehSab = false;
@@ -2613,7 +2623,10 @@ function calcularPrevistoProfessor() {
                         const sabLetivo = (dadosAno.sabados || []).find(s => 
                             s.data === iso && s.tipo === tipoSabado && s.referencia === diaRef
                         );
-                        if (sabLetivo) { contar = true; ehSab = true; }
+                        if (sabLetivo) { 
+                            contar = true; 
+                            ehSab = true; 
+                        }
                     }
 
                     if (contar) {
@@ -2623,7 +2636,7 @@ function calcularPrevistoProfessor() {
                         if (!feriado && !ferias) {
                             const pNome = (typeof traduzirProfessor === "function") 
                                 ? traduzirProfessor(m.prof).toUpperCase().trim() 
-                                : m.prof.toUpperCase().trim();
+                                : String(m.prof || "").toUpperCase().trim();
                             
                             const chave = `${disc.name.toUpperCase().trim()}||${turma.name.toUpperCase().trim()}`;
 
@@ -2648,6 +2661,7 @@ function calcularPrevistoProfessor() {
         });
     });
 
+    console.log("✅ Processamento do Previsto concluído.");
     return previsto;
 }
 
