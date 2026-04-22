@@ -2257,42 +2257,54 @@ async function gerarRelatorioProfessorCompleto() {
     if (!bExec || !bPrev || !bDiff) return;
 
     // Limpeza inicial
-bExec.innerHTML = ''; 
-bPrev.innerHTML = ''; 
-bDiff.innerHTML = '';
+    bExec.innerHTML = ''; 
+    bPrev.innerHTML = ''; 
+    bDiff.innerHTML = '';
 
-// 🔥 LIMPA SELEÇÃO ANTERIOR
-window.disciplinasSelecionadas = new Set();
+    window.disciplinasSelecionadas = new Set();
 
-if (!profInput) return;
-
-    // 🔷 Garante que o Set existe
-    if (!window.disciplinasSelecionadas) {
-        window.disciplinasSelecionadas = new Set();
-    }
+    if (!profInput) return;
 
     // 1. PREVISTO
     const previstoAll = (typeof calcularPrevistoProfessor === "function") 
         ? calcularPrevistoProfessor() 
         : {};
 
-    const previsto = previstoAll[profInput] || {};
+    // --- LOG DE DIAGNÓSTICO ---
+    console.log("Buscando por:", profInput);
+    console.log("Professores disponíveis no Previsto:", Object.keys(previstoAll));
+    
+    // Tentativa de busca exata
+    let previsto = previstoAll[profInput];
+
+    // Se não achou exato, tenta uma busca parcial (caso haja espaços ou erros de digitação)
+    if (!previsto) {
+        const chaveSimilar = Object.keys(previstoAll).find(k => k.includes(profInput) || profInput.includes(k));
+        if (chaveSimilar) {
+            console.warn(`Professor não achado exatamente, usando similar: ${chaveSimilar}`);
+            previsto = previstoAll[chaveSimilar];
+        }
+    }
+
+    if (!previsto) {
+        console.error(`❌ Nenhuma projeção encontrada para o professor: ${profInput}`);
+        // Se não tem previsto, ainda assim vamos processar o executado abaixo
+        previsto = {}; 
+    }
 
     // 2. EXECUTADO
     let executado = {};
 
     Object.values(dataStore).forEach(turma => {
         if (!turma.discs) return;
-
         Object.values(turma.discs).forEach(disc => {
             if (!disc.sch) return;
-
             disc.sch.forEach(s => {
                 if (s.tipo === "MOLDE") return;
 
                 const nomeProfTraduzido = (typeof traduzirProfessor === "function") 
                     ? traduzirProfessor(s.prof).toUpperCase().trim() 
-                    : s.prof.toUpperCase().trim();
+                    : String(s.prof || "").toUpperCase().trim();
 
                 if (nomeProfTraduzido !== profInput) return;
 
@@ -2309,23 +2321,18 @@ if (!profInput) return;
                 }
 
                 const dataAula = new Date(s.dtObj);
-                const mes = dataAula.getMonth();
-
-                executado[chave].meses[mes]++;
-                executado[chave].total++;
-
-                if (dataAula.getDay() === 6) {
-                    executado[chave].sabado++;
+                if (!isNaN(dataAula)) {
+                    const mes = dataAula.getMonth();
+                    executado[chave].meses[mes]++;
+                    executado[chave].total++;
+                    if (dataAula.getDay() === 6) executado[chave].sabado++;
                 }
             });
         });
     });
 
-    // 3. UNIFICAÇÃO
-    const todasAsChaves = new Set([
-        ...Object.keys(executado), 
-        ...Object.keys(previsto)
-    ]);
+    // 3. UNIFICAÇÃO E RENDERIZAÇÃO (Mantendo sua lógica original de construção de HTML)
+    const todasAsChaves = new Set([...Object.keys(executado), ...Object.keys(previsto)]);
 
     todasAsChaves.forEach(chave => {
         const dadosExec = executado[chave] || { meses: Array(12).fill(0), sabado: 0, total: 0, disciplina: "", turma: "" };
@@ -2334,96 +2341,34 @@ if (!profInput) return;
         const dNome = (dadosExec.disciplina || dadosPrev.disciplina || chave.split("||")[0]).trim();
         const tNome = (dadosExec.turma || dadosPrev.turma || chave.split("||")[1]).trim();
 
-        // ==========================================
-        // 🔷 EXECUTADO COM CHECKBOX
-        // ==========================================
-        const rowId = "row-" + btoa(chave);
-        const checked = window.disciplinasSelecionadas.has(chave) ? "checked" : "";
-
-        let rowExec = `
-        <tr 
-            id="${rowId}"
-            class="hover:bg-blue-50 cursor-pointer transition-colors"
-            onclick="toggleDisciplina('${chave}')"
-        >
-            <td class="text-center">
-                <input 
-                    type="checkbox" 
-                    ${checked}
-                    onclick="event.stopPropagation(); toggleDisciplina('${chave}')"
-                />
-            </td>
+        // RENDER EXECUTADO
+        const rowId = "row-" + btoa(unescape(encodeURIComponent(chave)));
+        let rowExec = `<tr id="${rowId}" class="hover:bg-blue-50 cursor-pointer" onclick="toggleDisciplina('${chave}')">
+            <td class="text-center"><input type="checkbox" onclick="event.stopPropagation(); toggleDisciplina('${chave}')" /></td>
             <td class="text-left font-bold text-[10px]">${dNome}</td>
-            <td class="bg-gray-50 text-[10px]">${tNome}</td>
-        `;
-
-        dadosExec.meses.forEach(v => {
-            rowExec += `<td class="text-center">${v || '-'}</td>`;
-        });
-
-        rowExec += `
-            <td class="font-bold text-center">${dadosExec.sabado || '-'}</td>
-            <td class="bg-blue-50 font-black text-center">${dadosExec.total}</td>
-        </tr>
-        `;
-
+            <td class="bg-gray-50 text-[10px]">${tNome}</td>`;
+        dadosExec.meses.forEach(v => rowExec += `<td class="text-center">${v || '-'}</td>`);
+        rowExec += `<td class="font-bold text-center">${dadosExec.sabado || '-'}</td><td class="bg-blue-50 font-black text-center">${dadosExec.total}</td></tr>`;
         bExec.innerHTML += rowExec;
 
-        // ==========================================
-        // 🔷 PREVISTO
-        // ==========================================
-        let rowPrev = `<tr class="hover:bg-gray-50">
-            <td class="text-left font-bold text-[10px]">${dNome}</td>
-            <td class="bg-gray-50 text-[10px]">${tNome}</td>`;
-
-        dadosPrev.meses.forEach(v => {
-            rowPrev += `<td class="text-center">${v || '-'}</td>`;
-        });
-
-        rowPrev += `
-            <td class="font-bold text-center">${dadosPrev.sabado || '-'}</td>
-            <td class="bg-green-50 font-black text-center">${dadosPrev.total}</td>
-        </tr>`;
-
+        // RENDER PREVISTO
+        let rowPrev = `<tr class="hover:bg-gray-50"><td class="text-left font-bold text-[10px]">${dNome}</td><td class="bg-gray-50 text-[10px]">${tNome}</td>`;
+        dadosPrev.meses.forEach(v => rowPrev += `<td class="text-center">${v || '-'}</td>`);
+        rowPrev += `<td class="font-bold text-center">${dadosPrev.sabado || '-'}</td><td class="bg-green-50 font-black text-center">${dadosPrev.total}</td></tr>`;
         bPrev.innerHTML += rowPrev;
 
-        // ==========================================
-        // 🔷 DIFERENÇA
-        // ==========================================
-        let rowDiff = `<tr class="hover:bg-gray-50">
-            <td class="text-left font-bold text-[10px]">${dNome}</td>
-            <td class="bg-gray-50 text-[10px]">${tNome}</td>`;
-
+        // RENDER DIFERENÇA
+        let rowDiff = `<tr class="hover:bg-gray-50"><td class="text-left font-bold text-[10px]">${dNome}</td><td class="bg-gray-50 text-[10px]">${tNome}</td>`;
         dadosPrev.meses.forEach((pVal, i) => {
             const eVal = dadosExec.meses[i] || 0;
             const diff = eVal - pVal;
-
-            const cor =
-                diff < 0 ? 'text-red-600 font-bold' :
-                diff > 0 ? 'text-green-600 font-bold' :
-                'text-gray-300';
-
+            const cor = diff < 0 ? 'text-red-600 font-bold' : diff > 0 ? 'text-green-600 font-bold' : 'text-gray-300';
             rowDiff += `<td class="text-center ${cor}">${diff === 0 ? '-' : diff}</td>`;
         });
-
         const diffSab = (dadosExec.sabado || 0) - (dadosPrev.sabado || 0);
         const diffTotal = (dadosExec.total || 0) - (dadosPrev.total || 0);
-
-        rowDiff += `
-            <td class="text-center ${
-                diffSab < 0 ? 'text-red-600 font-bold' :
-                diffSab > 0 ? 'text-green-600 font-bold' :
-                'text-gray-300'
-            }">${diffSab || '-'}</td>
-            <td class="p-1 text-center">
-                <span class="px-2 py-0.5 rounded ${
-                    diffTotal < 0 ? 'bg-red-100 text-red-700' :
-                    diffTotal > 0 ? 'bg-green-100 text-green-700' :
-                    'bg-gray-100 text-gray-400'
-                } font-black text-[10px]">${diffTotal}</span>
-            </td>
-        </tr>`;
-
+        rowDiff += `<td class="text-center ${diffSab < 0 ? 'text-red-600' : 'text-gray-300'}">${diffSab || '-'}</td>
+            <td class="p-1 text-center"><span class="px-2 py-0.5 rounded ${diffTotal < 0 ? 'bg-red-100 text-red-700' : 'bg-gray-100'} font-black text-[10px]">${diffTotal}</span></td></tr>`;
         bDiff.innerHTML += rowDiff;
     });
 }
