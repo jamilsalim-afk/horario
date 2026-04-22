@@ -2575,36 +2575,35 @@ function calcularPrevistoProfessor() {
         Object.keys(turma.discs).forEach(dId => {
             const disc = turma.discs[dId];
             
-            // CORREÇÃO AQUI: Filtro mais flexível para pegar BASE, base, Base, etc.
             const moldes = (disc.sch || []).filter(s => {
-                const tipo = String(s.tipo || "").toUpperCase();
                 const iden = String(s.identificador || "").toUpperCase();
-                return tipo === "MOLDE" || iden.startsWith('BASE_');
+                return s.tipo === "MOLDE" || iden.includes('BASE');
             });
 
             moldes.forEach(m => {
-                const identificador = String(m.identificador || "").toLowerCase();
-                const partes = identificador.split('_'); 
+                const idenLow = String(m.identificador || "").toLowerCase();
+                
                 let limites, diaRef, tipoSabado, feriasRef;
 
-                // Localiza o dia da semana no identificador (ex: seg, ter...)
-                const diaEncontrado = partes.find(p => mapaDias[p] !== undefined);
+                // --- NOVA LÓGICA DE DETECÇÃO ROBUSTA ---
+                // Procura por seg, ter, qua, qui, sex, sab dentro da string
+                const diaEncontrado = Object.keys(mapaDias).find(d => idenLow.includes(d));
                 diaRef = mapaDias[diaEncontrado];
 
-                if (partes.includes('int')) {
+                if (idenLow.includes('int')) {
                     limites = dadosAno.limites.integrado;
                     tipoSabado = "integrado";
                     feriasRef = dadosAno.ferias_int;
-                } else if (partes.includes('sup')) {
-                    const sem = partes.find(p => p === 's1' || p === 's2') || 's1';
+                } else if (idenLow.includes('sup')) {
+                    const sem = idenLow.includes('s2') ? 's2' : 's1';
                     limites = dadosAno.limites.superior?.[sem];
                     tipoSabado = `superior_${sem}`;
                     feriasRef = dadosAno.ferias_sup;
                 }
 
                 if (!limites || diaRef === undefined) {
-                    // Log para te ajudar a ver qual molde está mal formatado
-                    console.warn(`⚠️ Molde ignorado em ${turma.name}: Identificador "${m.identificador}" precisa conter 'int' ou 'sup' E o dia (seg, ter...)`);
+                    // Este log vai te dizer exatamente qual linha do CSV está ignorando
+                    console.warn(`⚠️ Molde ignorado. ID: "${m.identificador}" | Dia: ${diaEncontrado} | Limites: ${limites ? 'OK' : 'FALTOU'}`);
                     return;
                 }
 
@@ -2612,7 +2611,11 @@ function calcularPrevistoProfessor() {
                 const fim = new Date(limites.fim + "T00:00:00");
 
                 while (curr <= fim) {
-                    const iso = curr.toISOString().split('T')[0];
+                    const y = curr.getFullYear();
+                    const m_month = String(curr.getMonth() + 1).padStart(2, '0');
+                    const d = String(curr.getDate()).padStart(2, '0');
+                    const iso = `${y}-${m_month}-${d}`;
+                    
                     const wDay = curr.getDay();
                     let contar = false;
                     let ehSab = false;
@@ -2631,7 +2634,6 @@ function calcularPrevistoProfessor() {
                         const ferias = (feriasRef || []).some(f => iso >= f.inicio && iso <= f.fim);
 
                         if (!feriado && !ferias) {
-                            // Normalização do nome do professor para garantir o match
                             const pNome = (typeof traduzirProfessor === "function") 
                                 ? traduzirProfessor(m.prof).toUpperCase().trim() 
                                 : String(m.prof || "").toUpperCase().trim();
@@ -2659,6 +2661,7 @@ function calcularPrevistoProfessor() {
         });
     });
 
+    // O pulo do gato: Verifique se este log agora vem populado!
     console.log("✅ Processamento concluído. Professores encontrados:", Object.keys(previsto));
     return previsto;
 }
