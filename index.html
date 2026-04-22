@@ -2618,8 +2618,8 @@ function calcularPrevistoProfessor() {
                     
                     // Verifica se é o dia da semana ou um sábado letivo substituto
                     const ehSabadoLetivo = (dadosAno.sabados || []).some(s => 
-                        s.data === iso && s.tipo === tipoSab; && s.referencia === diaRef
-                    );
+    s.data === iso && s.tipo === tipoSab && s.referencia === diaRef
+);
 
                     if (wDay === diaRef || ehSabadoLetivo) {
                         const feriado = (dadosAno.feriados || []).includes(iso);
