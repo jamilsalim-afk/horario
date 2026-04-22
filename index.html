@@ -2607,42 +2607,47 @@ function calcularPrevistoProfessor() {
 
     if (!dadosAno) return {};
 
-    // Varremos todo o dataStore em busca de moldes
     Object.values(dataStore).forEach(turma => {
         if (!turma.discs) return;
 
         Object.values(turma.discs).forEach(disc => {
-            if (!disc.sch) return;
+            // Se disc.sch não existe ou está vazio, não há o que projetar
+            if (!disc.sch || disc.sch.length === 0) return;
 
             disc.sch.forEach(s => {
-                // Procuramos por qualquer identificador que contenha 'BASE' (maiúsculo ou minúsculo)
-                const iden = String(s.identificador || "").toLowerCase();
-                if (!iden.includes("base") && String(s.tipo).toUpperCase() !== "MOLDE") return;
+                // LOGICA DE DETECÇÃO: 
+                // Consideramos MOLDE qualquer coisa que tenha "BASE" no identificador 
+                // OU que NÃO tenha uma data (iso) definida (já que moldes são atemporais)
+                const iden = String(s.identificador || "").toUpperCase();
+                const ehMolde = iden.includes("BASE") || String(s.tipo).toUpperCase() === "MOLDE";
 
-                // 1. Extração do Professor (Tratando "Disciplina - Professor")
+                if (!ehMolde) return;
+
+                // 1. Quem é o professor?
                 let profRaw = (s.prof || disc.name || "").toUpperCase();
                 if (profRaw.includes(" - ")) profRaw = profRaw.split(" - ")[1];
                 const pNome = profRaw.trim();
 
                 if (!pNome || pNome === "INTERVALO") return;
 
-                // 2. Identificação do Dia e Modalidade
-                const diaChave = Object.keys(mapaDias).find(d => iden.includes(d));
+                // 2. Qual o dia e modalidade?
+                const idenLow = iden.toLowerCase();
+                const diaChave = Object.keys(mapaDias).find(d => idenLow.includes(d));
                 const diaRef = mapaDias[diaChave];
                 
-                const modalidade = iden.includes('int') ? 'integrado' : 'superior';
-                const sem = iden.includes('s2') ? 's2' : 's1';
+                const modalidade = idenLow.includes('int') ? 'integrado' : 'superior';
+                const sem = idenLow.includes('s2') ? 's2' : 's1';
                 
                 const limites = modalidade === 'integrado' ? 
                                dadosAno.limites.integrado : 
                                dadosAno.limites.superior?.[sem];
                 
+                if (!limites || diaRef === undefined) return;
+
                 const ferias = modalidade === 'integrado' ? dadosAno.ferias_int : dadosAno.ferias_sup;
                 const tipoSabado = modalidade === 'integrado' ? 'integrado' : `superior_${sem}`;
 
-                if (!limites || diaRef === undefined) return;
-
-                // 3. Projeção no Calendário
+                // 3. Projeção
                 let curr = new Date(limites.inicio + "T00:00:00");
                 const fim = new Date(limites.fim + "T00:00:00");
                 const chave = `${disc.name.toUpperCase()}||${turma.name.toUpperCase()}`;
@@ -2680,7 +2685,7 @@ function calcularPrevistoProfessor() {
         });
     });
 
-    console.log("🚀 Resultado da Projeção:", previsto);
+    console.log("🚀 Resultado Final da Projeção:", previsto);
     return previsto;
 }
         
