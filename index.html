@@ -2603,69 +2603,84 @@ function calcularPrevistoProfessor() {
     const year = document.getElementById('yearSelect')?.value || "2026";
     const dadosAno = CALENDARIO_DINAMICO[year];
     const previsto = {};
+    const mapaDias = { 'seg': 1, 'ter': 2, 'qua': 3, 'qui': 4, 'sex': 5, 'sab': 6, 'dom': 0 };
 
-    if (!dadosAno) {
-        console.error("❌ Calendário não encontrado para o ano:", year);
-        return {};
-    }
+    if (!dadosAno) return {};
 
+    // Varremos todo o dataStore em busca de moldes
     Object.values(dataStore).forEach(turma => {
-        Object.values(turma.discs || {}).forEach(disc => {
-            
-            // Filtra o que tem "BASE" no identificador ou tipo "MOLDE"
-            const moldes = (disc.sch || []).filter(s => {
-                const iden = String(s.identificador || "").toUpperCase();
-                return String(s.tipo).toUpperCase() === "MOLDE" || iden.includes("BASE");
-            });
+        if (!turma.discs) return;
 
-            moldes.forEach(m => {
-                const info = extrairDadosDoMolde(m, disc.name);
+        Object.values(turma.discs).forEach(disc => {
+            if (!disc.sch) return;
+
+            disc.sch.forEach(s => {
+                // Procuramos por qualquer identificador que contenha 'BASE' (maiúsculo ou minúsculo)
+                const iden = String(s.identificador || "").toLowerCase();
+                if (!iden.includes("base") && String(s.tipo).toUpperCase() !== "MOLDE") return;
+
+                // 1. Extração do Professor (Tratando "Disciplina - Professor")
+                let profRaw = (s.prof || disc.name || "").toUpperCase();
+                if (profRaw.includes(" - ")) profRaw = profRaw.split(" - ")[1];
+                const pNome = profRaw.trim();
+
+                if (!pNome || pNome === "INTERVALO") return;
+
+                // 2. Identificação do Dia e Modalidade
+                const diaChave = Object.keys(mapaDias).find(d => iden.includes(d));
+                const diaRef = mapaDias[diaChave];
                 
-                if (info.diaSemana === undefined || info.professor === "INTERVALO" || info.professor === "") return;
-
-                const limites = info.modalidade === 'integrado' ? 
+                const modalidade = iden.includes('int') ? 'integrado' : 'superior';
+                const sem = iden.includes('s2') ? 's2' : 's1';
+                
+                const limites = modalidade === 'integrado' ? 
                                dadosAno.limites.integrado : 
-                               dadosAno.limites.superior?.[info.semestre];
+                               dadosAno.limites.superior?.[sem];
                 
-                const ferias = info.modalidade === 'integrado' ? 
-                              dadosAno.ferias_int : 
-                              dadosAno.ferias_sup;
+                const ferias = modalidade === 'integrado' ? dadosAno.ferias_int : dadosAno.ferias_sup;
+                const tipoSabado = modalidade === 'integrado' ? 'integrado' : `superior_${sem}`;
 
-                if (!limites) return;
+                if (!limites || diaRef === undefined) return;
 
-                const datasProjetadas = projetarDatasVaildas(
-                    limites.inicio, 
-                    limites.fim, 
-                    info.diaSemana, 
-                    dadosAno.feriados, 
-                    ferias, 
-                    dadosAno.sabados, 
-                    info.modalidade === 'integrado' ? 'integrado' : `superior_${info.semestre}`
-                );
-
+                // 3. Projeção no Calendário
+                let curr = new Date(limites.inicio + "T00:00:00");
+                const fim = new Date(limites.fim + "T00:00:00");
                 const chave = `${disc.name.toUpperCase()}||${turma.name.toUpperCase()}`;
-                
-                if (!previsto[info.professor]) previsto[info.professor] = {};
-                if (!previsto[info.professor][chave]) {
-                    previsto[info.professor][chave] = {
-                        disciplina: disc.name.toUpperCase(),
-                        turma: turma.name.toUpperCase(),
-                        meses: Array(12).fill(0),
-                        sabado: 0,
-                        total: 0
-                    };
-                }
 
-                datasProjetadas.forEach(dt => {
-                    previsto[info.professor][chave].meses[dt.getMonth()]++;
-                    previsto[info.professor][chave].total++;
-                    if (dt.getDay() === 6) previsto[info.professor][chave].sabado++;
-                });
+                while (curr <= fim) {
+                    const iso = curr.toISOString().split('T')[0];
+                    const wDay = curr.getDay();
+
+                    const ehSabado = (dadosAno.sabados || []).some(sab => 
+                        sab.data === iso && sab.tipo === tipoSabado && sab.referencia === diaRef
+                    );
+
+                    if (wDay === diaRef || ehSabado) {
+                        const bloqueado = (dadosAno.feriados || []).includes(iso) || 
+                                          (ferias || []).some(f => iso >= f.inicio && iso <= f.fim);
+
+                        if (!bloqueado) {
+                            if (!previsto[pNome]) previsto[pNome] = {};
+                            if (!previsto[pNome][chave]) {
+                                previsto[pNome][chave] = {
+                                    disciplina: disc.name.toUpperCase(),
+                                    turma: turma.name.toUpperCase(),
+                                    meses: Array(12).fill(0),
+                                    sabado: 0, total: 0
+                                };
+                            }
+                            previsto[pNome][chave].meses[curr.getMonth()]++;
+                            previsto[pNome][chave].total++;
+                            if (wDay === 6) previsto[pNome][chave].sabado++;
+                        }
+                    }
+                    curr.setDate(curr.getDate() + 1);
+                }
             });
         });
     });
 
-    console.log("🚀 Projeção Concluída. Professores encontrados:", Object.keys(previsto));
+    console.log("🚀 Resultado da Projeção:", previsto);
     return previsto;
 }
         
