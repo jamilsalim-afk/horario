@@ -2561,89 +2561,67 @@ function calcularPrevistoProfessor() {
     const dadosAno = CALENDARIO_DINAMICO[year];
     
     if (!dadosAno || !dadosAno.limites) {
-        console.error("❌ Calendário não carregado para o ano:", year);
+        console.error("❌ Calendário não carregado");
         return {};
     }
 
     const previsto = {};
     const mapaDias = { 'seg': 1, 'ter': 2, 'qua': 3, 'qui': 4, 'sex': 5, 'sab': 6, 'dom': 0 };
 
-    console.log("🔍 Iniciando processamento do Previsto...");
-
     Object.keys(dataStore).forEach(tId => {
         const turma = dataStore[tId];
         Object.keys(turma.discs).forEach(dId => {
             const disc = turma.discs[dId];
             
-            // Filtro flexível para capturar moldes e bases (independente de maiúsculas)
-            const moldes = (disc.sch || []).filter(s => {
-                const iden = String(s.identificador || "").toUpperCase();
-                return s.tipo === "MOLDE" || iden.includes('BASE');
-            });
+            // 1. Pega apenas o que é BASE/MOLDE
+            const moldes = (disc.sch || []).filter(s => 
+                String(s.tipo).toUpperCase() === "MOLDE" || 
+                String(s.identificador).toUpperCase().includes("BASE")
+            );
 
             moldes.forEach(m => {
-                const idenLow = String(m.identificador || "").toLowerCase();
-                let limites, diaRef, tipoSabado, feriasRef;
-
-                // 1. Identificar o Dia da Semana (mesmo com vírgulas do CSV)
-                const diaEncontrado = Object.keys(mapaDias).find(d => idenLow.includes(d));
-                diaRef = mapaDias[diaEncontrado];
-
-                // 2. Identificar Modalidade (Integrado vs Superior)
-                if (idenLow.includes('int')) {
+                const iden = String(m.identificador).toLowerCase();
+                
+                // 2. Descobre o dia (seg, ter...) e o tipo (int, sup)
+                const diaChave = Object.keys(mapaDias).find(d => iden.includes(d));
+                const diaRef = mapaDias[diaChave];
+                
+                let limites, feriasRef, tipoSab;
+                if (iden.includes('int')) {
                     limites = dadosAno.limites.integrado;
-                    tipoSabado = "integrado";
                     feriasRef = dadosAno.ferias_int;
-                } else if (idenLow.includes('sup')) {
-                    const sem = idenLow.includes('s2') ? 's2' : 's1';
+                    tipoSab = "integrado";
+                } else {
+                    const sem = iden.includes('s2') ? 's2' : 's1';
                     limites = dadosAno.limites.superior?.[sem];
-                    tipoSabado = `superior_${sem}`;
                     feriasRef = dadosAno.ferias_sup;
+                    tipoSab = `superior_${sem}`;
                 }
 
                 if (!limites || diaRef === undefined) return;
 
-                // 3. Extração Robusta do Nome do Professor
-                // Tenta m.prof, se vazio tenta m.nome, se não, tenta extrair do que estiver após o " - "
-                let nomeBruto = (m.prof || m.nome || "").trim();
-                
-                if (!nomeBruto && disc.name.includes(" - ")) {
-                    nomeBruto = disc.name.split(" - ")[1];
-                }
+                // 3. Pega o nome do professor (limpa o "Disciplina - " se houver)
+                let profRaw = m.prof || disc.name || "";
+                if (profRaw.includes(" - ")) profRaw = profRaw.split(" - ")[1];
+                const pNome = profRaw.toUpperCase().trim();
 
-                // Se ainda estiver vazio ou for INTERVALO, ignora
-                if (!nomeBruto || nomeBruto.toUpperCase() === "INTERVALO") return;
+                if (!pNome || pNome === "INTERVALO") return;
 
-                const pNome = (typeof traduzirProfessor === "function") 
-                    ? traduzirProfessor(nomeBruto).toUpperCase().trim() 
-                    : nomeBruto.toUpperCase().trim();
-                
-                const chave = `${disc.name.toUpperCase().trim()}||${turma.name.toUpperCase().trim()}`;
-
-                // 4. Cálculo do Calendário
+                // 4. REPLICAÇÃO (A Projeção propriamente dita)
                 let curr = new Date(limites.inicio + "T00:00:00");
                 const fim = new Date(limites.fim + "T00:00:00");
+                const chave = `${disc.name.toUpperCase()}||${turma.name.toUpperCase()}`;
 
                 while (curr <= fim) {
-                    const y = curr.getFullYear();
-                    const m_month = String(curr.getMonth() + 1).padStart(2, '0');
-                    const d = String(curr.getDate()).padStart(2, '0');
-                    const iso = `${y}-${m_month}-${d}`;
-                    
+                    const iso = curr.toISOString().split('T')[0];
                     const wDay = curr.getDay();
-                    let contar = false;
-                    let ehSab = false;
+                    
+                    // Verifica se é o dia da semana ou um sábado letivo substituto
+                    const ehSabadoLetivo = (dadosAno.sabados || []).some(s => 
+                        s.data === iso && s.tipo === tipoSab; && s.referencia === diaRef
+                    );
 
-                    if (wDay === diaRef) {
-                        contar = true;
-                    } else {
-                        const sabLetivo = (dadosAno.sabados || []).find(s => 
-                            s.data === iso && s.tipo === tipoSabado && s.referencia === diaRef
-                        );
-                        if (sabLetivo) { contar = true; ehSab = true; }
-                    }
-
-                    if (contar) {
+                    if (wDay === diaRef || ehSabadoLetivo) {
                         const feriado = (dadosAno.feriados || []).includes(iso);
                         const ferias = (feriasRef || []).some(f => iso >= f.inicio && iso <= f.fim);
 
@@ -2654,13 +2632,12 @@ function calcularPrevistoProfessor() {
                                     disciplina: disc.name.toUpperCase(),
                                     turma: turma.name.toUpperCase(),
                                     meses: Array(12).fill(0),
-                                    sabado: 0,
-                                    total: 0
+                                    sabado: 0, total: 0
                                 };
                             }
                             previsto[pNome][chave].meses[curr.getMonth()]++;
                             previsto[pNome][chave].total++;
-                            if (ehSab) previsto[pNome][chave].sabado++;
+                            if (wDay === 6) previsto[pNome][chave].sabado++;
                         }
                     }
                     curr.setDate(curr.getDate() + 1);
@@ -2669,7 +2646,7 @@ function calcularPrevistoProfessor() {
         });
     });
 
-    console.log("✅ Processamento concluído. Professores encontrados:", Object.keys(previsto));
+    console.log("✅ Projeção concluída para os professores:", Object.keys(previsto));
     return previsto;
 }
 
