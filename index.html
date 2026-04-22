@@ -2575,6 +2575,7 @@ function calcularPrevistoProfessor() {
         Object.keys(turma.discs).forEach(dId => {
             const disc = turma.discs[dId];
             
+            // Pega tudo que for MOLDE ou que tenha BASE no identificador
             const moldes = (disc.sch || []).filter(s => {
                 const iden = String(s.identificador || "").toUpperCase();
                 return s.tipo === "MOLDE" || iden.includes('BASE');
@@ -2582,14 +2583,13 @@ function calcularPrevistoProfessor() {
 
             moldes.forEach(m => {
                 const idenLow = String(m.identificador || "").toLowerCase();
-                
                 let limites, diaRef, tipoSabado, feriasRef;
 
-                // --- NOVA LÓGICA DE DETECÇÃO ROBUSTA ---
-                // Procura por seg, ter, qua, qui, sex, sab dentro da string
+                // Identifica o dia da semana
                 const diaEncontrado = Object.keys(mapaDias).find(d => idenLow.includes(d));
                 diaRef = mapaDias[diaEncontrado];
 
+                // Identifica Integrado ou Superior
                 if (idenLow.includes('int')) {
                     limites = dadosAno.limites.integrado;
                     tipoSabado = "integrado";
@@ -2601,14 +2601,30 @@ function calcularPrevistoProfessor() {
                     feriasRef = dadosAno.ferias_sup;
                 }
 
-                if (!limites || diaRef === undefined) {
-                    // Este log vai te dizer exatamente qual linha do CSV está ignorando
-                    console.warn(`⚠️ Molde ignorado. ID: "${m.identificador}" | Dia: ${diaEncontrado} | Limites: ${limites ? 'OK' : 'FALTOU'}`);
-                    return;
+                if (!limites || diaRef === undefined) return;
+
+                // --- TRATAMENTO DO NOME DO PROFESSOR ---
+                // Se m.prof estiver vazio, tentamos extrair de m.nome ou disc.name
+                let nomeBruto = m.prof || "";
+                
+                // Se o professor veio no formato "Disciplina - Professor"
+                if (nomeBruto.includes(" - ")) {
+                    nomeBruto = nomeBruto.split(" - ")[1];
                 }
+
+                if (!nomeBruto || nomeBruto.trim() === "") return;
+
+                const pNome = (typeof traduzirProfessor === "function") 
+                    ? traduzirProfessor(nomeBruto).toUpperCase().trim() 
+                    : nomeBruto.toUpperCase().trim();
+                
+                // Pular se for intervalo ou PPS sem professor definido
+                if (pNome === "INTERVALO" || pNome === "") return;
 
                 let curr = new Date(limites.inicio + "T00:00:00");
                 const fim = new Date(limites.fim + "T00:00:00");
+
+                const chave = `${disc.name.toUpperCase().trim()}||${turma.name.toUpperCase().trim()}`;
 
                 while (curr <= fim) {
                     const y = curr.getFullYear();
@@ -2634,12 +2650,6 @@ function calcularPrevistoProfessor() {
                         const ferias = (feriasRef || []).some(f => iso >= f.inicio && iso <= f.fim);
 
                         if (!feriado && !ferias) {
-                            const pNome = (typeof traduzirProfessor === "function") 
-                                ? traduzirProfessor(m.prof).toUpperCase().trim() 
-                                : String(m.prof || "").toUpperCase().trim();
-                            
-                            const chave = `${disc.name.toUpperCase().trim()}||${turma.name.toUpperCase().trim()}`;
-
                             if (!previsto[pNome]) previsto[pNome] = {};
                             if (!previsto[pNome][chave]) {
                                 previsto[pNome][chave] = {
@@ -2661,7 +2671,6 @@ function calcularPrevistoProfessor() {
         });
     });
 
-    // O pulo do gato: Verifique se este log agora vem populado!
     console.log("✅ Processamento concluído. Professores encontrados:", Object.keys(previsto));
     return previsto;
 }
