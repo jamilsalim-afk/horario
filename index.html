@@ -2556,100 +2556,122 @@ function toggleDisciplina(chave) {
     }, 50);
 }
         
+function extrairDadosDoMolde(m, discName) {
+    const iden = String(m.identificador || "").toLowerCase();
+    const mapaDias = { 'seg': 1, 'ter': 2, 'qua': 3, 'qui': 4, 'sex': 5, 'sab': 6, 'dom': 0 };
+    
+    // Encontra o dia (seg, ter, etc) dentro do identificador
+    const diaChave = Object.keys(mapaDias).find(d => iden.includes(d));
+    
+    // Tenta pegar o professor: 1º do campo prof, 2º do nome da disciplina
+    let profRaw = (m.prof || discName || "").toUpperCase();
+    if (profRaw.includes(" - ")) profRaw = profRaw.split(" - ")[1];
+
+    return {
+        diaSemana: mapaDias[diaChave],
+        modalidade: iden.includes('int') ? 'integrado' : 'superior',
+        semestre: iden.includes('s2') ? 's2' : 's1',
+        professor: profRaw.trim()
+    };
+}
+
+function projetarDatasVaildas(inicio, fim, diaAlvo, feriados, ferias, sabadosLetivos, tipoSabado) {
+    let datas = [];
+    let atual = new Date(inicio + "T00:00:00");
+    const dataFim = new Date(fim + "T00:00:00");
+
+    while (atual <= dataFim) {
+        const iso = atual.toISOString().split('T')[0];
+        const wDay = atual.getDay();
+
+        // É o dia da semana original ou um sábado letivo que substitui esse dia?
+        const ehSabadoSubstituto = sabadosLetivos.some(s => 
+            s.data === iso && s.tipo === tipoSabado && s.referencia === diaAlvo
+        );
+
+        if (wDay === diaAlvo || ehSabadoSubstituto) {
+            const ehFeriado = feriados.includes(iso);
+            const ehFerias = ferias.some(f => iso >= f.inicio && iso <= f.fim);
+
+            if (!ehFeriado && !ehFerias) {
+                datas.push(new Date(atual));
+            }
+        }
+        atual.setDate(atual.getDate() + 1);
+    }
+    return datas;
+}
+
 function calcularPrevistoProfessor() {
     const year = document.getElementById('yearSelect')?.value || "2026";
     const dadosAno = CALENDARIO_DINAMICO[year];
-    
-    if (!dadosAno || !dadosAno.limites) {
-        console.error("❌ Calendário não carregado");
-        return {};
-    }
-
     const previsto = {};
-    const mapaDias = { 'seg': 1, 'ter': 2, 'qua': 3, 'qui': 4, 'sex': 5, 'sab': 6, 'dom': 0 };
 
-    Object.keys(dataStore).forEach(tId => {
-        const turma = dataStore[tId];
-        Object.keys(turma.discs).forEach(dId => {
-            const disc = turma.discs[dId];
-            
-            // 1. Pega apenas o que é BASE/MOLDE
+    if (!dadosAno) return {};
+
+    Object.values(dataStore).forEach(turma => {
+        Object.values(turma.discs).forEach(disc => {
+            // Filtra o que é molde/base
             const moldes = (disc.sch || []).filter(s => 
                 String(s.tipo).toUpperCase() === "MOLDE" || 
                 String(s.identificador).toUpperCase().includes("BASE")
             );
 
             moldes.forEach(m => {
-                const iden = String(m.identificador).toLowerCase();
+                const info = extrairDadosDoMolde(m, disc.name);
                 
-                // 2. Descobre o dia (seg, ter...) e o tipo (int, sup)
-                const diaChave = Object.keys(mapaDias).find(d => iden.includes(d));
-                const diaRef = mapaDias[diaChave];
+                // Se não achou o dia ou é intervalo, pula
+                if (info.diaSemana === undefined || info.professor === "INTERVALO" || info.professor === "") return;
+
+                // Define as regras do calendário para este molde específico
+                const limites = info.modalidade === 'integrado' ? 
+                               dadosAno.limites.integrado : 
+                               dadosAno.limites.superior?.[info.semestre];
                 
-                let limites, feriasRef, tipoSab;
-                if (iden.includes('int')) {
-                    limites = dadosAno.limites.integrado;
-                    feriasRef = dadosAno.ferias_int;
-                    tipoSab = "integrado";
-                } else {
-                    const sem = iden.includes('s2') ? 's2' : 's1';
-                    limites = dadosAno.limites.superior?.[sem];
-                    feriasRef = dadosAno.ferias_sup;
-                    tipoSab = `superior_${sem}`;
-                }
+                const ferias = info.modalidade === 'integrado' ? 
+                              dadosAno.ferias_int : 
+                              dadosAno.ferias_sup;
 
-                if (!limites || diaRef === undefined) return;
+                if (!limites) return;
 
-                // 3. Pega o nome do professor (limpa o "Disciplina - " se houver)
-                let profRaw = m.prof || disc.name || "";
-                if (profRaw.includes(" - ")) profRaw = profRaw.split(" - ")[1];
-                const pNome = profRaw.toUpperCase().trim();
+                // Chama o motor para gerar as datas
+                const datasProjetadas = projetarDatasVaildas(
+                    limites.inicio, 
+                    limites.fim, 
+                    info.diaSemana, 
+                    dadosAno.feriados || [], 
+                    ferias || [], 
+                    dadosAno.sabados || [], 
+                    info.modalidade === 'integrado' ? 'integrado' : `superior_${info.semestre}`
+                );
 
-                if (!pNome || pNome === "INTERVALO") return;
-
-                // 4. REPLICAÇÃO (A Projeção propriamente dita)
-                let curr = new Date(limites.inicio + "T00:00:00");
-                const fim = new Date(limites.fim + "T00:00:00");
+                // Organiza no objeto final por Professor -> Disciplina||Turma
                 const chave = `${disc.name.toUpperCase()}||${turma.name.toUpperCase()}`;
-
-                while (curr <= fim) {
-                    const iso = curr.toISOString().split('T')[0];
-                    const wDay = curr.getDay();
-                    
-                    // Verifica se é o dia da semana ou um sábado letivo substituto
-                    const ehSabadoLetivo = (dadosAno.sabados || []).some(s => 
-    s.data === iso && s.tipo === tipoSab && s.referencia === diaRef
-);
-
-                    if (wDay === diaRef || ehSabadoLetivo) {
-                        const feriado = (dadosAno.feriados || []).includes(iso);
-                        const ferias = (feriasRef || []).some(f => iso >= f.inicio && iso <= f.fim);
-
-                        if (!feriado && !ferias) {
-                            if (!previsto[pNome]) previsto[pNome] = {};
-                            if (!previsto[pNome][chave]) {
-                                previsto[pNome][chave] = {
-                                    disciplina: disc.name.toUpperCase(),
-                                    turma: turma.name.toUpperCase(),
-                                    meses: Array(12).fill(0),
-                                    sabado: 0, total: 0
-                                };
-                            }
-                            previsto[pNome][chave].meses[curr.getMonth()]++;
-                            previsto[pNome][chave].total++;
-                            if (wDay === 6) previsto[pNome][chave].sabado++;
-                        }
-                    }
-                    curr.setDate(curr.getDate() + 1);
+                
+                if (!previsto[info.professor]) previsto[info.professor] = {};
+                if (!previsto[info.professor][chave]) {
+                    previsto[info.professor][chave] = {
+                        disciplina: disc.name.toUpperCase(),
+                        turma: turma.name.toUpperCase(),
+                        meses: Array(12).fill(0),
+                        sabado: 0,
+                        total: 0
+                    };
                 }
+
+                datasProjetadas.forEach(dt => {
+                    previsto[info.professor][chave].meses[dt.getMonth()]++;
+                    previsto[info.professor][chave].total++;
+                    if (dt.getDay() === 6) previsto[info.professor][chave].sabado++;
+                });
             });
         });
     });
 
-    console.log("✅ Projeção concluída para os professores:", Object.keys(previsto));
+    console.log("🚀 Nova Projeção Concluída. Professores:", Object.keys(previsto));
     return previsto;
 }
-
+        
 /**
  * Calcula o saldo de aulas (Previsto - Realizado).
  * Valores positivos: Aulas pendentes (faltando).
