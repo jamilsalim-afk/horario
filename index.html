@@ -1391,7 +1391,7 @@ function gerarFuturoComBase() {
 
                 while (curr <= fim) {
 
-                    // 🔥 REGRA PRINCIPAL
+                    // 🔥 NÃO PROJETAR ANTES OU IGUAL AO ÚLTIMO MANUAL
                     if (ultimaDataManual && curr <= ultimaDataManual) {
                         curr.setDate(curr.getDate() + 1);
                         continue;
@@ -1436,13 +1436,13 @@ function gerarFuturoComBase() {
                             const dataFormatada =
                                 curr.toLocaleDateString('pt-BR');
 
-                            // 🔴 evita QUALQUER conflito no mesmo dia
-                            const jaExisteManual =
-                                manuais.some(man =>
-                                    man.date === dataFormatada
-                                );
+                            // ✅ VALIDAÇÃO CORRETA: DATA + HORÁRIO
+                            const jaExisteConflito = disc.sch.some(aula =>
+                                aula.date === dataFormatada &&
+                                aula.time === m.time
+                            );
 
-                            if (!jaExisteManual) {
+                            if (!jaExisteConflito) {
                                 disc.sch.push({
                                     date: dataFormatada,
                                     dtObj: new Date(curr),
