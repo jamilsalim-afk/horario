@@ -1764,7 +1764,6 @@ function gerarChave(disc, turma) {
 // ABA 01
 // FUNÇÃO QUE GERA TODAS AULAS DE CADA DISCIPLINA
 function renderD() {
-    // 1. CAPTURA DE ELEMENTOS
     const tSelect = document.getElementById('turmaSelect');
     const dSelect = document.getElementById('disciplinaSelect');
     const sSelect = document.getElementById('semestreSelect');
@@ -1777,13 +1776,11 @@ function renderD() {
     const dNomeOriginal = dSelect.options[dSelect.selectedIndex]?.text || "";
     const sem = sSelect ? sSelect.value : "1";
 
-    // 2. RESET INICIAL
     b.innerHTML = '';
     let sR = 0, sE = 0;
 
     if (!tId || !dNomeOriginal) return;
 
-    // 3. ACESSO AOS DADOS
     const turma = dataStore?.[tId];
     if (!turma || !turma.discs) {
         b.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Turma não encontrada.</td></tr>`;
@@ -1791,26 +1788,35 @@ function renderD() {
     }
 
     const normalizar = (txt) => {
-        return (txt || "").toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ");
+        return (txt || "").toString()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase().trim()
+            .replace(/[^a-z0-9\s]/g, " ")
+            .replace(/\s+/g, " ");
     };
 
     const nomeBusca = normalizar(dNomeOriginal);
+
     const disc = Object.values(turma.discs).find(d => {
         const nomeDisc = normalizar(d.name);
         return (nomeDisc === nomeBusca || nomeDisc.includes(nomeBusca) || nomeBusca.includes(nomeDisc));
     });
 
     if (!disc || !Array.isArray(disc.sch)) {
-        b.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500 italic">Sem aulas registradas para "${dNomeOriginal}".</td></tr>`;
+        b.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500 italic">Sem aulas registradas.</td></tr>`;
         resBusca?.classList.remove('hidden');
         return;
     }
 
-    // 5. PROCESSAMENTO E FILTRAGEM
-    disc.sch.forEach(a => {
-        if (!a || !a.dtObj) return;
+    // =========================================================
+    // 🔴 PASSO 1 — MAPA POR SLOT (RESOLVE CONFLITO)
+    // =========================================================
+    const mapaSlots = {};
 
-        // FILTRO DE SEMESTRE (Mantido)
+    disc.sch.forEach(a => {
+        if (!a || !a.dtObj || !a.time) return;
+
+        // filtro de semestre
         if (typeof ehSemestral === "function" && ehSemestral(tId)) {
             const dataAula = new Date(a.dtObj);
             const anoAtual = document.getElementById('yearSelect')?.value || new Date().getFullYear();
@@ -1818,49 +1824,63 @@ function renderD() {
 
             if (limites?.superior) {
                 const fimS1 = new Date(limites.superior.s1.fim + "T23:59:59");
-                const pertenceAoSelec = (sem === "1") ? (dataAula <= fimS1) : (dataAula > fimS1);
-                if (!pertenceAoSelec) return;
+                const pertence = (sem === "1") ? (dataAula <= fimS1) : (dataAula > fimS1);
+                if (!pertence) return;
             }
         }
 
-        // --- LÓGICA DE TRADUÇÃO E TAG (CORRIGIDA) ---
+        const dataISO = new Date(a.dtObj).toISOString().split('T')[0];
+        const horaPad = a.time.split(' - ')[0].trim().padStart(5, '0');
+        const chave = `${dataISO}_${horaPad}`;
+
+        if (!mapaSlots[chave]) mapaSlots[chave] = [];
+
+        const lista = mapaSlots[chave];
+        const ehManual = a.tipo === "MANUAL";
+
+        if (ehManual) {
+            // 🔴 manual domina o slot
+            mapaSlots[chave] = [a];
+        } else {
+            const jaTemManual = lista.some(x => x.tipo === "MANUAL");
+
+            if (!jaTemManual) {
+                mapaSlots[chave].push(a);
+            }
+        }
+    });
+
+    // =========================================================
+    // 🔴 PASSO 2 — ORDENAR E RENDERIZAR
+    // =========================================================
+    const aulasFinais = Object.values(mapaSlots)
+        .flat()
+        .sort((a, b) => new Date(a.dtObj) - new Date(b.dtObj));
+
+    aulasFinais.forEach(a => {
         let info;
         const ehSabado = a.wd && a.wd.toLowerCase().includes("sábado");
 
         if (ehSabado) {
-            // Se for sábado, força a tradução de Sábado Letivo (Verde)
             info = TRADUCAO["SÁBADO LETIVO"];
         } else {
-            // Caso contrário, busca a tag da aula ou define como NORMAL
-            info = (typeof TRADUCAO !== 'undefined' && TRADUCAO[a.tag])
-                ? TRADUCAO[a.tag]
-                : {
-                    texto: a.tag || "NORMAL",
-                    class: "bg-gray-100 text-gray-600 border-gray-200",
-                    soma: true
-                };
+            info = (TRADUCAO[a.tag]) || {
+                texto: a.tag || "NORMAL",
+                class: "bg-gray-100 text-gray-600 border-gray-200",
+                soma: true
+            };
         }
 
-        // Soma nos contadores
-        if (info.soma) { sR++; } else { sE++; }
+        if (info.soma) sR++; else sE++;
 
-        // RENDERIZAÇÃO DA LINHA
         b.innerHTML += `
-            <tr class="hover:bg-blue-50 transition-colors">
-                <td class="border p-2 text-center text-sm font-medium">
-                    ${a.date || '-'}
-                </td>
-                <td class="border p-2 uppercase text-[10px] text-gray-500 text-center">
-                    ${a.wd || '-'}
-                </td>
-                <td class="border p-2 text-center text-sm">
-                    ${a.time || '-'}
-                </td>
-                <td class="border p-2 font-semibold text-gray-700 text-sm">
-                    ${(a.prof || '-').split(' ')[0]}
-                </td>
+            <tr class="hover:bg-blue-50">
+                <td class="border p-2 text-center">${a.date || '-'}</td>
+                <td class="border p-2 text-center text-[10px]">${a.wd || '-'}</td>
+                <td class="border p-2 text-center">${a.time || '-'}</td>
+                <td class="border p-2 text-center">${(a.prof || '-').split(' ')[0]}</td>
                 <td class="border p-1 text-center">
-                    <span class="px-2 py-0.5 rounded text-[9px] font-black border ${info.class}">
+                    <span class="px-2 py-0.5 rounded text-[9px] border ${info.class}">
                         ${info.texto}
                     </span>
                 </td>
@@ -1875,6 +1895,7 @@ function renderD() {
     if (typeof atualizarContadores === "function") {
         atualizarContadores(sR, sE);
     }
+
     resBusca?.classList.remove('hidden');
 }
 
