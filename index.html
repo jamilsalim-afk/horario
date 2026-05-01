@@ -1344,20 +1344,16 @@ function gerarFuturoComBase() {
             const moldes = disc.sch.filter(s => s.tipo === "MOLDE");
             const manuais = disc.sch.filter(s => s.tipo === "MANUAL");
 
-            // 🔴 Descobre última data manual
+            // 🔴 DESCOBRE A ÚLTIMA DATA MANUAL
             let ultimaDataManual = null;
+
             if (manuais.length > 0) {
                 ultimaDataManual = new Date(
                     Math.max(...manuais.map(m => new Date(m.dtObj)))
                 );
             }
 
-            // 🔴 Mapa de prioridade (manual vence)
-            const mapaManual = new Set(
-                manuais.map(m => `${m.date}_${m.time}`)
-            );
-
-            // mantém só manuais inicialmente
+            // mantém só os manuais inicialmente
             disc.sch = [...manuais];
 
             moldes.forEach(m => {
@@ -1368,12 +1364,16 @@ function gerarFuturoComBase() {
                 let tipoSabado = null;
                 let feriasRef = [];
 
+                // INTEGRADO
                 if (partes[1] === 'int') {
                     limites = cal.limites.integrado;
                     diaRef = mapaDias[normalizarDia(partes[2])];
                     tipoSabado = "integrado";
                     feriasRef = cal.ferias_int || [];
-                } else if (partes[1] === 'sup') {
+                }
+
+                // SUPERIOR
+                else if (partes[1] === 'sup') {
                     const semestre = partes[2];
                     limites = cal.limites.superior?.[semestre];
                     diaRef = mapaDias[normalizarDia(partes[3])];
@@ -1391,7 +1391,7 @@ function gerarFuturoComBase() {
 
                 while (curr <= fim) {
 
-                    // não gerar antes do último manual
+                    // 🔥 REGRA PRINCIPAL
                     if (ultimaDataManual && curr <= ultimaDataManual) {
                         curr.setDate(curr.getDate() + 1);
                         continue;
@@ -1403,10 +1403,12 @@ function gerarFuturoComBase() {
                     let deveCriar = false;
                     let tagEspecial = m.tag;
 
+                    // dia normal
                     if (diaAtual === diaRef) {
                         deveCriar = true;
                     }
 
+                    // sábado letivo
                     const configSabado = (cal.sabados || []).find(s =>
                         s.data === isoData &&
                         s.tipo === tipoSabado &&
@@ -1434,21 +1436,13 @@ function gerarFuturoComBase() {
                             const dataFormatada =
                                 curr.toLocaleDateString('pt-BR');
 
-                            const chave = `${dataFormatada}_${m.time}`;
+                            // 🔴 evita QUALQUER conflito no mesmo dia
+                            const jaExisteManual =
+                                manuais.some(man =>
+                                    man.date === dataFormatada
+                                );
 
-                            // 🔴 REGRA: se já existe manual nesse horário → NÃO cria projetado
-                            if (mapaManual.has(chave)) {
-                                curr.setDate(curr.getDate() + 1);
-                                continue;
-                            }
-
-                            // 🔴 evita duplicação entre projetadas
-                            const jaExiste = disc.sch.some(aula =>
-                                aula.date === dataFormatada &&
-                                aula.time === m.time
-                            );
-
-                            if (!jaExiste) {
+                            if (!jaExisteManual) {
                                 disc.sch.push({
                                     date: dataFormatada,
                                     dtObj: new Date(curr),
@@ -1468,14 +1462,6 @@ function gerarFuturoComBase() {
                 }
             });
 
-            // 🔴 FAIL-SAFE FINAL (manual sempre vence)
-            disc.sch = disc.sch.filter(aula => {
-                if (aula.tipo === "MANUAL") return true;
-
-                const chave = `${aula.date}_${aula.time}`;
-                return !mapaManual.has(chave);
-            });
-
             // ordenação final
             disc.sch.sort((a, b) => {
                 if (a.dtObj.getTime() !== b.dtObj.getTime()) {
@@ -1486,7 +1472,7 @@ function gerarFuturoComBase() {
         });
     });
 
-    console.log("✅ Projeção finalizada (manual sobrescreve projetado)!");
+    console.log("✅ Projeção finalizada!");
 }
 
 // Função auxiliar para clareza do código
@@ -1806,42 +1792,8 @@ function renderD() {
         return;
     }
 
-    // =========================================================
-    // 🔴 NOVO BLOCO — RESOLUÇÃO DE CONFLITO POR SLOT
-    // =========================================================
-    const mapaSlots = {};
-
+    // 5. PROCESSAMENTO E FILTRAGEM
     disc.sch.forEach(a => {
-        if (!a || !a.dtObj || !a.time) return;
-
-        const dataISO = new Date(a.dtObj).toISOString().split('T')[0];
-        const horaPad = a.time.split(' - ')[0].trim().padStart(5, '0');
-        const chave = `${dataISO}_${horaPad}`;
-
-        if (!mapaSlots[chave]) mapaSlots[chave] = [];
-
-        const lista = mapaSlots[chave];
-        const ehManual = a.tipo === "MANUAL";
-
-        if (ehManual) {
-            // 🔴 manual sobrescreve tudo no slot
-            mapaSlots[chave] = [a];
-        } else {
-            const jaTemManual = lista.some(x => x.tipo === "MANUAL");
-            if (!jaTemManual) {
-                mapaSlots[chave].push(a);
-            }
-        }
-    });
-
-    const aulasResolvidas = Object.values(mapaSlots)
-        .flat()
-        .sort((a, b) => new Date(a.dtObj) - new Date(b.dtObj));
-
-    // =========================================================
-    // 🔴 RESTANTE ORIGINAL (mantido)
-    // =========================================================
-    aulasResolvidas.forEach(a => {
         if (!a || !a.dtObj) return;
 
         // FILTRO DE SEMESTRE (Mantido)
@@ -1857,13 +1809,15 @@ function renderD() {
             }
         }
 
-        // --- LÓGICA DE TRADUÇÃO E TAG (MANTIDA) ---
+        // --- LÓGICA DE TRADUÇÃO E TAG (CORRIGIDA) ---
         let info;
         const ehSabado = a.wd && a.wd.toLowerCase().includes("sábado");
 
         if (ehSabado) {
+            // Se for sábado, força a tradução de Sábado Letivo (Verde)
             info = TRADUCAO["SÁBADO LETIVO"];
         } else {
+            // Caso contrário, busca a tag da aula ou define como NORMAL
             info = (typeof TRADUCAO !== 'undefined' && TRADUCAO[a.tag])
                 ? TRADUCAO[a.tag]
                 : {
@@ -1876,7 +1830,7 @@ function renderD() {
         // Soma nos contadores
         if (info.soma) { sR++; } else { sE++; }
 
-        // RENDERIZAÇÃO ORIGINAL
+        // RENDERIZAÇÃO DA LINHA
         b.innerHTML += `
             <tr class="hover:bg-blue-50 transition-colors">
                 <td class="border p-2 text-center text-sm font-medium">
@@ -1907,7 +1861,6 @@ function renderD() {
     if (typeof atualizarContadores === "function") {
         atualizarContadores(sR, sE);
     }
-
     resBusca?.classList.remove('hidden');
 }
 
@@ -2131,253 +2084,159 @@ function gerarGrade() {
         return;
     }
 
-    const profNormalizado = (typeof traduzirProfessor === "function")
-        ? traduzirProfessor(prof)
-        : prof;
-
+    const profNormalizado = (typeof traduzirProfessor === "function") ? traduzirProfessor(prof) : prof;
     const [y, w] = week.split('-W').map(Number);
     const start = getStartOfWeek(w, y);
-
+    
+    // Fim da semana (Sábado) para pré-filtragem
     const end = new Date(start);
     end.setDate(end.getDate() + 6);
 
     const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-
     let aulasPorDia = Array(6).fill(0);
     let horasPermanencia = Array(6).fill(0);
     let observacoes = [];
 
-    // =========================================================
-    // 🔴 PASSO 1 — MAPA GLOBAL (RESOLVE CONFLITO PRIMEIRO)
-    // =========================================================
-    const mapaGlobal = {};
+    // --- PASSO 1: PRÉ-FILTRAGEM OTIMIZADA ---
+    // Em vez de buscar no loop da tabela, criamos um "Mapa de Aulas" do professor na semana
+    // Chave: "DATA_HORA" -> Valor: { turma, disciplina, tag }
+    const mapaAulasSemana = {};
+    const aulasOrdenadasParaPermanencia = [[], [], [], [], [], []]; // Indexado por dia da semana (0-5)
 
     Object.keys(dataStore).forEach(tId => {
         const turma = dataStore[tId];
-
         Object.keys(turma.discs).forEach(dId => {
             const disc = turma.discs[dId];
-
             disc.sch.forEach(aula => {
                 if (!aula.dtObj || !aula.time) return;
-                if (aula.dtObj < start || aula.dtObj > end) return;
 
-                const dataISO = aula.dtObj.toISOString().split('T')[0];
-                const horaPad = aula.time.split(' - ')[0].trim().padStart(5, '0');
-                const chave = `${dataISO}_${horaPad}`;
+                // Pré-filtro: A aula é deste professor e está dentro desta semana?
+                const profAulaTrad = (typeof traduzirProfessor === "function") ? traduzirProfessor(aula.prof) : aula.prof;
+                
+                if (profAulaTrad === profNormalizado && aula.dtObj >= start && aula.dtObj <= end) {
+                    
+                    const dataISO = aula.dtObj.toISOString().split('T')[0];
+                    const horaPad = aula.time.split(' - ')[0].trim().padStart(5, '0');
+                    const chave = `${dataISO}_${horaPad}`;
 
-                if (!mapaGlobal[chave]) {
-                    mapaGlobal[chave] = [];
-                }
-
-                const lista = mapaGlobal[chave];
-                const ehManual = aula.tipo === "MANUAL";
-
-                if (ehManual) {
-                    // 🔴 manual domina o slot inteiro
-                    mapaGlobal[chave] = [{
+                    if (!mapaAulasSemana[chave]) mapaAulasSemana[chave] = [];
+                    
+                    mapaAulasSemana[chave].push({
                         turmaNome: turma.name,
                         discNome: disc.name,
-                        tag: aula.tag,
-                        prof: aula.prof,
-                        tipo: "MANUAL",
-                        dtObj: new Date(aula.dtObj),
-                        time: aula.time
-                    }];
-                } else {
-                    const jaTemManual = lista.some(a => a.tipo === "MANUAL");
+                        tag: aula.tag
+                    });
 
-                    if (!jaTemManual) {
-                        mapaGlobal[chave].push({
-                            turmaNome: turma.name,
-                            discNome: disc.name,
-                            tag: aula.tag,
-                            prof: aula.prof,
-                            tipo: aula.tipo || "AUTO",
-                            dtObj: new Date(aula.dtObj),
-                            time: aula.time
+                    // Para cálculo de permanência posterior
+                    const diaSemanaIndex = (aula.dtObj.getDay() + 6) % 7; // Ajuste para Seg=0
+                    if (diaSemanaIndex < 6) {
+                        const [iniH, iniM] = aula.time.split(' - ')[0].split(':').map(Number);
+                        const [fimH, fimM] = aula.time.split(' - ')[1].split(':').map(Number);
+                        aulasOrdenadasParaPermanencia[diaSemanaIndex].push({
+                            inicioDec: iniH + (iniM / 60),
+                            fimDec: fimH + (fimM / 60),
+                            dt: new Date(aula.dtObj)
                         });
+                        aulasPorDia[diaSemanaIndex]++;
                     }
                 }
             });
         });
     });
 
-    // =========================================================
-    // 🔴 PASSO 2 — FILTRA POR PROFESSOR (APÓS LIMPEZA GLOBAL)
-    // =========================================================
-    const mapaAulasSemana = {};
-
-    Object.keys(mapaGlobal).forEach(chave => {
-        const aulas = mapaGlobal[chave];
-
-        const filtradas = aulas.filter(a => {
-            const profTrad = (typeof traduzirProfessor === "function")
-                ? traduzirProfessor(a.prof)
-                : a.prof;
-
-            return profTrad === profNormalizado;
-        });
-
-        if (filtradas.length > 0) {
-            mapaAulasSemana[chave] = filtradas;
-        }
-    });
-
-    // =========================================================
-    // 🔴 PASSO 3 — CONTAGEM E PERMANÊNCIA
-    // =========================================================
-    const aulasOrdenadasParaPermanencia = [[], [], [], [], [], []];
-
-    Object.keys(mapaAulasSemana).forEach(chave => {
-        const aulas = mapaAulasSemana[chave];
-
-        aulas.forEach(a => {
-            const dt = new Date(a.dtObj);
-           const dia = dt.getDay();
-
-if (dia >= 1 && dia <= 6) {
-    const diaSemanaIndex = dia - 1;
-
-    aulasPorDia[diaSemanaIndex]++;
-
-    const [iniH, iniM] = a.time.split(' - ')[0].split(':').map(Number);
-    const [fimH, fimM] = a.time.split(' - ')[1].split(':').map(Number);
-
-    aulasOrdenadasParaPermanencia[diaSemanaIndex].push({
-        inicioDec: iniH + (iniM / 60),
-        fimDec: fimH + (fimM / 60),
-        dt: dt
-    });
-}
-        });
-    });
-
-    // =========================================================
-    // 🔴 PASSO 4 — RENDER
-    // =========================================================
-    let h = `<div class="overflow-x-auto"><table class="tableGS bg-white w-full border-collapse border border-gray-300">
-    <thead><tr class="bg-[#15803d] text-white">
-    <th class="w-[100px] p-2 text-[10px] border">HORÁRIO</th>`;
-
+    // --- PASSO 2: RENDERIZAÇÃO DA TABELA (RÁPIDA) ---
+    let h = `<div class="overflow-x-auto"><table class="tableGS bg-white w-full border-collapse border border-gray-300" id="tableGS">
+                <thead><tr class="bg-[#15803d] text-white"><th class="w-[100px] p-2 text-[10px] border">HORÁRIO</th>`;
+    
     for (let i = 0; i < 6; i++) {
         const dtHead = new Date(start);
         dtHead.setDate(dtHead.getDate() + i);
-
-        h += `<th class="w-[14%] p-2 border text-[10px]">
-        ${dias[i].toUpperCase()}<br>
-        <span class="opacity-80 font-normal">${dtHead.toLocaleDateString('pt-BR').slice(0, 5)}</span>
-        </th>`;
+        h += `<th class="w-[14%] p-2 border text-[10px]">${dias[i].toUpperCase()}<br>
+              <span class="opacity-80 font-normal">${dtHead.toLocaleDateString('pt-BR').slice(0, 5)}</span></th>`;
     }
-
     h += `</tr></thead><tbody>`;
 
     GABARITO.forEach(slot => {
         if (slot.t === "intervalo") {
             h += `<tr class="bg-gray-100 italic text-gray-500 text-[10px] text-center">
-            <td class="border p-1">${slot.h}</td>
-            <td colspan="6" class="border p-1">${slot.l}</td></tr>`;
+                    <td class="border p-1">${slot.h}</td><td colspan="6" class="border p-1">${slot.l}</td></tr>`;
             return;
         }
 
         const horaSlotPad = slot.h.split(' - ')[0].padStart(5, '0');
-
         h += `<tr><td class="bg-gray-50 font-bold border p-2 text-[10px] text-center">${slot.h}</td>`;
 
         for (let i = 0; i < 6; i++) {
             const dtRef = new Date(start);
             dtRef.setDate(dtRef.getDate() + i);
-
             const dataISO = dtRef.toISOString().split('T')[0];
             const chaveBusca = `${dataISO}_${horaSlotPad}`;
-
+            
             let cellContent = "";
+            const aulasEncontradas = mapaAulasSemana[chaveBusca];
 
-            const aulas = mapaAulasSemana[chaveBusca];
-
-            if (aulas) {
-                aulas.forEach(a => {
+            if (aulasEncontradas) {
+                aulasEncontradas.forEach(a => {
                     const status = TRADUCAO[a.tag] || { class: "bg-green-50 border-green-200" };
-
                     cellContent += `
-                    <div class="p-1 mb-1 rounded border-l-4 ${status.class}">
-                        <div class="font-bold text-[9px]">${a.turmaNome}</div>
-                        <div class="text-[8px] uppercase border-t mt-1">${a.discNome}</div>
-                    </div>`;
+                        <div class="p-1 mb-1 rounded border-l-4 ${status.class} shadow-sm">
+                            <div class="font-bold text-[9px] text-gray-800">${a.turmaNome}</div>
+                            <div class="text-[8px] text-blue-800 uppercase border-t border-blue-100 mt-1">${a.discNome}</div>
+                        </div>`;
                 });
             }
-
             h += `<td class="border p-1 align-top min-h-[50px]">${cellContent}</td>`;
         }
-
         h += `</tr>`;
     });
 
-    // =========================================================
-    // 🔴 PERMANÊNCIA
-    // =========================================================
+    // --- PASSO 3: CÁLCULO DE PERMANÊNCIA (USANDO O FILTRO PRONTO) ---
     let ultimaAulaDoDiaAnterior = null;
-
     for (let i = 0; i < 6; i++) {
         let dia = aulasOrdenadasParaPermanencia[i];
-
         if (dia.length > 0) {
             dia.sort((a, b) => a.inicioDec - b.inicioDec);
-
             let primeira = dia[0];
             let ultima = dia[dia.length - 1];
             let diff = ultima.fimDec - primeira.inicioDec;
 
             if (primeira.inicioDec <= 12 && ultima.fimDec >= 14) diff -= 2;
-
             horasPermanencia[i] = Math.max(0, diff).toFixed(1);
 
+            // Interjornada
             if (ultimaAulaDoDiaAnterior) {
                 const fimAnt = new Date(ultimaAulaDoDiaAnterior.dt);
                 fimAnt.setHours(Math.floor(ultimaAulaDoDiaAnterior.fimDec), (ultimaAulaDoDiaAnterior.fimDec % 1) * 60);
-
                 const iniAtu = new Date(primeira.dt);
                 iniAtu.setHours(Math.floor(primeira.inicioDec), (primeira.inicioDec % 1) * 60);
-
+                
                 const diffInter = (iniAtu - fimAnt) / (1000 * 60 * 60);
-
                 if (diffInter < 11 && diffInter > 0) {
                     observacoes.push(`${dias[i]}: ${diffInter.toFixed(1)}h de intervalo`);
                 }
             }
-
             ultimaAulaDoDiaAnterior = ultima;
         } else {
             ultimaAulaDoDiaAnterior = null;
         }
     }
 
-    // =========================================================
-    // 🔴 RODAPÉ
-    // =========================================================
-    h += `<tr class="bg-gray-50 font-bold text-[10px]"><td>AULAS / DIA</td>`;
-    aulasPorDia.forEach(c => h += `<td class="text-center">${c}</td>`);
-    h += `</tr>`;
-
-    h += `<tr class="bg-blue-50 font-bold text-[10px]"><td>PERMANÊNCIA</td>`;
-    horasPermanencia.forEach(v => h += `<td class="text-center">${v}h</td>`);
+    // --- RODAPÉ ---
+    // (O resto do seu código de rodapé permanece igual, injetando aulasPorDia e horasPermanencia)
+    h += `<tr class="bg-gray-50 font-bold text-[10px]"><td class="border p-2">AULAS / DIA</td>`;
+    aulasPorDia.forEach(c => h += `<td class="border p-2 text-center">${c}</td>`);
+    h += `</tr><tr class="bg-blue-50 font-bold text-[10px]"><td class="border p-2">PERMANÊNCIA</td>`;
+    horasPermanencia.forEach(v => h += `<td class="border p-2 text-center text-blue-700">${v}h</td>`);
     h += `</tr>`;
 
     const totalSemana = aulasPorDia.reduce((a, b) => a + b, 0);
+    h += `<tr class="bg-green-100 font-black text-xs text-green-900 uppercase">
+            <td colspan="2" class="p-3 border">Total:</td><td colspan="5" class="p-3 border">${totalSemana} Aulas</td></tr>`;
 
-    h += `<tr class="bg-green-100 font-bold">
-        <td colspan="2">Total:</td>
-        <td colspan="5">${totalSemana} Aulas</td>
-    </tr>`;
-
-    const obsTexto = observacoes.length > 0
-        ? observacoes.join(' | ')
-        : "Interjornada regular.";
-
-    h += `<tr class="text-[9px] bg-yellow-50">
-        <td>ALERTAS:</td>
-        <td colspan="6">${obsTexto}</td>
-    </tr></tbody></table></div>`;
+    const obsTexto = observacoes.length > 0 ? observacoes.join(' | ') : "Interjornada regular.";
+    h += `<tr class="text-[9px] bg-yellow-50"><td class="font-bold p-2 border">ALERTAS:</td>
+          <td colspan="6" class="p-2 border ${observacoes.length > 0 ? 'text-red-600' : 'text-gray-500'}">${obsTexto}</td>
+          </tr></tbody></table></div>`;
 
     document.getElementById('gradeRender').innerHTML = h;
 }
@@ -2995,6 +2854,7 @@ function gerarGradeTurma() {
     const start = getStartOfWeek(w, y);
     const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
+    // 1. Início da Tabela
     let h = `
     <div class="overflow-x-auto shadow-md rounded-lg">
         <table class="tableGS bg-white w-full border-collapse" id="tableGSTurma">
@@ -3014,8 +2874,8 @@ function gerarGradeTurma() {
 
     h += `</tr></thead><tbody>`;
 
+    // 2. Renderização das Linhas baseadas no GABARITO (Horários da Instituição)
     GABARITO.forEach(slot => {
-
         if (slot.t === "intervalo") {
             h += `
                 <tr class="bg-gray-100 italic text-gray-500 text-[10px] text-center">
@@ -3025,21 +2885,19 @@ function gerarGradeTurma() {
             return;
         }
 
+        // Normalização do horário para comparação (ex: 07:30)
         const horaSlotPad = slot.h.split(' - ')[0].trim().padStart(5, '0');
 
         h += `<tr><td class="bg-gray-50 font-bold border p-2 text-[10px] text-center">${slot.h}</td>`;
 
+        // Loop pelos 6 dias da semana (Segunda a Sábado)
         for (let i = 0; i < 6; i++) {
             const dtRef = new Date(start);
             dtRef.setDate(dtRef.getDate() + i);
-
             let cellContent = "";
 
             if (dataStore[tId]) {
-
-                // 🔴 coleta todas as aulas do slot
-                const aulasNoSlot = [];
-
+                // Varre as disciplinas da turma selecionada
                 Object.keys(dataStore[tId].discs).forEach(dId => {
                     const discObj = dataStore[tId].discs[dId];
 
@@ -3048,53 +2906,37 @@ function gerarGradeTurma() {
 
                         const horaAulaPad = aula.time.split(' - ')[0].trim().padStart(5, '0');
 
-                        if (
-                            aula.dtObj.getDate() === dtRef.getDate() &&
+                        // Comparação de Data e Hora
+                        if (aula.dtObj.getDate() === dtRef.getDate() &&
                             aula.dtObj.getMonth() === dtRef.getMonth() &&
                             aula.dtObj.getFullYear() === dtRef.getFullYear() &&
-                            horaAulaPad === horaSlotPad
-                        ) {
-                            aulasNoSlot.push({ aula, discObj });
+                            horaAulaPad === horaSlotPad) {
+
+                            const status = TRADUCAO[aula.tag] || { class: "bg-green-50 border-green-200" };
+                            const profNome = (typeof traduzirProfessor === "function") 
+                                ? traduzirProfessor(aula.prof) 
+                                : aula.prof;
+
+                            cellContent += `
+                                <div class="p-1 mb-1 rounded border-l-4 shadow-sm ${status.class}">
+                                    <div class="font-black text-[9px] text-gray-800 leading-tight uppercase">
+                                        ${discObj.name}
+                                    </div>
+                                    <div class="border-t border-gray-200 mt-1 pt-1 italic text-[8px] text-blue-800">
+                                        ${getPrimeiroNome(profNome)}
+                                    </div>
+                                </div>`;
                         }
                     });
-                });
-
-                // 🔴 PRIORIDADE: manual vence
-                let aulasFiltradas = [];
-                const manuais = aulasNoSlot.filter(x => x.aula.tipo === "MANUAL");
-
-                if (manuais.length > 0) {
-                    aulasFiltradas = manuais;
-                } else {
-                    aulasFiltradas = aulasNoSlot;
-                }
-
-                // 🔴 renderização final
-                aulasFiltradas.forEach(({ aula, discObj }) => {
-                    const status = TRADUCAO[aula.tag] || { class: "bg-green-50 border-green-200" };
-
-                    const profNome = (typeof traduzirProfessor === "function")
-                        ? traduzirProfessor(aula.prof)
-                        : aula.prof;
-
-                    cellContent += `
-                        <div class="p-1 mb-1 rounded border-l-4 shadow-sm ${status.class}">
-                            <div class="font-black text-[9px] text-gray-800 leading-tight uppercase">
-                                ${discObj.name}
-                            </div>
-                            <div class="border-t border-gray-200 mt-1 pt-1 italic text-[8px] text-blue-800">
-                                ${getPrimeiroNome(profNome)}
-                            </div>
-                        </div>`;
                 });
             }
 
             h += `<td class="border p-1 align-top min-h-[50px]">${cellContent}</td>`;
         }
-
         h += `</tr>`;
     });
 
+    // 3. Renderização Final
     document.getElementById('gradeTurmaRender').innerHTML = h + "</tbody></table></div>";
 }
 
