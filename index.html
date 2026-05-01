@@ -2098,7 +2098,10 @@ function gerarGrade() {
         return;
     }
 
-    const profNormalizado = (typeof traduzirProfessor === "function") ? traduzirProfessor(prof) : prof;
+    const profNormalizado = (typeof traduzirProfessor === "function")
+        ? traduzirProfessor(prof)
+        : prof;
+
     const [y, w] = week.split('-W').map(Number);
     const start = getStartOfWeek(w, y);
 
@@ -2106,13 +2109,15 @@ function gerarGrade() {
     end.setDate(end.getDate() + 6);
 
     const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
     let aulasPorDia = Array(6).fill(0);
     let horasPermanencia = Array(6).fill(0);
     let observacoes = [];
 
-    // 🔴 MAPA COM REGRA DE PRIORIDADE
-    const mapaAulasSemana = {};
-    const aulasOrdenadasParaPermanencia = [[], [], [], [], [], []];
+    // =========================================================
+    // 🔴 PASSO 1 — MAPA GLOBAL (RESOLVE CONFLITO PRIMEIRO)
+    // =========================================================
+    const mapaGlobal = {};
 
     Object.keys(dataStore).forEach(tId => {
         const turma = dataStore[tId];
@@ -2122,56 +2127,42 @@ function gerarGrade() {
 
             disc.sch.forEach(aula => {
                 if (!aula.dtObj || !aula.time) return;
+                if (aula.dtObj < start || aula.dtObj > end) return;
 
-                const profAulaTrad = (typeof traduzirProfessor === "function")
-                    ? traduzirProfessor(aula.prof)
-                    : aula.prof;
+                const dataISO = aula.dtObj.toISOString().split('T')[0];
+                const horaPad = aula.time.split(' - ')[0].trim().padStart(5, '0');
+                const chave = `${dataISO}_${horaPad}`;
 
-                if (profAulaTrad === profNormalizado && aula.dtObj >= start && aula.dtObj <= end) {
+                if (!mapaGlobal[chave]) {
+                    mapaGlobal[chave] = [];
+                }
 
-                    const dataISO = aula.dtObj.toISOString().split('T')[0];
-                    const horaPad = aula.time.split(' - ')[0].trim().padStart(5, '0');
-                    const chave = `${dataISO}_${horaPad}`;
+                const lista = mapaGlobal[chave];
+                const ehManual = aula.tipo === "MANUAL";
 
-                    if (!mapaAulasSemana[chave]) {
-                        mapaAulasSemana[chave] = [];
-                    }
+                if (ehManual) {
+                    // 🔴 manual domina o slot inteiro
+                    mapaGlobal[chave] = [{
+                        turmaNome: turma.name,
+                        discNome: disc.name,
+                        tag: aula.tag,
+                        prof: aula.prof,
+                        tipo: "MANUAL",
+                        dtObj: new Date(aula.dtObj),
+                        time: aula.time
+                    }];
+                } else {
+                    const jaTemManual = lista.some(a => a.tipo === "MANUAL");
 
-                    const lista = mapaAulasSemana[chave];
-                    const ehManual = aula.tipo === "MANUAL";
-
-                    if (ehManual) {
-                        // 🔴 manual sobrescreve tudo
-                        mapaAulasSemana[chave] = [{
+                    if (!jaTemManual) {
+                        mapaGlobal[chave].push({
                             turmaNome: turma.name,
                             discNome: disc.name,
                             tag: aula.tag,
-                            tipo: "MANUAL"
-                        }];
-                    } else {
-                        // 🔴 só adiciona automático se NÃO houver manual
-                        const jaTemManual = lista.some(a => a.tipo === "MANUAL");
-
-                        if (!jaTemManual) {
-                            mapaAulasSemana[chave].push({
-                                turmaNome: turma.name,
-                                discNome: disc.name,
-                                tag: aula.tag,
-                                tipo: aula.tipo || "AUTO"
-                            });
-                        }
-                    }
-
-                    // 🔴 permanência (mantém lógica)
-                    const diaSemanaIndex = (aula.dtObj.getDay() + 6) % 7;
-                    if (diaSemanaIndex < 6) {
-                        const [iniH, iniM] = aula.time.split(' - ')[0].split(':').map(Number);
-                        const [fimH, fimM] = aula.time.split(' - ')[1].split(':').map(Number);
-
-                        aulasOrdenadasParaPermanencia[diaSemanaIndex].push({
-                            inicioDec: iniH + (iniM / 60),
-                            fimDec: fimH + (fimM / 60),
-                            dt: new Date(aula.dtObj)
+                            prof: aula.prof,
+                            tipo: aula.tipo || "AUTO",
+                            dtObj: new Date(aula.dtObj),
+                            time: aula.time
                         });
                     }
                 }
@@ -2179,37 +2170,83 @@ function gerarGrade() {
         });
     });
 
-    // 🔴 CONTAGEM CORRETA POR DIA (APÓS PRIORIDADE)
-    Object.keys(mapaAulasSemana).forEach(chave => {
-        const [dataISO] = chave.split('_');
-        const dt = new Date(dataISO + "T00:00:00");
-        const diaSemanaIndex = (dt.getDay() + 6) % 7;
+    // =========================================================
+    // 🔴 PASSO 2 — FILTRA POR PROFESSOR (APÓS LIMPEZA GLOBAL)
+    // =========================================================
+    const mapaAulasSemana = {};
 
-        if (diaSemanaIndex < 6) {
-            aulasPorDia[diaSemanaIndex]++;
+    Object.keys(mapaGlobal).forEach(chave => {
+        const aulas = mapaGlobal[chave];
+
+        const filtradas = aulas.filter(a => {
+            const profTrad = (typeof traduzirProfessor === "function")
+                ? traduzirProfessor(a.prof)
+                : a.prof;
+
+            return profTrad === profNormalizado;
+        });
+
+        if (filtradas.length > 0) {
+            mapaAulasSemana[chave] = filtradas;
         }
     });
 
-    // --- RENDER ---
-    let h = `<div class="overflow-x-auto"><table class="tableGS bg-white w-full border-collapse border border-gray-300" id="tableGS">
-                <thead><tr class="bg-[#15803d] text-white"><th class="w-[100px] p-2 text-[10px] border">HORÁRIO</th>`;
+    // =========================================================
+    // 🔴 PASSO 3 — CONTAGEM E PERMANÊNCIA
+    // =========================================================
+    const aulasOrdenadasParaPermanencia = [[], [], [], [], [], []];
+
+    Object.keys(mapaAulasSemana).forEach(chave => {
+        const aulas = mapaAulasSemana[chave];
+
+        aulas.forEach(a => {
+            const dt = new Date(a.dtObj);
+            const diaSemanaIndex = (dt.getDay() + 6) % 7;
+
+            if (diaSemanaIndex < 6) {
+                aulasPorDia[diaSemanaIndex]++;
+
+                const [iniH, iniM] = a.time.split(' - ')[0].split(':').map(Number);
+                const [fimH, fimM] = a.time.split(' - ')[1].split(':').map(Number);
+
+                aulasOrdenadasParaPermanencia[diaSemanaIndex].push({
+                    inicioDec: iniH + (iniM / 60),
+                    fimDec: fimH + (fimM / 60),
+                    dt: dt
+                });
+            }
+        });
+    });
+
+    // =========================================================
+    // 🔴 PASSO 4 — RENDER
+    // =========================================================
+    let h = `<div class="overflow-x-auto"><table class="tableGS bg-white w-full border-collapse border border-gray-300">
+    <thead><tr class="bg-[#15803d] text-white">
+    <th class="w-[100px] p-2 text-[10px] border">HORÁRIO</th>`;
 
     for (let i = 0; i < 6; i++) {
         const dtHead = new Date(start);
         dtHead.setDate(dtHead.getDate() + i);
-        h += `<th class="w-[14%] p-2 border text-[10px]">${dias[i].toUpperCase()}<br>
-              <span class="opacity-80 font-normal">${dtHead.toLocaleDateString('pt-BR').slice(0, 5)}</span></th>`;
+
+        h += `<th class="w-[14%] p-2 border text-[10px]">
+        ${dias[i].toUpperCase()}<br>
+        <span class="opacity-80 font-normal">${dtHead.toLocaleDateString('pt-BR').slice(0, 5)}</span>
+        </th>`;
     }
+
     h += `</tr></thead><tbody>`;
 
     GABARITO.forEach(slot => {
         if (slot.t === "intervalo") {
             h += `<tr class="bg-gray-100 italic text-gray-500 text-[10px] text-center">
-                    <td class="border p-1">${slot.h}</td><td colspan="6" class="border p-1">${slot.l}</td></tr>`;
+            <td class="border p-1">${slot.h}</td>
+            <td colspan="6" class="border p-1">${slot.l}</td></tr>`;
             return;
         }
 
         const horaSlotPad = slot.h.split(' - ')[0].padStart(5, '0');
+
         h += `<tr><td class="bg-gray-50 font-bold border p-2 text-[10px] text-center">${slot.h}</td>`;
 
         for (let i = 0; i < 6; i++) {
@@ -2220,17 +2257,18 @@ function gerarGrade() {
             const chaveBusca = `${dataISO}_${horaSlotPad}`;
 
             let cellContent = "";
-            const aulasEncontradas = mapaAulasSemana[chaveBusca];
 
-            if (aulasEncontradas) {
-                aulasEncontradas.forEach(a => {
+            const aulas = mapaAulasSemana[chaveBusca];
+
+            if (aulas) {
+                aulas.forEach(a => {
                     const status = TRADUCAO[a.tag] || { class: "bg-green-50 border-green-200" };
 
                     cellContent += `
-                        <div class="p-1 mb-1 rounded border-l-4 ${status.class} shadow-sm">
-                            <div class="font-bold text-[9px] text-gray-800">${a.turmaNome}</div>
-                            <div class="text-[8px] text-blue-800 uppercase border-t border-blue-100 mt-1">${a.discNome}</div>
-                        </div>`;
+                    <div class="p-1 mb-1 rounded border-l-4 ${status.class}">
+                        <div class="font-bold text-[9px]">${a.turmaNome}</div>
+                        <div class="text-[8px] uppercase border-t mt-1">${a.discNome}</div>
+                    </div>`;
                 });
             }
 
@@ -2240,7 +2278,9 @@ function gerarGrade() {
         h += `</tr>`;
     });
 
-    // --- PERMANÊNCIA ---
+    // =========================================================
+    // 🔴 PERMANÊNCIA
+    // =========================================================
     let ultimaAulaDoDiaAnterior = null;
 
     for (let i = 0; i < 6; i++) {
@@ -2277,32 +2317,32 @@ function gerarGrade() {
         }
     }
 
-    // --- RODAPÉ ---
-    h += `<tr class="bg-gray-50 font-bold text-[10px]"><td class="border p-2">AULAS / DIA</td>`;
-    aulasPorDia.forEach(c => h += `<td class="border p-2 text-center">${c}</td>`);
+    // =========================================================
+    // 🔴 RODAPÉ
+    // =========================================================
+    h += `<tr class="bg-gray-50 font-bold text-[10px]"><td>AULAS / DIA</td>`;
+    aulasPorDia.forEach(c => h += `<td class="text-center">${c}</td>`);
     h += `</tr>`;
 
-    h += `<tr class="bg-blue-50 font-bold text-[10px]"><td class="border p-2">PERMANÊNCIA</td>`;
-    horasPermanencia.forEach(v => h += `<td class="border p-2 text-center text-blue-700">${v}h</td>`);
+    h += `<tr class="bg-blue-50 font-bold text-[10px]"><td>PERMANÊNCIA</td>`;
+    horasPermanencia.forEach(v => h += `<td class="text-center">${v}h</td>`);
     h += `</tr>`;
 
     const totalSemana = aulasPorDia.reduce((a, b) => a + b, 0);
 
-    h += `<tr class="bg-green-100 font-black text-xs text-green-900 uppercase">
-            <td colspan="2" class="p-3 border">Total:</td>
-            <td colspan="5" class="p-3 border">${totalSemana} Aulas</td>
-          </tr>`;
+    h += `<tr class="bg-green-100 font-bold">
+        <td colspan="2">Total:</td>
+        <td colspan="5">${totalSemana} Aulas</td>
+    </tr>`;
 
     const obsTexto = observacoes.length > 0
         ? observacoes.join(' | ')
         : "Interjornada regular.";
 
     h += `<tr class="text-[9px] bg-yellow-50">
-            <td class="font-bold p-2 border">ALERTAS:</td>
-            <td colspan="6" class="p-2 border ${observacoes.length > 0 ? 'text-red-600' : 'text-gray-500'}">
-                ${obsTexto}
-            </td>
-          </tr></tbody></table></div>`;
+        <td>ALERTAS:</td>
+        <td colspan="6">${obsTexto}</td>
+    </tr></tbody></table></div>`;
 
     document.getElementById('gradeRender').innerHTML = h;
 }
