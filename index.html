@@ -2234,21 +2234,22 @@ function gerarGrade() {
 
         aulas.forEach(a => {
             const dt = new Date(a.dtObj);
-            const dia = dt.getDay();
+           const dia = dt.getDay();
 
 if (dia >= 1 && dia <= 6) {
-    const diaSemanaIndex = dia - 1; {
-                aulasPorDia[diaSemanaIndex]++;
+    const diaSemanaIndex = dia - 1;
 
-                const [iniH, iniM] = a.time.split(' - ')[0].split(':').map(Number);
-                const [fimH, fimM] = a.time.split(' - ')[1].split(':').map(Number);
+    aulasPorDia[diaSemanaIndex]++;
 
-                aulasOrdenadasParaPermanencia[diaSemanaIndex].push({
-                    inicioDec: iniH + (iniM / 60),
-                    fimDec: fimH + (fimM / 60),
-                    dt: dt
-                });
-            }
+    const [iniH, iniM] = a.time.split(' - ')[0].split(':').map(Number);
+    const [fimH, fimM] = a.time.split(' - ')[1].split(':').map(Number);
+
+    aulasOrdenadasParaPermanencia[diaSemanaIndex].push({
+        inicioDec: iniH + (iniM / 60),
+        fimDec: fimH + (fimM / 60),
+        dt: dt
+    });
+}
         });
     });
 
