@@ -1344,16 +1344,20 @@ function gerarFuturoComBase() {
             const moldes = disc.sch.filter(s => s.tipo === "MOLDE");
             const manuais = disc.sch.filter(s => s.tipo === "MANUAL");
 
-            // 🔴 DESCOBRE A ÚLTIMA DATA MANUAL
+            // 🔴 Descobre última data manual
             let ultimaDataManual = null;
-
             if (manuais.length > 0) {
                 ultimaDataManual = new Date(
                     Math.max(...manuais.map(m => new Date(m.dtObj)))
                 );
             }
 
-            // mantém só os manuais inicialmente
+            // 🔴 Mapa de prioridade (manual vence)
+            const mapaManual = new Set(
+                manuais.map(m => `${m.date}_${m.time}`)
+            );
+
+            // mantém só manuais inicialmente
             disc.sch = [...manuais];
 
             moldes.forEach(m => {
@@ -1364,16 +1368,12 @@ function gerarFuturoComBase() {
                 let tipoSabado = null;
                 let feriasRef = [];
 
-                // INTEGRADO
                 if (partes[1] === 'int') {
                     limites = cal.limites.integrado;
                     diaRef = mapaDias[normalizarDia(partes[2])];
                     tipoSabado = "integrado";
                     feriasRef = cal.ferias_int || [];
-                }
-
-                // SUPERIOR
-                else if (partes[1] === 'sup') {
+                } else if (partes[1] === 'sup') {
                     const semestre = partes[2];
                     limites = cal.limites.superior?.[semestre];
                     diaRef = mapaDias[normalizarDia(partes[3])];
@@ -1391,7 +1391,7 @@ function gerarFuturoComBase() {
 
                 while (curr <= fim) {
 
-                    // 🔥 NÃO PROJETAR ANTES OU IGUAL AO ÚLTIMO MANUAL
+                    // não gerar antes do último manual
                     if (ultimaDataManual && curr <= ultimaDataManual) {
                         curr.setDate(curr.getDate() + 1);
                         continue;
@@ -1403,12 +1403,10 @@ function gerarFuturoComBase() {
                     let deveCriar = false;
                     let tagEspecial = m.tag;
 
-                    // dia normal
                     if (diaAtual === diaRef) {
                         deveCriar = true;
                     }
 
-                    // sábado letivo
                     const configSabado = (cal.sabados || []).find(s =>
                         s.data === isoData &&
                         s.tipo === tipoSabado &&
@@ -1436,13 +1434,21 @@ function gerarFuturoComBase() {
                             const dataFormatada =
                                 curr.toLocaleDateString('pt-BR');
 
-                            // ✅ VALIDAÇÃO CORRETA: DATA + HORÁRIO
-                            const jaExisteConflito = disc.sch.some(aula =>
+                            const chave = `${dataFormatada}_${m.time}`;
+
+                            // 🔴 REGRA: se já existe manual nesse horário → NÃO cria projetado
+                            if (mapaManual.has(chave)) {
+                                curr.setDate(curr.getDate() + 1);
+                                continue;
+                            }
+
+                            // 🔴 evita duplicação entre projetadas
+                            const jaExiste = disc.sch.some(aula =>
                                 aula.date === dataFormatada &&
                                 aula.time === m.time
                             );
 
-                            if (!jaExisteConflito) {
+                            if (!jaExiste) {
                                 disc.sch.push({
                                     date: dataFormatada,
                                     dtObj: new Date(curr),
@@ -1462,6 +1468,14 @@ function gerarFuturoComBase() {
                 }
             });
 
+            // 🔴 FAIL-SAFE FINAL (manual sempre vence)
+            disc.sch = disc.sch.filter(aula => {
+                if (aula.tipo === "MANUAL") return true;
+
+                const chave = `${aula.date}_${aula.time}`;
+                return !mapaManual.has(chave);
+            });
+
             // ordenação final
             disc.sch.sort((a, b) => {
                 if (a.dtObj.getTime() !== b.dtObj.getTime()) {
@@ -1472,7 +1486,7 @@ function gerarFuturoComBase() {
         });
     });
 
-    console.log("✅ Projeção finalizada!");
+    console.log("✅ Projeção finalizada (manual sobrescreve projetado)!");
 }
 
 // Função auxiliar para clareza do código
