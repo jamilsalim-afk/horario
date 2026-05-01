@@ -2868,7 +2868,6 @@ function gerarGradeTurma() {
     const start = getStartOfWeek(w, y);
     const dias = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
-    // 1. Início da Tabela
     let h = `
     <div class="overflow-x-auto shadow-md rounded-lg">
         <table class="tableGS bg-white w-full border-collapse" id="tableGSTurma">
@@ -2888,8 +2887,8 @@ function gerarGradeTurma() {
 
     h += `</tr></thead><tbody>`;
 
-    // 2. Renderização das Linhas baseadas no GABARITO (Horários da Instituição)
     GABARITO.forEach(slot => {
+
         if (slot.t === "intervalo") {
             h += `
                 <tr class="bg-gray-100 italic text-gray-500 text-[10px] text-center">
@@ -2899,19 +2898,21 @@ function gerarGradeTurma() {
             return;
         }
 
-        // Normalização do horário para comparação (ex: 07:30)
         const horaSlotPad = slot.h.split(' - ')[0].trim().padStart(5, '0');
 
         h += `<tr><td class="bg-gray-50 font-bold border p-2 text-[10px] text-center">${slot.h}</td>`;
 
-        // Loop pelos 6 dias da semana (Segunda a Sábado)
         for (let i = 0; i < 6; i++) {
             const dtRef = new Date(start);
             dtRef.setDate(dtRef.getDate() + i);
+
             let cellContent = "";
 
             if (dataStore[tId]) {
-                // Varre as disciplinas da turma selecionada
+
+                // 🔴 coleta todas as aulas do slot
+                const aulasNoSlot = [];
+
                 Object.keys(dataStore[tId].discs).forEach(dId => {
                     const discObj = dataStore[tId].discs[dId];
 
@@ -2920,37 +2921,53 @@ function gerarGradeTurma() {
 
                         const horaAulaPad = aula.time.split(' - ')[0].trim().padStart(5, '0');
 
-                        // Comparação de Data e Hora
-                        if (aula.dtObj.getDate() === dtRef.getDate() &&
+                        if (
+                            aula.dtObj.getDate() === dtRef.getDate() &&
                             aula.dtObj.getMonth() === dtRef.getMonth() &&
                             aula.dtObj.getFullYear() === dtRef.getFullYear() &&
-                            horaAulaPad === horaSlotPad) {
-
-                            const status = TRADUCAO[aula.tag] || { class: "bg-green-50 border-green-200" };
-                            const profNome = (typeof traduzirProfessor === "function") 
-                                ? traduzirProfessor(aula.prof) 
-                                : aula.prof;
-
-                            cellContent += `
-                                <div class="p-1 mb-1 rounded border-l-4 shadow-sm ${status.class}">
-                                    <div class="font-black text-[9px] text-gray-800 leading-tight uppercase">
-                                        ${discObj.name}
-                                    </div>
-                                    <div class="border-t border-gray-200 mt-1 pt-1 italic text-[8px] text-blue-800">
-                                        ${getPrimeiroNome(profNome)}
-                                    </div>
-                                </div>`;
+                            horaAulaPad === horaSlotPad
+                        ) {
+                            aulasNoSlot.push({ aula, discObj });
                         }
                     });
+                });
+
+                // 🔴 PRIORIDADE: manual vence
+                let aulasFiltradas = [];
+                const manuais = aulasNoSlot.filter(x => x.aula.tipo === "MANUAL");
+
+                if (manuais.length > 0) {
+                    aulasFiltradas = manuais;
+                } else {
+                    aulasFiltradas = aulasNoSlot;
+                }
+
+                // 🔴 renderização final
+                aulasFiltradas.forEach(({ aula, discObj }) => {
+                    const status = TRADUCAO[aula.tag] || { class: "bg-green-50 border-green-200" };
+
+                    const profNome = (typeof traduzirProfessor === "function")
+                        ? traduzirProfessor(aula.prof)
+                        : aula.prof;
+
+                    cellContent += `
+                        <div class="p-1 mb-1 rounded border-l-4 shadow-sm ${status.class}">
+                            <div class="font-black text-[9px] text-gray-800 leading-tight uppercase">
+                                ${discObj.name}
+                            </div>
+                            <div class="border-t border-gray-200 mt-1 pt-1 italic text-[8px] text-blue-800">
+                                ${getPrimeiroNome(profNome)}
+                            </div>
+                        </div>`;
                 });
             }
 
             h += `<td class="border p-1 align-top min-h-[50px]">${cellContent}</td>`;
         }
+
         h += `</tr>`;
     });
 
-    // 3. Renderização Final
     document.getElementById('gradeTurmaRender').innerHTML = h + "</tbody></table></div>";
 }
 
