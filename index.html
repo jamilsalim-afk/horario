@@ -2101,8 +2101,7 @@ function gerarGrade() {
     const profNormalizado = (typeof traduzirProfessor === "function") ? traduzirProfessor(prof) : prof;
     const [y, w] = week.split('-W').map(Number);
     const start = getStartOfWeek(w, y);
-    
-    // Fim da semana (Sábado) para pré-filtragem
+
     const end = new Date(start);
     end.setDate(end.getDate() + 6);
 
@@ -2111,57 +2110,90 @@ function gerarGrade() {
     let horasPermanencia = Array(6).fill(0);
     let observacoes = [];
 
-    // --- PASSO 1: PRÉ-FILTRAGEM OTIMIZADA ---
-    // Em vez de buscar no loop da tabela, criamos um "Mapa de Aulas" do professor na semana
-    // Chave: "DATA_HORA" -> Valor: { turma, disciplina, tag }
+    // 🔴 MAPA COM REGRA DE PRIORIDADE
     const mapaAulasSemana = {};
-    const aulasOrdenadasParaPermanencia = [[], [], [], [], [], []]; // Indexado por dia da semana (0-5)
+    const aulasOrdenadasParaPermanencia = [[], [], [], [], [], []];
 
     Object.keys(dataStore).forEach(tId => {
         const turma = dataStore[tId];
+
         Object.keys(turma.discs).forEach(dId => {
             const disc = turma.discs[dId];
+
             disc.sch.forEach(aula => {
                 if (!aula.dtObj || !aula.time) return;
 
-                // Pré-filtro: A aula é deste professor e está dentro desta semana?
-                const profAulaTrad = (typeof traduzirProfessor === "function") ? traduzirProfessor(aula.prof) : aula.prof;
-                
+                const profAulaTrad = (typeof traduzirProfessor === "function")
+                    ? traduzirProfessor(aula.prof)
+                    : aula.prof;
+
                 if (profAulaTrad === profNormalizado && aula.dtObj >= start && aula.dtObj <= end) {
-                    
+
                     const dataISO = aula.dtObj.toISOString().split('T')[0];
                     const horaPad = aula.time.split(' - ')[0].trim().padStart(5, '0');
                     const chave = `${dataISO}_${horaPad}`;
 
-                    if (!mapaAulasSemana[chave]) mapaAulasSemana[chave] = [];
-                    
-                    mapaAulasSemana[chave].push({
-                        turmaNome: turma.name,
-                        discNome: disc.name,
-                        tag: aula.tag
-                    });
+                    if (!mapaAulasSemana[chave]) {
+                        mapaAulasSemana[chave] = [];
+                    }
 
-                    // Para cálculo de permanência posterior
-                    const diaSemanaIndex = (aula.dtObj.getDay() + 6) % 7; // Ajuste para Seg=0
+                    const lista = mapaAulasSemana[chave];
+                    const ehManual = aula.tipo === "MANUAL";
+
+                    if (ehManual) {
+                        // 🔴 manual sobrescreve tudo
+                        mapaAulasSemana[chave] = [{
+                            turmaNome: turma.name,
+                            discNome: disc.name,
+                            tag: aula.tag,
+                            tipo: "MANUAL"
+                        }];
+                    } else {
+                        // 🔴 só adiciona automático se NÃO houver manual
+                        const jaTemManual = lista.some(a => a.tipo === "MANUAL");
+
+                        if (!jaTemManual) {
+                            mapaAulasSemana[chave].push({
+                                turmaNome: turma.name,
+                                discNome: disc.name,
+                                tag: aula.tag,
+                                tipo: aula.tipo || "AUTO"
+                            });
+                        }
+                    }
+
+                    // 🔴 permanência (mantém lógica)
+                    const diaSemanaIndex = (aula.dtObj.getDay() + 6) % 7;
                     if (diaSemanaIndex < 6) {
                         const [iniH, iniM] = aula.time.split(' - ')[0].split(':').map(Number);
                         const [fimH, fimM] = aula.time.split(' - ')[1].split(':').map(Number);
+
                         aulasOrdenadasParaPermanencia[diaSemanaIndex].push({
                             inicioDec: iniH + (iniM / 60),
                             fimDec: fimH + (fimM / 60),
                             dt: new Date(aula.dtObj)
                         });
-                        aulasPorDia[diaSemanaIndex]++;
                     }
                 }
             });
         });
     });
 
-    // --- PASSO 2: RENDERIZAÇÃO DA TABELA (RÁPIDA) ---
+    // 🔴 CONTAGEM CORRETA POR DIA (APÓS PRIORIDADE)
+    Object.keys(mapaAulasSemana).forEach(chave => {
+        const [dataISO] = chave.split('_');
+        const dt = new Date(dataISO + "T00:00:00");
+        const diaSemanaIndex = (dt.getDay() + 6) % 7;
+
+        if (diaSemanaIndex < 6) {
+            aulasPorDia[diaSemanaIndex]++;
+        }
+    });
+
+    // --- RENDER ---
     let h = `<div class="overflow-x-auto"><table class="tableGS bg-white w-full border-collapse border border-gray-300" id="tableGS">
                 <thead><tr class="bg-[#15803d] text-white"><th class="w-[100px] p-2 text-[10px] border">HORÁRIO</th>`;
-    
+
     for (let i = 0; i < 6; i++) {
         const dtHead = new Date(start);
         dtHead.setDate(dtHead.getDate() + i);
@@ -2183,15 +2215,17 @@ function gerarGrade() {
         for (let i = 0; i < 6; i++) {
             const dtRef = new Date(start);
             dtRef.setDate(dtRef.getDate() + i);
+
             const dataISO = dtRef.toISOString().split('T')[0];
             const chaveBusca = `${dataISO}_${horaSlotPad}`;
-            
+
             let cellContent = "";
             const aulasEncontradas = mapaAulasSemana[chaveBusca];
 
             if (aulasEncontradas) {
                 aulasEncontradas.forEach(a => {
                     const status = TRADUCAO[a.tag] || { class: "bg-green-50 border-green-200" };
+
                     cellContent += `
                         <div class="p-1 mb-1 rounded border-l-4 ${status.class} shadow-sm">
                             <div class="font-bold text-[9px] text-gray-800">${a.turmaNome}</div>
@@ -2199,36 +2233,44 @@ function gerarGrade() {
                         </div>`;
                 });
             }
+
             h += `<td class="border p-1 align-top min-h-[50px]">${cellContent}</td>`;
         }
+
         h += `</tr>`;
     });
 
-    // --- PASSO 3: CÁLCULO DE PERMANÊNCIA (USANDO O FILTRO PRONTO) ---
+    // --- PERMANÊNCIA ---
     let ultimaAulaDoDiaAnterior = null;
+
     for (let i = 0; i < 6; i++) {
         let dia = aulasOrdenadasParaPermanencia[i];
+
         if (dia.length > 0) {
             dia.sort((a, b) => a.inicioDec - b.inicioDec);
+
             let primeira = dia[0];
             let ultima = dia[dia.length - 1];
             let diff = ultima.fimDec - primeira.inicioDec;
 
             if (primeira.inicioDec <= 12 && ultima.fimDec >= 14) diff -= 2;
+
             horasPermanencia[i] = Math.max(0, diff).toFixed(1);
 
-            // Interjornada
             if (ultimaAulaDoDiaAnterior) {
                 const fimAnt = new Date(ultimaAulaDoDiaAnterior.dt);
                 fimAnt.setHours(Math.floor(ultimaAulaDoDiaAnterior.fimDec), (ultimaAulaDoDiaAnterior.fimDec % 1) * 60);
+
                 const iniAtu = new Date(primeira.dt);
                 iniAtu.setHours(Math.floor(primeira.inicioDec), (primeira.inicioDec % 1) * 60);
-                
+
                 const diffInter = (iniAtu - fimAnt) / (1000 * 60 * 60);
+
                 if (diffInter < 11 && diffInter > 0) {
                     observacoes.push(`${dias[i]}: ${diffInter.toFixed(1)}h de intervalo`);
                 }
             }
+
             ultimaAulaDoDiaAnterior = ultima;
         } else {
             ultimaAulaDoDiaAnterior = null;
@@ -2236,20 +2278,30 @@ function gerarGrade() {
     }
 
     // --- RODAPÉ ---
-    // (O resto do seu código de rodapé permanece igual, injetando aulasPorDia e horasPermanencia)
     h += `<tr class="bg-gray-50 font-bold text-[10px]"><td class="border p-2">AULAS / DIA</td>`;
     aulasPorDia.forEach(c => h += `<td class="border p-2 text-center">${c}</td>`);
-    h += `</tr><tr class="bg-blue-50 font-bold text-[10px]"><td class="border p-2">PERMANÊNCIA</td>`;
+    h += `</tr>`;
+
+    h += `<tr class="bg-blue-50 font-bold text-[10px]"><td class="border p-2">PERMANÊNCIA</td>`;
     horasPermanencia.forEach(v => h += `<td class="border p-2 text-center text-blue-700">${v}h</td>`);
     h += `</tr>`;
 
     const totalSemana = aulasPorDia.reduce((a, b) => a + b, 0);
-    h += `<tr class="bg-green-100 font-black text-xs text-green-900 uppercase">
-            <td colspan="2" class="p-3 border">Total:</td><td colspan="5" class="p-3 border">${totalSemana} Aulas</td></tr>`;
 
-    const obsTexto = observacoes.length > 0 ? observacoes.join(' | ') : "Interjornada regular.";
-    h += `<tr class="text-[9px] bg-yellow-50"><td class="font-bold p-2 border">ALERTAS:</td>
-          <td colspan="6" class="p-2 border ${observacoes.length > 0 ? 'text-red-600' : 'text-gray-500'}">${obsTexto}</td>
+    h += `<tr class="bg-green-100 font-black text-xs text-green-900 uppercase">
+            <td colspan="2" class="p-3 border">Total:</td>
+            <td colspan="5" class="p-3 border">${totalSemana} Aulas</td>
+          </tr>`;
+
+    const obsTexto = observacoes.length > 0
+        ? observacoes.join(' | ')
+        : "Interjornada regular.";
+
+    h += `<tr class="text-[9px] bg-yellow-50">
+            <td class="font-bold p-2 border">ALERTAS:</td>
+            <td colspan="6" class="p-2 border ${observacoes.length > 0 ? 'text-red-600' : 'text-gray-500'}">
+                ${obsTexto}
+            </td>
           </tr></tbody></table></div>`;
 
     document.getElementById('gradeRender').innerHTML = h;
