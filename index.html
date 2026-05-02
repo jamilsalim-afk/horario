@@ -1358,20 +1358,33 @@ function gerarFuturoComBase() {
     Object.keys(dataStore).forEach(tId => {
         const turma = dataStore[tId];
 
+        // 🔥 MAPA GLOBAL DA TURMA (controle de conflito real)
+        const mapaTurma = new Set();
+
+        // 🔥 PRIMEIRO PASSO: limpar AUTO e montar mapa com MANUAL
+        Object.values(turma.discs).forEach(disc => {
+
+            // remove AUTO antigo
+            disc.sch = disc.sch.filter(s => s.tipo !== "AUTO");
+
+            disc.sch.forEach(a => {
+                if (a.tipo === "MANUAL" && a.dtObj) {
+                    const iso = a.dtObj.toISOString().split('T')[0];
+                    mapaTurma.add(`${iso}|${a.time}`);
+                }
+            });
+        });
+
+        // 🔁 AGORA PROCESSA DISCIPLINA POR DISCIPLINA
         Object.keys(turma.discs).forEach(dId => {
             const disc = turma.discs[dId];
-
-            // 🔥 PASSO 1 — LIMPA APENAS AUTO (ESSENCIAL)
-            disc.sch = disc.sch.filter(s => s.tipo !== "AUTO");
 
             const moldes = disc.sch.filter(s => s.tipo === "MOLDE");
             const manuais = disc.sch.filter(s => s.tipo === "MANUAL");
 
-            if (manuais.length === 0) {
-                return; // sem base manual → não gera
-            }
+            if (manuais.length === 0) return;
 
-            // 🔵 normaliza datas
+            // normaliza dtObj
             manuais.forEach(m => {
                 if (!m.dtObj && m.date) {
                     const p = m.date.split('/');
@@ -1379,16 +1392,9 @@ function gerarFuturoComBase() {
                 }
             });
 
-            // 🔴 intervalo manual
-            const datas = manuais.map(m => m.dtObj.getTime());
-            const ultimaData = new Date(Math.max(...datas));
-
-            // 🔥 mapa de existentes (manual)
-            const mapaExistentes = new Set(
-                manuais.map(m => {
-                    const iso = m.dtObj.toISOString().split('T')[0];
-                    return `${iso}|${m.time}`;
-                })
+            // última data manual
+            const ultimaData = new Date(
+                Math.max(...manuais.map(m => m.dtObj.getTime()))
             );
 
             moldes.forEach(m => {
@@ -1419,7 +1425,7 @@ function gerarFuturoComBase() {
 
                 while (curr <= fim) {
 
-                    // 🔴 REGRA: só depois da última manual
+                    // 🔴 REGRA ABSOLUTA: só depois da última manual
                     if (curr <= ultimaData) {
                         curr.setDate(curr.getDate() + 1);
                         continue;
@@ -1431,10 +1437,12 @@ function gerarFuturoComBase() {
                     let deveCriar = false;
                     let tagEspecial = m.tag;
 
+                    // dia normal
                     if (diaAtual === diaRef) {
                         deveCriar = true;
                     }
 
+                    // sábado letivo
                     const configSabado = (cal.sabados || []).find(s =>
                         s.data === isoData &&
                         s.tipo === tipoSabado &&
@@ -1448,20 +1456,23 @@ function gerarFuturoComBase() {
 
                     if (deveCriar) {
 
-                        const ehFeriado = (cal.feriados || []).includes(isoData);
+                        const ehFeriado =
+                            (cal.feriados || []).includes(isoData);
 
-                        const estaEmFerias = feriasRef.some(f =>
-                            isoData >= f.inicio && isoData <= f.fim
-                        );
+                        const estaEmFerias =
+                            feriasRef.some(f =>
+                                isoData >= f.inicio &&
+                                isoData <= f.fim
+                            );
 
                         if (!ehFeriado && !estaEmFerias) {
 
                             const chave = `${isoData}|${m.time}`;
 
-                            // 🔴 evita conflito com manual
-                            if (!mapaExistentes.has(chave)) {
+                            // 🔥 REGRA FINAL: bloqueio global da turma
+                            if (!mapaTurma.has(chave)) {
 
-                                mapaExistentes.add(chave);
+                                mapaTurma.add(chave);
 
                                 disc.sch.push({
                                     tipo: "AUTO",
@@ -1484,7 +1495,7 @@ function gerarFuturoComBase() {
                 }
             });
 
-            // 🔵 ordenação segura
+            // ordenação segura
             disc.sch.sort((a, b) => {
                 const tA = a.dtObj ? a.dtObj.getTime() : 0;
                 const tB = b.dtObj ? b.dtObj.getTime() : 0;
