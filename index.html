@@ -1469,14 +1469,27 @@ function gerarFuturoComBase() {
                     curr.setDate(curr.getDate() + 1);
                 }
             });
-
+disc.sch.forEach(item => {
+    if (!item.dtObj) {
+        if (item.iso) {
+            item.dtObj = new Date(item.iso + "T12:00:00");
+        } else if (item.date) {
+            const partes = item.date.split('/');
+            const iso = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+            item.dtObj = new Date(iso + "T12:00:00");
+            item.iso = iso;
+        }
+    }
+});
             // 🔵 Ordenação final
             disc.sch.sort((a, b) => {
-                if (a.dtObj.getTime() !== b.dtObj.getTime()) {
-                    return a.dtObj - b.dtObj;
-                }
-                return a.time.localeCompare(b.time);
-            });
+    const tA = a.dtObj ? a.dtObj.getTime() : 0;
+    const tB = b.dtObj ? b.dtObj.getTime() : 0;
+
+    if (tA !== tB) return tA - tB;
+
+    return (a.time || "").localeCompare(b.time || "");
+});
         });
     });
 
