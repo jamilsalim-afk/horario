@@ -1361,15 +1361,17 @@ function gerarFuturoComBase() {
         Object.keys(turma.discs).forEach(dId => {
             const disc = turma.discs[dId];
 
+            // 🔥 PASSO 1 — LIMPA APENAS AUTO (ESSENCIAL)
+            disc.sch = disc.sch.filter(s => s.tipo !== "AUTO");
+
             const moldes = disc.sch.filter(s => s.tipo === "MOLDE");
             const manuais = disc.sch.filter(s => s.tipo === "MANUAL");
 
             if (manuais.length === 0) {
-                console.warn("Sem base manual:", dId);
-                return; // 🔴 NÃO GERA NADA sem base manual
+                return; // sem base manual → não gera
             }
 
-            // 🔴 NORMALIZA dtObj
+            // 🔵 normaliza datas
             manuais.forEach(m => {
                 if (!m.dtObj && m.date) {
                     const p = m.date.split('/');
@@ -1379,16 +1381,13 @@ function gerarFuturoComBase() {
 
             // 🔴 intervalo manual
             const datas = manuais.map(m => m.dtObj.getTime());
-            const primeiraData = new Date(Math.min(...datas));
             const ultimaData = new Date(Math.max(...datas));
 
-            // 🔥 mapa de tudo que já existe (manual + auto)
+            // 🔥 mapa de existentes (manual)
             const mapaExistentes = new Set(
-                disc.sch.map(e => {
-                    const iso = e.iso || (e.dtObj
-                        ? e.dtObj.toISOString().split('T')[0]
-                        : null);
-                    return iso ? `${iso}|${e.time}` : null;
+                manuais.map(m => {
+                    const iso = m.dtObj.toISOString().split('T')[0];
+                    return `${iso}|${m.time}`;
                 })
             );
 
@@ -1420,13 +1419,7 @@ function gerarFuturoComBase() {
 
                 while (curr <= fim) {
 
-                    // 🔴 REGRA ABSOLUTA: NÃO TOCAR NO INTERVALO MANUAL
-                    if (curr >= primeiraData && curr <= ultimaData) {
-                        curr.setDate(curr.getDate() + 1);
-                        continue;
-                    }
-
-                    // 🔴 só gera DEPOIS da última data manual
+                    // 🔴 REGRA: só depois da última manual
                     if (curr <= ultimaData) {
                         curr.setDate(curr.getDate() + 1);
                         continue;
@@ -1465,6 +1458,7 @@ function gerarFuturoComBase() {
 
                             const chave = `${isoData}|${m.time}`;
 
+                            // 🔴 evita conflito com manual
                             if (!mapaExistentes.has(chave)) {
 
                                 mapaExistentes.add(chave);
@@ -1490,7 +1484,7 @@ function gerarFuturoComBase() {
                 }
             });
 
-            // ordenação segura
+            // 🔵 ordenação segura
             disc.sch.sort((a, b) => {
                 const tA = a.dtObj ? a.dtObj.getTime() : 0;
                 const tB = b.dtObj ? b.dtObj.getTime() : 0;
