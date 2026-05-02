@@ -1106,7 +1106,7 @@ async function carregarDados() {
                 ? cols[0].toLowerCase()
                 : "";
 
-            // atualiza data
+            // Atualiza data
             if (cols[0] && !primeiraColuna.startsWith("base_")) {
                 lastDate = cols[0].replace(/\./g, '/');
             }
@@ -1166,25 +1166,28 @@ async function carregarDados() {
                     };
                 }
 
-                // 🔥 BASE (MOLDE) - CORREÇÃO AQUI
+                // =========================
+                // 🔥 TRATAMENTO DE MOLDE
+                // =========================
                 if (primeiraColuna.startsWith("base_")) {
 
-                    const lista = dataStore[tId].discs[dId].sch;
+                    const timeAtual = cols[1];
 
-                    // 🔴 chave única do molde (dia base + horário)
-                    const chaveMolde = `${primeiraColuna}|${cols[1]}`;
+                    // 🔴 REMOVE QUALQUER MOLDE NO MESMO SLOT DA TURMA
+                    Object.keys(dataStore[tId].discs).forEach(dKey => {
+                        const discTemp = dataStore[tId].discs[dKey];
 
-                    // 🔥 REMOVE molde anterior conflitante (mesmo slot)
-                    const idxExistente = lista.findIndex(s =>
-                        s.tipo === "MOLDE" &&
-                        `${s.identificador}|${s.time}` === chaveMolde
-                    );
+                        discTemp.sch = discTemp.sch.filter(s => {
+                            return !(
+                                s.tipo === "MOLDE" &&
+                                s.identificador === primeiraColuna &&
+                                s.time === timeAtual
+                            );
+                        });
+                    });
 
-                    if (idxExistente !== -1) {
-                        lista.splice(idxExistente, 1);
-                    }
-
-                    lista.push({
+                    // 🔥 INSERE O NOVO MOLDE (único válido)
+                    dataStore[tId].discs[dId].sch.push({
                         tipo: "MOLDE",
                         identificador: primeiraColuna,
                         time: cols[1],
@@ -1193,6 +1196,9 @@ async function carregarDados() {
                     });
 
                 } else {
+                    // =========================
+                    // 🔵 MANUAL (sem alteração)
+                    // =========================
                     const p = lastDate.split('/');
                     if (p.length !== 3) return;
 
