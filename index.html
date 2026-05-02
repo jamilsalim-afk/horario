@@ -1081,7 +1081,6 @@ async function carregarDados() {
 
         const csv = await obterCSVConsolidado(yearSelected);
 
-        // detectar separador
         const primeiraLinha = csv.split(/\r?\n/)[0];
         const separador = primeiraLinha.includes('\t')
             ? '\t'
@@ -1089,7 +1088,6 @@ async function carregarDados() {
             ? ';'
             : ',';
 
-        // 🔥 usa parser correto
         const rows = parseCSV(csv, separador);
 
         if (rows.length < 2) {
@@ -1122,7 +1120,6 @@ async function carregarDados() {
             turmasHeaders.forEach((tNome, idx) => {
                 const cell = cols[idx + 2];
 
-                // 🔥 corrigido (REMOVIDO length < 3)
                 if (!cell || cell.trim() === "" || cell === "0") return;
 
                 const tId = tNome
@@ -1169,15 +1166,32 @@ async function carregarDados() {
                     };
                 }
 
-                // BASE (molde)
+                // 🔥 BASE (MOLDE) - CORREÇÃO AQUI
                 if (primeiraColuna.startsWith("base_")) {
-                    dataStore[tId].discs[dId].sch.push({
+
+                    const lista = dataStore[tId].discs[dId].sch;
+
+                    // 🔴 chave única do molde (dia base + horário)
+                    const chaveMolde = `${primeiraColuna}|${cols[1]}`;
+
+                    // 🔥 REMOVE molde anterior conflitante (mesmo slot)
+                    const idxExistente = lista.findIndex(s =>
+                        s.tipo === "MOLDE" &&
+                        `${s.identificador}|${s.time}` === chaveMolde
+                    );
+
+                    if (idxExistente !== -1) {
+                        lista.splice(idxExistente, 1);
+                    }
+
+                    lista.push({
                         tipo: "MOLDE",
                         identificador: primeiraColuna,
                         time: cols[1],
                         prof: traduzirProfessor?.(profNome) || profNome,
                         tag
                     });
+
                 } else {
                     const p = lastDate.split('/');
                     if (p.length !== 3) return;
