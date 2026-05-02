@@ -1358,27 +1358,17 @@ function gerarFuturoComBase() {
             const moldes = disc.sch.filter(s => s.tipo === "MOLDE");
             const manuais = disc.sch.filter(s => s.tipo === "MANUAL");
 
-            // 🔵 NORMALIZA ISO nos manuais
-            manuais.forEach(m => {
-                if (!m.iso) {
-                    if (m.dtObj) {
-                        m.iso = new Date(m.dtObj).toISOString().split('T')[0];
-                    } else {
-                        const partes = m.date.split('/');
-                        m.iso = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
-                    }
-                }
-            });
+            // 🔴 DESCOBRE A ÚLTIMA DATA MANUAL
+            let ultimaDataManual = null;
 
-            // 🔥 MAPA DE CONTROLE CORRETO (TODOS EXISTENTES)
-            const mapaExistentes = new Set(
-                disc.sch.map(e => `${e.iso}|${e.time}`)
-            );
+            if (manuais.length > 0) {
+                ultimaDataManual = new Date(
+                    Math.max(...manuais.map(m => new Date(m.dtObj)))
+                );
+            }
 
-            // 🔥 MANUAL continua tendo prioridade
-            const mapaManuais = new Set(
-                manuais.map(m => `${m.iso}|${m.time}`)
-            );
+            // mantém só os manuais inicialmente
+            disc.sch = [...manuais];
 
             moldes.forEach(m => {
                 const partes = m.identificador.toLowerCase().split('_');
@@ -1415,18 +1405,24 @@ function gerarFuturoComBase() {
 
                 while (curr <= fim) {
 
+                    // 🔥 REGRA PRINCIPAL
+                    if (ultimaDataManual && curr <= ultimaDataManual) {
+                        curr.setDate(curr.getDate() + 1);
+                        continue;
+                    }
+
                     const isoData = curr.toISOString().split('T')[0];
                     const diaAtual = curr.getDay();
 
                     let deveCriar = false;
                     let tagEspecial = m.tag;
 
-                    // Dia normal
+                    // dia normal
                     if (diaAtual === diaRef) {
                         deveCriar = true;
                     }
 
-                    // Sábado letivo
+                    // sábado letivo
                     const configSabado = (cal.sabados || []).find(s =>
                         s.data === isoData &&
                         s.tipo === tipoSabado &&
@@ -1440,33 +1436,29 @@ function gerarFuturoComBase() {
 
                     if (deveCriar) {
 
-                        const ehFeriado = (cal.feriados || []).includes(isoData);
+                        const ehFeriado =
+                            (cal.feriados || []).includes(isoData);
 
-                        const estaEmFerias = feriasRef.some(f =>
-                            isoData >= f.inicio && isoData <= f.fim
-                        );
+                        const estaEmFerias =
+                            feriasRef.some(f =>
+                                isoData >= f.inicio &&
+                                isoData <= f.fim
+                            );
 
                         if (!ehFeriado && !estaEmFerias) {
 
-                            const chave = `${isoData}|${m.time}`;
+                            const dataFormatada =
+                                curr.toLocaleDateString('pt-BR');
 
-                            // 🔴 REGRA 1: manual sempre vence
-                            const existeManualMesmoHorario = mapaManuais.has(chave);
+                            // 🔴 evita QUALQUER conflito no mesmo dia
+                            const jaExisteManual =
+                                manuais.some(man =>
+                                    man.date === dataFormatada
+                                );
 
-                            // 🔴 REGRA 2: evita duplicidade geral (AGORA CORRETA)
-                            const jaExiste = mapaExistentes.has(chave);
-
-                            if (!existeManualMesmoHorario && !jaExiste) {
-
-                                const dataFormatada =
-                                    curr.toLocaleDateString('pt-BR');
-
-                                mapaExistentes.add(chave);
-
+                            if (!jaExisteManual) {
                                 disc.sch.push({
-                                    tipo: "AUTO",
                                     date: dataFormatada,
-                                    iso: isoData,
                                     dtObj: new Date(curr),
                                     wd: curr.toLocaleDateString('pt-BR', {
                                         weekday: 'long'
@@ -1483,27 +1475,14 @@ function gerarFuturoComBase() {
                     curr.setDate(curr.getDate() + 1);
                 }
             });
-disc.sch.forEach(item => {
-    if (!item.dtObj) {
-        if (item.iso) {
-            item.dtObj = new Date(item.iso + "T12:00:00");
-        } else if (item.date) {
-            const partes = item.date.split('/');
-            const iso = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
-            item.dtObj = new Date(iso + "T12:00:00");
-            item.iso = iso;
-        }
-    }
-});
-            // 🔵 Ordenação final
+
+            // ordenação final
             disc.sch.sort((a, b) => {
-    const tA = a.dtObj ? a.dtObj.getTime() : 0;
-    const tB = b.dtObj ? b.dtObj.getTime() : 0;
-
-    if (tA !== tB) return tA - tB;
-
-    return (a.time || "").localeCompare(b.time || "");
-});
+                if (a.dtObj.getTime() !== b.dtObj.getTime()) {
+                    return a.dtObj - b.dtObj;
+                }
+                return a.time.localeCompare(b.time);
+            });
         });
     });
 
@@ -1511,15 +1490,10 @@ disc.sch.forEach(item => {
 }
 
 // Função auxiliar para clareza do código
-function jaTemManualNoMesmoHorario(manuais, dataISO, horario) {
-    return manuais.some(m => {
-        const iso = m.iso || (m.dtObj
-            ? new Date(m.dtObj).toISOString().split('T')[0]
-            : null);
-
-        return iso === dataISO && m.time === horario;
-    });
+function jaTemManualNoMesmoHorario(manuais, data, horario) {
+    return manuais.some(m => m.date === data && m.time === horario);
 }
+
 /**
  * Helpers necessários para a lógica acima
  */
@@ -1787,25 +1761,6 @@ function gerarChave(disc, turma) {
         .replace(/\s+/g, ' ');              // Transforma múltiplos espaços em apenas um
 }
 
-        // 🔧 Garante Date válido
-function garantirDate(dt) {
-    return (dt instanceof Date) ? dt : new Date(dt);
-}
-
-// 🔧 ISO seguro (corrige timezone)
-function toISODateLocal(date) {
-    const d = new Date(date);
-    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-    return d.toISOString().split('T')[0];
-}
-
-// 🔧 Normaliza hora (08:00)
-function normalizarHora(h) {
-    if (!h || !h.includes(':')) return "00:00";
-    const [hh, mm] = h.split(':');
-    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-}
-        
 // ABA 01
 // FUNÇÃO QUE GERA TODAS AULAS DE CADA DISCIPLINA
 function renderD() {
