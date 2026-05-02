@@ -1344,16 +1344,7 @@ function gerarFuturoComBase() {
             const moldes = disc.sch.filter(s => s.tipo === "MOLDE");
             const manuais = disc.sch.filter(s => s.tipo === "MANUAL");
 
-            // 🔴 DESCOBRE A ÚLTIMA DATA MANUAL
-            let ultimaDataManual = null;
-
-            if (manuais.length > 0) {
-                ultimaDataManual = new Date(
-                    Math.max(...manuais.map(m => new Date(m.dtObj)))
-                );
-            }
-
-            // mantém só os manuais inicialmente
+            // 🔵 Mantém apenas os manuais inicialmente
             disc.sch = [...manuais];
 
             moldes.forEach(m => {
@@ -1391,24 +1382,18 @@ function gerarFuturoComBase() {
 
                 while (curr <= fim) {
 
-                    // 🔥 REGRA PRINCIPAL
-                    if (ultimaDataManual && curr <= ultimaDataManual) {
-                        curr.setDate(curr.getDate() + 1);
-                        continue;
-                    }
-
                     const isoData = curr.toISOString().split('T')[0];
                     const diaAtual = curr.getDay();
 
                     let deveCriar = false;
                     let tagEspecial = m.tag;
 
-                    // dia normal
+                    // Dia normal
                     if (diaAtual === diaRef) {
                         deveCriar = true;
                     }
 
-                    // sábado letivo
+                    // Sábado letivo
                     const configSabado = (cal.sabados || []).find(s =>
                         s.data === isoData &&
                         s.tipo === tipoSabado &&
@@ -1422,28 +1407,27 @@ function gerarFuturoComBase() {
 
                     if (deveCriar) {
 
-                        const ehFeriado =
-                            (cal.feriados || []).includes(isoData);
+                        const ehFeriado = (cal.feriados || []).includes(isoData);
 
-                        const estaEmFerias =
-                            feriasRef.some(f =>
-                                isoData >= f.inicio &&
-                                isoData <= f.fim
-                            );
+                        const estaEmFerias = feriasRef.some(f =>
+                            isoData >= f.inicio && isoData <= f.fim
+                        );
 
                         if (!ehFeriado && !estaEmFerias) {
 
                             const dataFormatada =
                                 curr.toLocaleDateString('pt-BR');
 
-                            // 🔴 evita QUALQUER conflito no mesmo dia
-                            const jaExisteManual =
+                            // 🔴 REGRA PRINCIPAL: manual sempre vence (data + horário)
+                            const existeManualMesmoHorario =
                                 manuais.some(man =>
-                                    man.date === dataFormatada
+                                    man.date === dataFormatada &&
+                                    man.time === m.time
                                 );
 
-                            if (!jaExisteManual) {
+                            if (!existeManualMesmoHorario) {
                                 disc.sch.push({
+                                    tipo: "AUTO",
                                     date: dataFormatada,
                                     dtObj: new Date(curr),
                                     wd: curr.toLocaleDateString('pt-BR', {
@@ -1462,7 +1446,7 @@ function gerarFuturoComBase() {
                 }
             });
 
-            // ordenação final
+            // 🔵 Ordenação final
             disc.sch.sort((a, b) => {
                 if (a.dtObj.getTime() !== b.dtObj.getTime()) {
                     return a.dtObj - b.dtObj;
