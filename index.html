@@ -1344,7 +1344,7 @@ function gerarFuturoComBase() {
             const moldes = disc.sch.filter(s => s.tipo === "MOLDE");
             const manuais = disc.sch.filter(s => s.tipo === "MANUAL");
 
-            // 🔵 NORMALIZA ISO nos manuais (sem remover nada existente)
+            // 🔵 NORMALIZA ISO nos manuais
             manuais.forEach(m => {
                 if (!m.iso) {
                     if (m.dtObj) {
@@ -1356,15 +1356,13 @@ function gerarFuturoComBase() {
                 }
             });
 
-            // 🔵 Mantém apenas os manuais inicialmente
-            disc.sch = [...manuais];
-
-            // 🔥 MAPA DE CONTROLE (PERFORMANCE + CONSISTÊNCIA)
-            const mapaManuais = new Set(
-                manuais.map(m => `${m.iso}|${m.time}`)
+            // 🔥 MAPA DE CONTROLE CORRETO (TODOS EXISTENTES)
+            const mapaExistentes = new Set(
+                disc.sch.map(e => `${e.iso}|${e.time}`)
             );
 
-            const mapaExistentes = new Set(
+            // 🔥 MANUAL continua tendo prioridade
+            const mapaManuais = new Set(
                 manuais.map(m => `${m.iso}|${m.time}`)
             );
 
@@ -1441,7 +1439,7 @@ function gerarFuturoComBase() {
                             // 🔴 REGRA 1: manual sempre vence
                             const existeManualMesmoHorario = mapaManuais.has(chave);
 
-                            // 🔴 REGRA 2: evita duplicidade geral
+                            // 🔴 REGRA 2: evita duplicidade geral (AGORA CORRETA)
                             const jaExiste = mapaExistentes.has(chave);
 
                             if (!existeManualMesmoHorario && !jaExiste) {
@@ -1762,6 +1760,25 @@ function gerarChave(disc, turma) {
         .replace(/\s+/g, ' ');              // Transforma múltiplos espaços em apenas um
 }
 
+        // 🔧 Garante Date válido
+function garantirDate(dt) {
+    return (dt instanceof Date) ? dt : new Date(dt);
+}
+
+// 🔧 ISO seguro (corrige timezone)
+function toISODateLocal(date) {
+    const d = new Date(date);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().split('T')[0];
+}
+
+// 🔧 Normaliza hora (08:00)
+function normalizarHora(h) {
+    if (!h || !h.includes(':')) return "00:00";
+    const [hh, mm] = h.split(':');
+    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+        
 // ABA 01
 // FUNÇÃO QUE GERA TODAS AULAS DE CADA DISCIPLINA
 function renderD() {
