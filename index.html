@@ -1344,8 +1344,29 @@ function gerarFuturoComBase() {
             const moldes = disc.sch.filter(s => s.tipo === "MOLDE");
             const manuais = disc.sch.filter(s => s.tipo === "MANUAL");
 
+            // 🔵 NORMALIZA ISO nos manuais (sem remover nada existente)
+            manuais.forEach(m => {
+                if (!m.iso) {
+                    if (m.dtObj) {
+                        m.iso = new Date(m.dtObj).toISOString().split('T')[0];
+                    } else {
+                        const partes = m.date.split('/');
+                        m.iso = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+                    }
+                }
+            });
+
             // 🔵 Mantém apenas os manuais inicialmente
             disc.sch = [...manuais];
+
+            // 🔥 MAPA DE CONTROLE (PERFORMANCE + CONSISTÊNCIA)
+            const mapaManuais = new Set(
+                manuais.map(m => `${m.iso}|${m.time}`)
+            );
+
+            const mapaExistentes = new Set(
+                manuais.map(m => `${m.iso}|${m.time}`)
+            );
 
             moldes.forEach(m => {
                 const partes = m.identificador.toLowerCase().split('_');
@@ -1415,20 +1436,25 @@ function gerarFuturoComBase() {
 
                         if (!ehFeriado && !estaEmFerias) {
 
-                            const dataFormatada =
-                                curr.toLocaleDateString('pt-BR');
+                            const chave = `${isoData}|${m.time}`;
 
-                            // 🔴 REGRA PRINCIPAL: manual sempre vence (data + horário)
-                            const existeManualMesmoHorario =
-                                manuais.some(man =>
-                                    man.date === dataFormatada &&
-                                    man.time === m.time
-                                );
+                            // 🔴 REGRA 1: manual sempre vence
+                            const existeManualMesmoHorario = mapaManuais.has(chave);
 
-                            if (!existeManualMesmoHorario) {
+                            // 🔴 REGRA 2: evita duplicidade geral
+                            const jaExiste = mapaExistentes.has(chave);
+
+                            if (!existeManualMesmoHorario && !jaExiste) {
+
+                                const dataFormatada =
+                                    curr.toLocaleDateString('pt-BR');
+
+                                mapaExistentes.add(chave);
+
                                 disc.sch.push({
                                     tipo: "AUTO",
                                     date: dataFormatada,
+                                    iso: isoData,
                                     dtObj: new Date(curr),
                                     wd: curr.toLocaleDateString('pt-BR', {
                                         weekday: 'long'
@@ -1460,10 +1486,15 @@ function gerarFuturoComBase() {
 }
 
 // Função auxiliar para clareza do código
-function jaTemManualNoMesmoHorario(manuais, data, horario) {
-    return manuais.some(m => m.date === data && m.time === horario);
-}
+function jaTemManualNoMesmoHorario(manuais, dataISO, horario) {
+    return manuais.some(m => {
+        const iso = m.iso || (m.dtObj
+            ? new Date(m.dtObj).toISOString().split('T')[0]
+            : null);
 
+        return iso === dataISO && m.time === horario;
+    });
+}
 /**
  * Helpers necessários para a lógica acima
  */
