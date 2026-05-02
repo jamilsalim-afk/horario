@@ -1358,24 +1358,24 @@ function gerarFuturoComBase() {
     Object.keys(dataStore).forEach(tId => {
         const turma = dataStore[tId];
 
-        // 🔥 MAPA GLOBAL DA TURMA (controle de conflito real)
         const mapaTurma = new Set();
+        const mapaDatasManuais = new Set(); // 🔴 NOVO
 
-        // 🔥 PRIMEIRO PASSO: limpar AUTO e montar mapa com MANUAL
+        // 🔥 PASSO 1 — limpar AUTO e mapear manual
         Object.values(turma.discs).forEach(disc => {
 
-            // remove AUTO antigo
             disc.sch = disc.sch.filter(s => s.tipo !== "AUTO");
 
             disc.sch.forEach(a => {
                 if (a.tipo === "MANUAL" && a.dtObj) {
                     const iso = a.dtObj.toISOString().split('T')[0];
+
                     mapaTurma.add(`${iso}|${a.time}`);
+                    mapaDatasManuais.add(iso); // 🔴 BLOQUEIA O DIA
                 }
             });
         });
 
-        // 🔁 AGORA PROCESSA DISCIPLINA POR DISCIPLINA
         Object.keys(turma.discs).forEach(dId => {
             const disc = turma.discs[dId];
 
@@ -1384,7 +1384,6 @@ function gerarFuturoComBase() {
 
             if (manuais.length === 0) return;
 
-            // normaliza dtObj
             manuais.forEach(m => {
                 if (!m.dtObj && m.date) {
                     const p = m.date.split('/');
@@ -1392,7 +1391,6 @@ function gerarFuturoComBase() {
                 }
             });
 
-            // última data manual
             const ultimaData = new Date(
                 Math.max(...manuais.map(m => m.dtObj.getTime()))
             );
@@ -1425,24 +1423,29 @@ function gerarFuturoComBase() {
 
                 while (curr <= fim) {
 
-                    // 🔴 REGRA ABSOLUTA: só depois da última manual
+                    const isoData = curr.toISOString().split('T')[0];
+
+                    // 🔴 REGRA 1 — não gera antes da última manual
                     if (curr <= ultimaData) {
                         curr.setDate(curr.getDate() + 1);
                         continue;
                     }
 
-                    const isoData = curr.toISOString().split('T')[0];
+                    // 🔴 REGRA 2 — NÃO GERAR EM DIA MANUAL (mesmo vazio)
+                    if (mapaDatasManuais.has(isoData)) {
+                        curr.setDate(curr.getDate() + 1);
+                        continue;
+                    }
+
                     const diaAtual = curr.getDay();
 
                     let deveCriar = false;
                     let tagEspecial = m.tag;
 
-                    // dia normal
                     if (diaAtual === diaRef) {
                         deveCriar = true;
                     }
 
-                    // sábado letivo
                     const configSabado = (cal.sabados || []).find(s =>
                         s.data === isoData &&
                         s.tipo === tipoSabado &&
@@ -1469,7 +1472,7 @@ function gerarFuturoComBase() {
 
                             const chave = `${isoData}|${m.time}`;
 
-                            // 🔥 REGRA FINAL: bloqueio global da turma
+                            // 🔴 REGRA FINAL — conflito global
                             if (!mapaTurma.has(chave)) {
 
                                 mapaTurma.add(chave);
@@ -1495,7 +1498,6 @@ function gerarFuturoComBase() {
                 }
             });
 
-            // ordenação segura
             disc.sch.sort((a, b) => {
                 const tA = a.dtObj ? a.dtObj.getTime() : 0;
                 const tB = b.dtObj ? b.dtObj.getTime() : 0;
