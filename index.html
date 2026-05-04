@@ -343,22 +343,23 @@
         </div>
 
 <section id="tab-sabados" class="tab-pane hidden">
-    <div class="bg-white p-6 rounded-xl shadow-sm border">
+   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
 
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-black text-green-800">
-                RELATÓRIO DE SÁBADOS LETIVOS
-            </h2>
+    <select id="nivelSabado" class="p-3 border rounded-lg bg-gray-50">
+        <option value="tecnico">INTEGRADO</option>
+        <option value="superior">SUPERIOR</option>
+    </select>
 
-            <button onclick="renderSabadosSequenciais()"
-                class="bg-[#15803d] text-white px-6 py-2 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">
-                GERAR RELATÓRIO
-            </button>
-        </div>
+    <select id="selectSabado" class="p-3 border rounded-lg bg-gray-50">
+        <option value="">SELECIONE O SÁBADO</option>
+    </select>
 
-        <div id="renderSabados" class="space-y-4"></div>
+    <button onclick="renderSabadoSelecionado()"
+        class="bg-[#15803d] text-white px-6 py-2 rounded-lg font-bold">
+        GERAR
+    </button>
 
-    </div>
+</div>
 </section>
             
         <section id="tab-info" class="tab-pane">
@@ -3166,119 +3167,129 @@ function gerarGradeGeral() {
 
 // ABA 08
 // FUNÇÃO RESPONSÁVEL POR GERAR OS SABADOS LETIVOS
-function renderSabadosSequenciais() {
-    console.log("🟢 Gerando relatório de sábados...");
+function carregarSabadosSelect() {
+    const select = document.getElementById("selectSabado");
+    const year = document.getElementById("yearSelect").value;
 
-    const render = document.getElementById("renderSabados");
-    if (!render) return;
+    if (!select) return;
 
-    if (!dataStore || Object.keys(dataStore).length === 0) {
-        render.innerHTML = `<div class="p-4 text-red-600 font-bold">Nenhum dado carregado.</div>`;
-        return;
-    }
+    select.innerHTML = `<option value="">SELECIONE O SÁBADO</option>`;
 
-    const mapaSabados = {};
+    const cal = CALENDARIO_DINAMICO[year];
 
-    // 🔴 1. COLETA TODOS OS SÁBADOS
-    Object.keys(dataStore).forEach(tId => {
-        const turma = dataStore[tId];
+    if (!cal || !cal.sabados) return;
 
-        Object.values(turma.discs || {}).forEach(disc => {
+    // 🔴 ORDENA
+    const sabados = [...cal.sabados].sort((a,b) => a.data.localeCompare(b.data));
 
-            (disc.sch || []).forEach(a => {
-
-                if (!a?.dtObj) return;
-
-                // 🔴 FILTRO PRINCIPAL (SÁBADO LETIVO)
-                if (a.tag !== "SÁBADO LETIVO") return;
-
-                const iso = a.dtObj.toISOString().split('T')[0];
-
-                if (!mapaSabados[iso]) {
-                    mapaSabados[iso] = [];
-                }
-
-                mapaSabados[iso].push({
-                    turma: turma.name,
-                    disciplina: disc.name,
-                    professor: getPrimeiroNome(a.prof || ""),
-                    hora: a.time || ""
-                });
-            });
-        });
-    });
-
-    // 🔴 2. ORDENA DATAS
-    const datasOrdenadas = Object.keys(mapaSabados).sort();
-
-    if (datasOrdenadas.length === 0) {
-        render.innerHTML = `<div class="p-4 text-gray-500 italic">Nenhum sábado letivo encontrado.</div>`;
-        return;
-    }
-
-    let html = "";
-
-    // 🔴 3. RENDERIZA
-    datasOrdenadas.forEach(iso => {
-
-        const dataFormatada = new Date(iso + "T12:00:00")
+    sabados.forEach(s => {
+        const dataFormatada = new Date(s.data + "T12:00:00")
             .toLocaleDateString("pt-BR");
 
-        html += `
-        <div class="mb-6 border rounded shadow-sm">
+        const opt = document.createElement("option");
+        opt.value = s.data;
+        opt.textContent = `${dataFormatada} - ${s.tipo.toUpperCase()}`;
 
-            <div class="bg-green-700 text-white p-2 font-bold">
-                SÁBADO LETIVO - ${dataFormatada}
-            </div>
+        select.appendChild(opt);
+    });
+}
+        
+function renderSabadoSelecionado() {
 
-            <div class="p-2 space-y-2">
-        `;
+    const iso = document.getElementById("selectSabado").value;
+    const nivel = document.getElementById("nivelSabado").value;
+    const render = document.getElementById("renderSabados");
 
-        // 🔴 AGRUPAR POR TURMA
-        const porTurma = {};
+    if (!iso) {
+        render.innerHTML = `<div class="p-4 text-red-600">Selecione um sábado.</div>`;
+        return;
+    }
 
-        mapaSabados[iso].forEach(item => {
-            if (!porTurma[item.turma]) {
-                porTurma[item.turma] = [];
-            }
-            porTurma[item.turma].push(item);
-        });
+    const dataDia = new Date(iso + "T00:00:00");
 
-        Object.keys(porTurma).sort().forEach(turmaNome => {
-
-            html += `
-            <div class="border rounded p-2 bg-gray-50">
-                <div class="font-bold text-sm text-green-800 mb-1">
-                    ${turmaNome}
-                </div>
-            `;
-
-            porTurma[turmaNome]
-                .sort((a,b) => a.hora.localeCompare(b.hora))
-                .forEach(aula => {
-
-                    html += `
-                    <div class="text-[12px] flex justify-between">
-                        <span>${aula.disciplina}</span>
-                        <span class="text-blue-800 font-semibold">
-                            ${aula.professor}
-                        </span>
-                        <span class="text-gray-600">
-                            ${aula.hora}
-                        </span>
-                    </div>
-                    `;
-                });
-
-            html += `</div>`;
-        });
-
-        html += `</div></div>`;
+    // 🔴 FILTRO DE TURMAS (IGUAL SUA FUNÇÃO)
+    const turmasFiltradas = Object.keys(dataStore).filter(tId => {
+        return nivel === "superior"
+            ? turmaEhSuperior(tId)
+            : !turmaEhSuperior(tId);
     });
 
-    render.innerHTML = html;
+    let html = `
+    <h3 class="bg-[#15803d] text-white p-2 font-bold mb-4">
+        SÁBADO LETIVO - ${dataDia.toLocaleDateString("pt-BR")}
+    </h3>
 
-    console.log("✅ Relatório de sábados pronto!");
+    <div class="overflow-x-auto">
+    <table class="tableGS bg-white text-[11px]">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="border w-[80px]">HORA</th>
+                ${turmasFiltradas.map(t => `<th>${dataStore[t].name}</th>`).join("")}
+            </tr>
+        </thead>
+        <tbody>
+    `;
+
+    const horarios = [...GABARITO];
+
+    horarios.forEach(slot => {
+
+        if (slot.t === "intervalo") {
+            html += `
+            <tr class="intervalo-row">
+                <td>${slot.h}</td>
+                <td colspan="${turmasFiltradas.length}">INTERVALO</td>
+            </tr>`;
+            return;
+        }
+
+        const horaSlot = slot.h.split(" - ")[0].substring(0,5);
+
+        html += `<tr>
+            <td class="border bg-gray-100 font-bold">${slot.h}</td>`;
+
+        turmasFiltradas.forEach(tId => {
+
+            let conteudo = "";
+
+            Object.values(dataStore[tId].discs || {}).forEach(disc => {
+
+                (disc.sch || []).forEach(a => {
+
+                    if (!a?.dtObj) return;
+
+                    const dataAula = new Date(a.dtObj);
+                    dataAula.setHours(0,0,0,0);
+
+                    const horaAula = (a.time || "")
+                        .split(" - ")[0]
+                        .substring(0,5);
+
+                    // 🔴 MATCH POR DATA (GARANTE MANUAL + AUTO)
+                    if (
+                        dataAula.getTime() === dataDia.getTime() &&
+                        horaAula === horaSlot
+                    ) {
+                        conteudo += `
+                        <div class="p-1 mb-1 bg-gray-50 rounded border">
+                            <div class="font-bold">${disc.name}</div>
+                            <div class="text-blue-800">
+                                ${getPrimeiroNome(a.prof || "")}
+                            </div>
+                        </div>`;
+                    }
+                });
+            });
+
+            html += `<td class="border align-top">${conteudo}</td>`;
+        });
+
+        html += `</tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+
+    render.innerHTML = html;
 }
         
 // ABA 09
