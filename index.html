@@ -3184,29 +3184,38 @@ function gerarGradeGeral() {
 // FUNÇÃO RESPONSÁVEL POR GERAR OS SABADOS LETIVOS
 function carregarSabadosSelect() {
     const select = document.getElementById("selectSabado");
-    const year = document.getElementById("yearSelect").value;
+    const nivel = document.getElementById("nivelSabado")?.value;
+    const year = document.getElementById("yearSelect")?.value;
 
     if (!select) return;
 
     select.innerHTML = `<option value="">SELECIONE O SÁBADO</option>`;
 
-    const cal = CALENDARIO_DINAMICO[year];
-
+    const cal = CALENDARIO_DINAMICO?.[year];
     if (!cal || !cal.sabados) return;
 
-    // 🔴 ORDENA
-    const sabados = [...cal.sabados].sort((a,b) => a.data.localeCompare(b.data));
+    // 🔴 FILTRA POR NÍVEL (ESSENCIAL)
+    const sabadosFiltrados = cal.sabados.filter(s => {
+        if (nivel === "integrado") return s.tipo === "integrado";
+        if (nivel === "superior") return s.tipo.startsWith("superior");
+        return true;
+    });
 
-    sabados.forEach(s => {
+    // 🔴 ORDENA
+    sabadosFiltrados.sort((a,b) => a.data.localeCompare(b.data));
+
+    sabadosFiltrados.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.data;
+
         const dataFormatada = new Date(s.data + "T12:00:00")
             .toLocaleDateString("pt-BR");
 
-        const opt = document.createElement("option");
-        opt.value = s.data;
-        opt.textContent = `${dataFormatada} - ${s.tipo.toUpperCase()}`;
-
+        opt.textContent = dataFormatada;
         select.appendChild(opt);
     });
+
+    console.log("✅ Sábados carregados:", sabadosFiltrados.length);
 }
         
 function renderSabadoSelecionado() {
