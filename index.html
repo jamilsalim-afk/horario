@@ -1817,10 +1817,20 @@ function renderD() {
     };
 
     const nomeBusca = normalizar(dNomeOriginal);
-    const disc = Object.values(turma.discs).find(d => {
+    const disciplinasLista = Object.values(turma.discs);
+
+// 🔴 1. TENTA MATCH EXATO PRIMEIRO
+let disc = disciplinasLista.find(d => {
+    return normalizar(d.name) === nomeBusca;
+});
+
+// 🔴 2. SE NÃO ENCONTRAR, AÍ SIM USA INCLUDES (fallback controlado)
+if (!disc) {
+    disc = disciplinasLista.find(d => {
         const nomeDisc = normalizar(d.name);
-        return (nomeDisc === nomeBusca || nomeDisc.includes(nomeBusca) || nomeBusca.includes(nomeDisc));
+        return nomeDisc.includes(nomeBusca) || nomeBusca.includes(nomeDisc);
     });
+}
 
     if (!disc || !Array.isArray(disc.sch)) {
         b.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500 italic">Sem aulas registradas para "${dNomeOriginal}".</td></tr>`;
