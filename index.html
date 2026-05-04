@@ -3254,9 +3254,14 @@ function carregarSabadosSelect() {
         
 function renderSabadoSelecionado() {
 
-    const iso = document.getElementById("selectSabado").value;
-    const nivel = document.getElementById("nivelSabado").value;
+    const iso = document.getElementById("selectSabado")?.value;
+    const nivel = document.getElementById("nivelSabado")?.value;
     const render = document.getElementById("renderSabados");
+
+    if (!render) {
+        console.error("❌ renderSabados não encontrado");
+        return;
+    }
 
     if (!iso) {
         render.innerHTML = `<div class="p-4 text-red-600">Selecione um sábado.</div>`;
@@ -3265,7 +3270,6 @@ function renderSabadoSelecionado() {
 
     const dataDia = new Date(iso + "T00:00:00");
 
-    // 🔴 FILTRO DE TURMAS (IGUAL SUA FUNÇÃO)
     const turmasFiltradas = Object.keys(dataStore).filter(tId => {
         return nivel === "superior"
             ? turmaEhSuperior(tId)
@@ -3273,38 +3277,51 @@ function renderSabadoSelecionado() {
     });
 
     let html = `
-    <h3 class="bg-[#15803d] text-white p-2 font-bold mb-4">
-        SÁBADO LETIVO - ${dataDia.toLocaleDateString("pt-BR")}
-    </h3>
+    <div class="max-w-full overflow-x-auto">
+        <h3 class="bg-[#15803d] text-white p-2 font-bold mb-4">
+            SÁBADO LETIVO - ${dataDia.toLocaleDateString("pt-BR")}
+        </h3>
 
-    <div class="overflow-x-auto">
-    <table class="tableGS bg-white text-[11px]">
-        <thead class="bg-gray-100">
-            <tr>
-                <th class="border w-[80px]">HORA</th>
-                ${turmasFiltradas.map(t => `<th>${dataStore[t].name}</th>`).join("")}
-            </tr>
-        </thead>
-        <tbody>
+        <table class="tableGS bg-white mb-6 text-[10px] table-fixed w-full">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="border w-[70px]">H</th>
+                    ${turmasFiltradas.map(t => `
+                        <th class="border break-words">
+                            ${dataStore[t].name}
+                        </th>
+                    `).join("")}
+                </tr>
+            </thead>
+            <tbody>
     `;
 
-    const horarios = [...GABARITO];
+    let horariosFiltrados = [...GABARITO];
 
-    horarios.forEach(slot => {
+    if (nivel === "tecnico") {
+        horariosFiltrados = GABARITO.filter(slot => {
+            const horaInicio = slot.h.split(" - ")[0];
+            return horaInicio < "18:20";
+        });
+    }
+
+    horariosFiltrados.forEach(slot => {
 
         if (slot.t === "intervalo") {
             html += `
             <tr class="intervalo-row">
-                <td>${slot.h}</td>
-                <td colspan="${turmasFiltradas.length}">INTERVALO</td>
+                <td class="border">${slot.h}</td>
+                <td colspan="${turmasFiltradas.length}" class="text-center">
+                    ${slot.l || "INTERVALO"}
+                </td>
             </tr>`;
             return;
         }
 
-        const horaSlot = slot.h.split(" - ")[0].substring(0,5);
+        const horaSlot = slot.h.split(" - ")[0].substring(0,5).padStart(5,"0");
 
         html += `<tr>
-            <td class="border bg-gray-100 font-bold">${slot.h}</td>`;
+            <td class="bg-gray-100 font-bold border text-[10px]">${slot.h}</td>`;
 
         turmasFiltradas.forEach(tId => {
 
@@ -3321,17 +3338,19 @@ function renderSabadoSelecionado() {
 
                     const horaAula = (a.time || "")
                         .split(" - ")[0]
-                        .substring(0,5);
+                        .substring(0,5)
+                        .padStart(5,"0");
 
-                    // 🔴 MATCH POR DATA (GARANTE MANUAL + AUTO)
                     if (
                         dataAula.getTime() === dataDia.getTime() &&
                         horaAula === horaSlot
                     ) {
                         conteudo += `
-                        <div class="p-1 mb-1 bg-gray-50 rounded border">
-                            <div class="font-bold">${disc.name}</div>
-                            <div class="text-blue-800">
+                        <div class="border p-1 mb-1 rounded bg-gray-50 break-words">
+                            <div class="font-bold text-[10px] leading-tight">
+                                ${disc.name}
+                            </div>
+                            <div class="text-[9px] text-blue-800 leading-tight">
                                 ${getPrimeiroNome(a.prof || "")}
                             </div>
                         </div>`;
@@ -3339,13 +3358,22 @@ function renderSabadoSelecionado() {
                 });
             });
 
-            html += `<td class="border align-top">${conteudo}</td>`;
+            html += `
+            <td class="border align-top">
+                <div class="min-h-[35px] break-words">
+                    ${conteudo}
+                </div>
+            </td>`;
         });
 
         html += `</tr>`;
     });
 
-    html += `</tbody></table></div>`;
+    html += `
+            </tbody>
+        </table>
+    </div>
+    `;
 
     render.innerHTML = html;
 }
