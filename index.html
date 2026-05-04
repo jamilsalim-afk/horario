@@ -113,6 +113,7 @@
             <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100" data-tab="tab-anual-professor">Anual Professor</button>
             <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100" data-tab="tab-semanal-turma">Semanal Turma</button>
             <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100" data-tab="tab-geral">Geral</button>
+            <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100" data-tab="tab-sabados">Sábados Letivos</button>
             <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100" data-tab="dashboardTab">Dashboard</button>
             <button class="tab-btn text-left px-4 py-2 rounded hover:bg-gray-100" data-tab="tab-info">Informações</button>
         </div>
@@ -341,6 +342,25 @@
             <div style="margin-top:30px;"><canvas id="graficoProfessor" height="100"></canvas></div>
         </div>
 
+<section id="tab-sabados" class="tab-pane hidden">
+    <div class="bg-white p-6 rounded-xl shadow-sm border">
+
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-black text-green-800">
+                RELATÓRIO DE SÁBADOS LETIVOS
+            </h2>
+
+            <button onclick="renderSabadosSequenciais()"
+                class="bg-[#15803d] text-white px-6 py-2 rounded-lg font-bold hover:bg-green-800 transition shadow-md uppercase">
+                GERAR RELATÓRIO
+            </button>
+        </div>
+
+        <div id="renderSabados" class="space-y-4"></div>
+
+    </div>
+</section>
+            
         <section id="tab-info" class="tab-pane">
             <div class="bg-white p-6 rounded-xl shadow-sm border">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -3145,6 +3165,123 @@ function gerarGradeGeral() {
 }
 
 // ABA 08
+// FUNÇÃO RESPONSÁVEL POR GERAR OS SABADOS LETIVOS
+function renderSabadosSequenciais() {
+    console.log("🟢 Gerando relatório de sábados...");
+
+    const render = document.getElementById("renderSabados");
+    if (!render) return;
+
+    if (!dataStore || Object.keys(dataStore).length === 0) {
+        render.innerHTML = `<div class="p-4 text-red-600 font-bold">Nenhum dado carregado.</div>`;
+        return;
+    }
+
+    const mapaSabados = {};
+
+    // 🔴 1. COLETA TODOS OS SÁBADOS
+    Object.keys(dataStore).forEach(tId => {
+        const turma = dataStore[tId];
+
+        Object.values(turma.discs || {}).forEach(disc => {
+
+            (disc.sch || []).forEach(a => {
+
+                if (!a?.dtObj) return;
+
+                // 🔴 FILTRO PRINCIPAL (SÁBADO LETIVO)
+                if (a.tag !== "SÁBADO LETIVO") return;
+
+                const iso = a.dtObj.toISOString().split('T')[0];
+
+                if (!mapaSabados[iso]) {
+                    mapaSabados[iso] = [];
+                }
+
+                mapaSabados[iso].push({
+                    turma: turma.name,
+                    disciplina: disc.name,
+                    professor: getPrimeiroNome(a.prof || ""),
+                    hora: a.time || ""
+                });
+            });
+        });
+    });
+
+    // 🔴 2. ORDENA DATAS
+    const datasOrdenadas = Object.keys(mapaSabados).sort();
+
+    if (datasOrdenadas.length === 0) {
+        render.innerHTML = `<div class="p-4 text-gray-500 italic">Nenhum sábado letivo encontrado.</div>`;
+        return;
+    }
+
+    let html = "";
+
+    // 🔴 3. RENDERIZA
+    datasOrdenadas.forEach(iso => {
+
+        const dataFormatada = new Date(iso + "T12:00:00")
+            .toLocaleDateString("pt-BR");
+
+        html += `
+        <div class="mb-6 border rounded shadow-sm">
+
+            <div class="bg-green-700 text-white p-2 font-bold">
+                SÁBADO LETIVO - ${dataFormatada}
+            </div>
+
+            <div class="p-2 space-y-2">
+        `;
+
+        // 🔴 AGRUPAR POR TURMA
+        const porTurma = {};
+
+        mapaSabados[iso].forEach(item => {
+            if (!porTurma[item.turma]) {
+                porTurma[item.turma] = [];
+            }
+            porTurma[item.turma].push(item);
+        });
+
+        Object.keys(porTurma).sort().forEach(turmaNome => {
+
+            html += `
+            <div class="border rounded p-2 bg-gray-50">
+                <div class="font-bold text-sm text-green-800 mb-1">
+                    ${turmaNome}
+                </div>
+            `;
+
+            porTurma[turmaNome]
+                .sort((a,b) => a.hora.localeCompare(b.hora))
+                .forEach(aula => {
+
+                    html += `
+                    <div class="text-[12px] flex justify-between">
+                        <span>${aula.disciplina}</span>
+                        <span class="text-blue-800 font-semibold">
+                            ${aula.professor}
+                        </span>
+                        <span class="text-gray-600">
+                            ${aula.hora}
+                        </span>
+                    </div>
+                    `;
+                });
+
+            html += `</div>`;
+        });
+
+        html += `</div></div>`;
+    });
+
+    render.innerHTML = html;
+
+    console.log("✅ Relatório de sábados pronto!");
+}
+        
+// ABA 09
 // FUNÇÃO RESPONSÁVEL POR GERAR OS DADOS DE TODOS OS PROFESSORES - SOMA DAS AULAS = ANUAL+SEMESTRAL
 function gerarDashboard() {
     const container = document.getElementById('dashboardContent');
