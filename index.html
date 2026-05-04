@@ -5034,6 +5034,43 @@ async function exportarSabadoPDF() {
     });
 }
 
+async function exportarTodosSabadosPDF() {
+
+    const { jsPDF } = window.jspdf;
+
+    const nivel = document.getElementById("nivelSabado").value;
+    const year = document.getElementById("yearSelect").value;
+
+    const cal = CALENDARIO_DINAMICO[year];
+
+    if (!cal || !cal.sabados) {
+        alert("Nenhum sábado encontrado");
+        return;
+    }
+
+    const doc = new jsPDF("l", "mm", "a4");
+
+    const sabados = [...cal.sabados].sort((a,b) => a.data.localeCompare(b.data));
+
+    let primeira = true;
+
+    for (let s of sabados) {
+
+        const html = gerarHTMLSabado(s.data, nivel);
+
+        if (!primeira) doc.addPage();
+        primeira = false;
+
+        await doc.html(html, {
+            x: 10,
+            y: 10,
+            width: 270
+        });
+    }
+
+    doc.save(`todos_sabados_${year}.pdf`);
+}
+
 // EXPORTADOR DE PDF DO DASHBOARD DA ABA 09
 function exportarDashboardPDF() {
     const { jsPDF } = window.jspdf;
