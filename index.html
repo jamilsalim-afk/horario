@@ -3358,17 +3358,18 @@ function gerarHTMLSabado(iso, nivel) {
 
                     if (!a?.dtObj) return;
 
-                    const dataAula = new Date(a.dtObj);
-                    dataAula.setHours(0,0,0,0);
+                    const isoAula = a.iso || (a.dtObj
+    ? a.dtObj.toISOString().split("T")[0]
+    : null);
 
-                    const horaAula = (a.time || "")
-                        .split(" - ")[0]
-                        .substring(0,5);
+const horaAula = (a.time || "")
+    .split(" - ")[0]
+    .substring(0,5);
 
-                    if (
-                        dataAula.getTime() === dataDia.getTime() &&
-                        horaAula === horaSlot
-                    ) {
+if (
+    isoAula === iso &&
+    horaAula === horaSlot
+) {
                         conteudo += `${disc.name}<br>${getPrimeiroNome(a.prof || "")}<br><br>`;
                     }
                 });
