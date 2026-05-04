@@ -2842,9 +2842,12 @@ function calcularDiferencaProfessor(realizado, previsto) {
 // ABA 05 - ANUAL PROFESSOR
 // GERA TODAS AS AULAS DO PROFESSOR NO ANO INTEIRO
 function gerarHorarioAnualProfessor() {
-    const profInput = document.getElementById("buscaProfessorAnual").value.trim().toUpperCase();
+    const profInput = document.getElementById("buscaProfessorAnual")?.value.trim().toUpperCase();
     const b = document.getElementById("bodyHorarioAnual");
+
+    if (!b) return;
     b.innerHTML = '';
+
     if (!profInput) return;
 
     let agenda = {};
@@ -2852,51 +2855,78 @@ function gerarHorarioAnualProfessor() {
 
     // 1. Coleta e Normalização dos Dados
     Object.keys(dataStore).forEach(tId => {
-        Object.values(dataStore[tId].discs).forEach(disc => {
-            const agendaDisc = disc.schProjetada || disc.sch;
+
+        Object.values(dataStore[tId].discs || {}).forEach(disc => {
+
+            const agendaDisc = Array.isArray(disc.schProjetada)
+                ? disc.schProjetada
+                : (disc.sch || []);
 
             agendaDisc.forEach(s => {
-                if (normalizarTexto(traduzirProfessor(s.prof)) === normalizarTexto(profInput)) {
-                    const dataStr = s.dtObj.toISOString().split('T')[0];
-                    if (!agenda[dataStr]) agenda[dataStr] = [];
+
+                // 🔴 PROTEÇÃO CONTRA ERROS
+                if (!s || !s.dtObj || !s.time) return;
+
+                const nomeProf = traduzirProfessor?.(s.prof) || s.prof || "";
+
+                if (normalizarTexto(nomeProf) === normalizarTexto(profInput)) {
+
+                    const iso = s.dtObj.toISOString().split('T')[0];
+
+                    if (!agenda[iso]) agenda[iso] = [];
 
                     const horaString = s.time.split(' - ')[0].trim();
                     const [h, m] = horaString.split(':');
-                    const minutosDoDia = (parseInt(h) * 60) + parseInt(m);
 
-                    agenda[dataStr].push({ 
-                        turma: dataStore[tId].name, 
-                        disc: disc.name, 
+                    const minutosDoDia =
+                        (parseInt(h || 0) * 60) + parseInt(m || 0);
+
+                    agenda[iso].push({
+                        turma: dataStore[tId].name,
+                        disc: disc.name,
                         horario: s.time,
-                        ordem: minutosDoDia 
+                        ordem: minutosDoDia
                     });
 
-                    if (agenda[dataStr].length > maxAulasPorDia) {
-                        maxAulasPorDia = agenda[dataStr].length;
+                    if (agenda[iso].length > maxAulasPorDia) {
+                        maxAulasPorDia = agenda[iso].length;
                     }
                 }
             });
         });
     });
 
-    // 2. Ajuste do Cabeçalho (Estilo Verde/Branco)
-    ajustarCabecalhoAnual(maxAulasPorDia);
+    // 2. Ajuste do Cabeçalho
+    if (typeof ajustarCabecalhoAnual === "function") {
+        ajustarCabecalhoAnual(maxAulasPorDia);
+    }
 
     // 3. Ordenação e Renderização
-    Object.keys(agenda).sort().forEach(data => {
+    const datasOrdenadas = Object.keys(agenda).sort();
+
+    datasOrdenadas.forEach(data => {
+
         agenda[data].sort((a, b) => a.ordem - b.ordem);
 
-        let row = `<tr><td class="border p-2 font-bold">${data}</td>`;
-        
+        let row = `<tr>
+            <td class="border p-2 font-bold">
+                ${new Date(data + "T12:00:00").toLocaleDateString("pt-BR")}
+            </td>`;
+
         agenda[data].forEach(aula => {
-            row += `<td class="border p-2">${aula.turma} / ${aula.disc} (${aula.horario})</td>`;
+            row += `
+            <td class="border p-2">
+                ${aula.turma} / ${aula.disc} (${aula.horario})
+            </td>`;
         });
 
+        // Completa colunas vazias
         for (let i = agenda[data].length; i < maxAulasPorDia; i++) {
             row += `<td class="border p-2">-</td>`;
         }
 
         row += `</tr>`;
+
         b.innerHTML += row;
     });
 }
