@@ -359,6 +359,20 @@
         GERAR
     </button>
 
+       <div class="flex gap-2 flex-wrap mb-4">
+
+    <button onclick="exportarSabadoPDF()"
+        class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-800">
+        Exportar Sábado (PDF)
+    </button>
+
+    <button onclick="exportarTodosSabadosPDF()"
+        class="bg-purple-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-purple-800">
+        Exportar Todos os Sábados
+    </button>
+
+</div>
+
 </div>
 </section>
             
@@ -3291,6 +3305,85 @@ function renderSabadoSelecionado() {
 
     render.innerHTML = html;
 }
+
+function gerarHTMLSabado(iso, nivel) {
+
+    const dataDia = new Date(iso + "T00:00:00");
+
+    const turmasFiltradas = Object.keys(dataStore).filter(tId => {
+        return nivel === "superior"
+            ? turmaEhSuperior(tId)
+            : !turmaEhSuperior(tId);
+    });
+
+    let html = `
+    <h3 style="background:#15803d;color:white;padding:6px;">
+        SÁBADO LETIVO - ${dataDia.toLocaleDateString("pt-BR")}
+    </h3>
+
+    <table border="1" style="width:100%; border-collapse:collapse; font-size:10px;">
+        <thead>
+            <tr>
+                <th>HORA</th>
+                ${turmasFiltradas.map(t => `<th>${dataStore[t].name}</th>`).join("")}
+            </tr>
+        </thead>
+        <tbody>
+    `;
+
+    const horarios = [...GABARITO];
+
+    horarios.forEach(slot => {
+
+        if (slot.t === "intervalo") {
+            html += `
+            <tr>
+                <td>${slot.h}</td>
+                <td colspan="${turmasFiltradas.length}">INTERVALO</td>
+            </tr>`;
+            return;
+        }
+
+        const horaSlot = slot.h.split(" - ")[0].substring(0,5);
+
+        html += `<tr><td>${slot.h}</td>`;
+
+        turmasFiltradas.forEach(tId => {
+
+            let conteudo = "";
+
+            Object.values(dataStore[tId].discs || {}).forEach(disc => {
+
+                (disc.sch || []).forEach(a => {
+
+                    if (!a?.dtObj) return;
+
+                    const dataAula = new Date(a.dtObj);
+                    dataAula.setHours(0,0,0,0);
+
+                    const horaAula = (a.time || "")
+                        .split(" - ")[0]
+                        .substring(0,5);
+
+                    if (
+                        dataAula.getTime() === dataDia.getTime() &&
+                        horaAula === horaSlot
+                    ) {
+                        conteudo += `${disc.name}<br>${getPrimeiroNome(a.prof || "")}<br><br>`;
+                    }
+                });
+            });
+
+            html += `<td>${conteudo}</td>`;
+        });
+
+        html += `</tr>`;
+    });
+
+    html += `</tbody></table><br><br>`;
+
+    return html;
+}
         
 // ABA 09
 // FUNÇÃO RESPONSÁVEL POR GERAR OS DADOS DE TODOS OS PROFESSORES - SOMA DAS AULAS = ANUAL+SEMESTRAL
@@ -4913,8 +5006,35 @@ function exportarGradeGeralPDF() {
     const nomeArquivo = `Grade_Geral_${nivel}_W${w}.pdf`;
     doc.save(nomeArquivo);
 }
+        
+// EXPORTADOR DE PDF DO SABADO LETIVO DA ABA 08
+async function exportarSabadoPDF() {
 
-// EXPORTADOR DE PDF DO DASHBOARD DA ABA 08
+    const { jsPDF } = window.jspdf;
+
+    const iso = document.getElementById("selectSabado").value;
+    const nivel = document.getElementById("nivelSabado").value;
+
+    if (!iso) {
+        alert("Selecione um sábado");
+        return;
+    }
+
+    const html = gerarHTMLSabado(iso, nivel);
+
+    const doc = new jsPDF("l", "mm", "a4");
+
+    await doc.html(html, {
+        callback: function (doc) {
+            doc.save(`sabado_${iso}.pdf`);
+        },
+        x: 10,
+        y: 10,
+        width: 270
+    });
+}
+
+// EXPORTADOR DE PDF DO DASHBOARD DA ABA 09
 function exportarDashboardPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
