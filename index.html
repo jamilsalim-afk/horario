@@ -950,6 +950,44 @@ function disciplinaDeveSerOcultada(nome) {
     return DISCIPLINAS_OCULTAR.some(d => nomeUpper.includes(d.toUpperCase()));
 }
 
+function ordenarTurmas(turmasIds, nivel) {
+
+    const ORDEM_SUPERIOR = [
+        "GEOGRAFIA",
+        "MATEMATICA",
+        "AGRONEGOCIO",
+        "ZOOTECNIA",
+        "AGRONOMIA"
+    ];
+
+    const ORDEM_INTEGRADO = [
+        "AGROECOLOGIA",
+        "AGROPECUARIA",
+        "INFORMATICA"
+    ];
+
+    const ORDEM = nivel === "superior"
+        ? ORDEM_SUPERIOR
+        : ORDEM_INTEGRADO;
+
+    return turmasIds.sort((a, b) => {
+
+        const nomeA = (dataStore[a]?.name || "").toUpperCase();
+        const nomeB = (dataStore[b]?.name || "").toUpperCase();
+
+        const idxA = ORDEM.findIndex(c => nomeA.includes(c));
+        const idxB = ORDEM.findIndex(c => nomeB.includes(c));
+
+        // Cursos conhecidos vêm primeiro
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+
+        // resto ordena por nome
+        return nomeA.localeCompare(nomeB);
+    });
+}
+        
 // ==========================================
 // 🔷 INICIALIZAÇÃO DO SISTEMA (WINDOW ONLOAD)
 // ==========================================
@@ -3270,11 +3308,14 @@ function renderSabadoSelecionado() {
 
     const dataDia = new Date(iso + "T00:00:00");
 
-    const turmasFiltradas = Object.keys(dataStore).filter(tId => {
-        return nivel === "superior"
-            ? turmaEhSuperior(tId)
-            : !turmaEhSuperior(tId);
-    });
+    let turmasFiltradas = Object.keys(dataStore).filter(tId => {
+    return nivel === "superior"
+        ? turmaEhSuperior(tId)
+        : !turmaEhSuperior(tId);
+});
+
+// 🔥 AQUI ENTRA A ORDENAÇÃO
+turmasFiltradas = ordenarTurmas(turmasFiltradas, nivel);
 
     let html = `
     <div class="max-w-full overflow-x-auto">
