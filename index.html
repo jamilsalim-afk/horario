@@ -1207,30 +1207,36 @@ function criarBotoesDias() {
   mostrarPainelVagas(texto);
 }
   
-function gerarFichaProfessor(nomeProf){
+function gerarGradeProfessor(nomeProf){
 
   const sem = document.getElementById('selectSemana').value;
   const dias = semanasAgrupadas[sem].dias;
 
-  let resultado = [];
+  const diasSemana = ["SEGUNDA-FEIRA","TERÇA-FEIRA","QUARTA-FEIRA","QUINTA-FEIRA","SEXTA-FEIRA"];
+
+  const mapa = {}; // horario -> {dia: valor}
 
   Object.keys(dias).forEach(dia => {
+
+    const dataObj = new Date(dia.split('/').reverse().join('-'));
+    const nomeDia = ["DOMINGO","SEGUNDA-FEIRA","TERÇA-FEIRA","QUARTA-FEIRA","QUINTA-FEIRA","SEXTA-FEIRA","SÁBADO"][dataObj.getDay()];
+
+    if(!diasSemana.includes(nomeDia)) return;
 
     dias[dia].forEach(r => {
 
       const horario = r[1];
+
+      if(!mapa[horario]){
+        mapa[horario] = {};
+      }
 
       turmasDaPlanilha.forEach(turma => {
         const idx = dadosGlobais[0].indexOf(turma);
         const val = (r[idx] || "");
 
         if(val.toUpperCase().includes(nomeProf.toUpperCase())){
-          resultado.push({
-            dia,
-            horario,
-            turma,
-            aula: val
-          });
+          mapa[horario][nomeDia] = val;
         }
       });
 
@@ -1238,29 +1244,46 @@ function gerarFichaProfessor(nomeProf){
 
   });
 
-  return resultado;
+  return mapa;
 }
 
-  function mostrarFichaProfessor(nome){
+function mostrarFichaProfessorTabela(nome){
 
-  const dados = gerarFichaProfessor(nome);
+  const grade = gerarGradeProfessor(nome);
 
-  let texto = `FICHA SEMANAL - ${nome}\n\n`;
+  const diasSemana = ["SEGUNDA-FEIRA","TERÇA-FEIRA","QUARTA-FEIRA","QUINTA-FEIRA","SEXTA-FEIRA"];
 
-  dados.forEach(a=>{
-    texto += `📅 ${a.dia}\n`;
-    texto += `⏰ ${a.horario}\n`;
-    texto += `🏫 ${a.turma}\n`;
-    texto += `📘 ${a.aula}\n\n`;
+  let html = `
+    <h3>👨‍🏫 FICHA SEMANAL - ${nome}</h3>
+    <table border="1" style="border-collapse:collapse;width:100%;font-size:12px;">
+      <tr>
+        <th>Horário</th>
+        ${diasSemana.map(d=>`<th>${d}</th>`).join("")}
+      </tr>
+  `;
+
+  Object.keys(grade).forEach(horario => {
+
+    html += `<tr>`;
+    html += `<td><b>${horario}</b></td>`;
+
+    diasSemana.forEach(dia=>{
+      html += `<td>${grade[horario][dia] || "-"}</td>`;
+    });
+
+    html += `</tr>`;
   });
 
-  mostrarPainelVagas(texto);
+  html += `</table>`;
+
+  document.getElementById("conteudoVagas").innerHTML = html;
+  document.getElementById("painelVagas").style.display = "block";
 }
 
   function gerarPreviewProfessor(){
   const nome = document.getElementById('searchProf').value;
   if(nome.length > 3){
-    mostrarFichaProfessor(nome);
+    mostrarFichaProfessorTabela(nome);
   }
 }
 
