@@ -337,13 +337,11 @@ function limparPainelAlteracoes(){
 }
 
 function mostrarPainelVagas(texto){
-  document.getElementById("conteudoVagas").innerHTML = html;
+  document.getElementById("conteudoVagas").innerText = texto;
 
-// 🔥 ALTERA O TÍTULO DINAMICAMENTE
-document.querySelector("#painelVagas strong").innerText = "📅 Aulas Vagas";
-document.querySelector("#painelVagas strong").innerText = "👨‍🏫 Ficha do Professor";
+  document.querySelector("#painelVagas strong").innerText = "📅 Aulas Vagas";
 
-document.getElementById("painelVagas").style.display = "block";
+  document.getElementById("painelVagas").style.display = "block";
 }
 
 function fecharPainelVagas(){
@@ -1307,12 +1305,18 @@ html += `<td>${conteudo || "-"}</td>`;
 }
 
   function gerarPreviewProfessor(){
-  const nome = document.getElementById('searchProf').value;
+  const nome = document.getElementById('searchProf').value.trim();
+
   if(nome.length > 3){
     mostrarFichaProfessorTabela(nome);
+
+    document.querySelector("#painelVagas strong").innerText = "👨‍🏫 Ficha do Professor";
+
+  } else {
+    document.getElementById("painelVagas").style.display = "none";
   }
 }
-
+  
   function gerarFichaTurma(nomeTurma){
 
   const sem = document.getElementById('selectSemana').value;
