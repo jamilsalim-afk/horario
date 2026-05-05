@@ -1246,7 +1246,10 @@ if(nomesSeparados.some(n => n.includes(nomeBusca))){
   mapa[horario][nomeDia] = [];
 }
 
-mapa[horario][nomeDia].push(val);
+mapa[horario][nomeDia].push({
+  turma: turma,
+  aula: val
+});
         }
       });
 
@@ -1281,7 +1284,9 @@ function mostrarFichaProfessorTabela(nome){
       let conteudo = grade[horario][dia];
 
 if(Array.isArray(conteudo)){
-  conteudo = conteudo.join("<br>");
+  conteudo = conteudo.map(item => {
+    return `<b>${item.turma}</b><br>${item.aula}`;
+  }).join("<hr style='margin:3px 0;'>");
 }
 
 html += `<td>${conteudo || "-"}</td>`;
