@@ -520,9 +520,14 @@ function verificarMudancaAoAbrir({
 
   // primeira execução
   if (!antigoRaw) {
-    salvarSnapshotAtual();
-    return;
-  }
+
+  // 🔥 PRIMEIRO ACESSO: NÃO MOSTRA ALTERAÇÕES
+  salvarSnapshotAtual();
+
+  console.log("📌 Snapshot inicial criado — nenhuma comparação feita.");
+
+  return;
+}
 
   const snapshotAntigo = JSON.parse(antigoRaw);
   const mapaAntigo = snapshotAntigo.mapa || {};
