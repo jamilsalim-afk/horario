@@ -337,8 +337,12 @@ function limparPainelAlteracoes(){
 }
 
 function mostrarPainelVagas(texto){
-  document.getElementById("conteudoVagas").innerText = texto;
-  document.getElementById("painelVagas").style.display = "block";
+  document.getElementById("conteudoVagas").innerHTML = html;
+
+// 🔥 ALTERA O TÍTULO DINAMICAMENTE
+document.querySelector("#painelVagas strong").innerText = "👨‍🏫 Ficha do Professor";
+
+document.getElementById("painelVagas").style.display = "block";
 }
 
 function fecharPainelVagas(){
@@ -535,7 +539,7 @@ function verificarMudancaAoAbrir({
     document.getElementById("painelAlteracoes").style.display = "none";
   }
 
-  salvarSnapshotAtualRobusto(dados, sem, mod);
+  salvarSnapshotAtual();
 }
 
 function mostrarAvisoAlteracoesRobusto(lista) {
