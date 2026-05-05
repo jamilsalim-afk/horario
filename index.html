@@ -928,7 +928,7 @@ function copiarRelatorioDia(dia) {
   });
 }
 
-function gerarRelatorioSemana() {
+function gerarRelatorioSemanaTexto() {
   const sem = document.getElementById('selectSemana').value;
   const dias = semanasAgrupadas[sem].dias;
 
@@ -936,7 +936,6 @@ function gerarRelatorioSemana() {
 
   const agrupado = {};
 
-  // 🔥 AGRUPA DIA + TURMA
   Object.keys(dias).forEach(dia => {
     const vagas = coletarVagasDoDia(dia);
 
@@ -959,12 +958,9 @@ function gerarRelatorioSemana() {
 
   if (listaFinal.length === 0) {
     texto += "Não há aulas vagas na semana.";
-    navigator.clipboard.writeText(texto);
-    alert("Relatório semanal copiado!");
-    return;
+    return texto;
   }
 
-  // 🔥 ORGANIZA POR DIA
   listaFinal.sort((a, b) => {
     const [da, ma, aa] = a.dia.split('/');
     const [db, mb, ab] = b.dia.split('/');
@@ -975,7 +971,6 @@ function gerarRelatorioSemana() {
 
   listaFinal.forEach(item => {
 
-    // 🔥 quebra por dia
     if (item.dia !== diaAtual) {
       texto += `📅 DATA: ${item.dia}\n\n`;
       diaAtual = item.dia;
@@ -987,9 +982,7 @@ function gerarRelatorioSemana() {
     texto += `⏰ AULAS VAGAS: ${horariosUnicos.join(", ")}\n\n`;
   });
 
-  navigator.clipboard.writeText(texto).then(() => {
-    alert("Relatório semanal copiado!");
-  });
+  return texto;
 }
   
 function exportarPDF(){
