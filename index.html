@@ -1218,7 +1218,8 @@ function gerarGradeProfessor(nomeProf){
 
   Object.keys(dias).forEach(dia => {
 
-    const dataObj = new Date(dia.split('/').reverse().join('-'));
+    const [d, m, a] = dia.split('/');
+const dataObj = new Date(a, m - 1, d); // 🔥 forma correta (local time)
     const nomeDia = ["DOMINGO","SEGUNDA-FEIRA","TERÇA-FEIRA","QUARTA-FEIRA","QUINTA-FEIRA","SEXTA-FEIRA","SÁBADO"][dataObj.getDay()];
 
     if(!diasSemana.includes(nomeDia)) return;
