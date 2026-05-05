@@ -1199,7 +1199,7 @@ function criarBotoesDias() {
   });
 
   html += `
-      <button onclick="gerarRelatorioSemana()"
+      <button onclick="abrirRelatorioSemana()"
         style="padding:10px;background:#d32f2f;color:white;border:none;border-radius:6px;cursor:pointer;">
         📊 Semana inteira
       </button>
@@ -1207,6 +1207,11 @@ function criarBotoesDias() {
   `;
 
   document.getElementById("botoesRelatorio").innerHTML = html;
+}
+
+  function abrirRelatorioSemana(){
+  const texto = gerarRelatorioSemanaTexto();
+  mostrarPainelVagas(texto);
 }
   
 function gerarFichaProfessor(nomeProf){
