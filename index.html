@@ -1238,7 +1238,9 @@ function gerarGradeProfessor(nomeProf){
         const nomeBusca = normalizarTexto(nomeProf);
 const valNorm = normalizarTexto(val);
 
-if(valNorm.includes(nomeBusca)){
+const nomesSeparados = valNorm.split(/[\n,;/]/); // quebra por vários separadores
+
+if(nomesSeparados.some(n => n.includes(nomeBusca))){
           if(!mapa[horario][nomeDia]){
   mapa[horario][nomeDia] = [];
 }
