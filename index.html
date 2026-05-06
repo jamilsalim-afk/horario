@@ -861,38 +861,83 @@ function renderizarTabela(){
 
         html += `</tr>`;
 
-        let eventoAtual = null;
+        let i = 0;
+const linhas = dias[dia];
 
-dias[dia].forEach(r => {
+while(i < linhas.length){
 
-    const horario = r[1];
+  const r = linhas[i];
+  const horario = r[1];
 
-    const eventoGeral = getEventoGeral(dia, horario);
+  const eventoGeral = getEventoGeral(dia, horario);
 
-    // 🔥 SE EXISTE EVENTO GERAL
-    if(eventoGeral){
+  if(eventoGeral){
 
-        // evita repetir várias linhas
-        if(eventoAtual === eventoGeral){
-            return;
-        }
+    let inicio = i;
+    let fim = i;
 
-        eventoAtual = eventoGeral;
-
-        html += `
-          <tr class="evento-geral">
-            <td class="time-col">${horario}</td>
-            <td colspan="${turmasAtivas.length}" class="evento-bloco">
-              📌 ${eventoGeral}
-            </td>
-          </tr>
-        `;
-
-        return;
+    // 🔥 encontra até onde o evento vai
+    while(
+      fim + 1 < linhas.length &&
+      getEventoGeral(dia, linhas[fim + 1][1]) === eventoGeral
+    ){
+      fim++;
     }
 
-    // 🔥 volta ao normal
-    eventoAtual = null;
+    const totalLinhas = (fim - inicio) + 1;
+
+    html += `
+      <tr class="evento-geral">
+        <td class="time-col">${linhas[inicio][1]}</td>
+        <td rowspan="${totalLinhas}" colspan="${turmasAtivas.length}" class="evento-bloco">
+          📌 ${eventoGeral}
+        </td>
+      </tr>
+    `;
+
+    i = fim + 1;
+    continue;
+  }
+
+  // 🔥 linha normal
+  const isInt = r[1].toUpperCase().includes("INTERVALO");
+  const linhaVazia = r.slice(2).every(v => !v || v.trim() === "");
+
+  html += `<tr class="${isInt ? 'intervalo' : ''} ${linhaVazia ? 'linha-vazia' : ''}">
+              <td class="time-col">${r[1]}</td>`;
+
+  turmasAtivas.forEach(t => {
+      const idx = dadosGlobais[0].indexOf(t);
+      let val = (r[idx] || "").trim();
+
+      let classesExtras = [];
+
+      const valNorm = normalizarTexto(val);
+
+      regrasDestaque.forEach(regra => {
+          if (regra.match(valNorm)) {
+              classesExtras.push(regra.classe);
+          }
+      });
+
+      if (
+          val.includes("[+]") ||
+          val.includes("*") ||
+          val.includes("[R]") ||
+          valNorm.includes("INTERVALO")
+      ) {
+          classesExtras.push("marcacao-extra");
+      }
+
+      html += `<td class="aula-cell ${getCursoInfo(t).cl} ${classesExtras.join(" ")}">
+                  ${val}
+               </td>`;
+  });
+
+  html += `</tr>`;
+
+  i++;
+}
 
     const isInt = r[1].toUpperCase().includes("INTERVALO");
     const linhaVazia = r.slice(2).every(v => !v || v.trim() === "");
