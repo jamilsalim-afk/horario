@@ -724,7 +724,12 @@ async function init(){
 
 function getEventoGeral(dia, horario){
 
-  const hAtual = horaParaMinutos(horario.split(" - ")[0]);
+  if(!horario || !horario.includes(" - ")) return null;
+
+  const [hIniStr, hFimStr] = horario.split(" - ");
+
+  const hIniLinha = horaParaMinutos(hIniStr);
+  const hFimLinha = horaParaMinutos(hFimStr);
 
   for(let i = 1; i < eventosGlobais.length; i++){
 
@@ -743,7 +748,11 @@ function getEventoGeral(dia, horario){
     if(tipo !== "GERAL") continue;
     if(data !== dia) continue;
 
-    if(hAtual >= hInicio && hAtual <= hFim){
+    // 🔥 REGRA CORRETA (INTERSEÇÃO DE INTERVALO)
+    const dentro =
+      hIniLinha < hFim && hFimLinha > hInicio;
+
+    if(dentro){
       return desc || "EVENTO";
     }
   }
