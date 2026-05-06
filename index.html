@@ -189,15 +189,15 @@ tr.linha-vazia td {
 }
 
 .evento-bloco {
-  background: #fff3cd !important; /* amarelo suave */
-  color: #856404;
+  background: #fff8e1 !important;
+  color: #6d4c41;
   font-weight: bold;
   font-size: 12px;
   text-align: center;
 }
 
 .evento-geral td {
-  border: 1px solid #ffeeba;
+  border: 1px solid #ffe0b2;
 }
   
 </style>
@@ -336,6 +336,11 @@ async function carregarEventos(){
   const url = `https://docs.google.com/spreadsheets/d/${SHEETS.EVENTOS.id}/export?format=csv&gid=${SHEETS.EVENTOS.gid}`;
   const res = await fetch(url);
   eventosGlobais = parseCSV(await res.text());
+}
+
+function horaParaMinutos(h){
+  const [hh, mm] = h.split(':').map(Number);
+  return hh * 60 + mm;
 }
   
 let dadosGlobais=[],turmasDaPlanilha=[],semanasAgrupadas={};
@@ -695,31 +700,31 @@ async function init(){
 
 function getEventoGeral(dia, horario){
 
-  const hAtual = horario.split(" - ")[0];
+  const hAtual = horaParaMinutos(horario.split(" - ")[0]);
 
-  return eventosGlobais.find((ev, i) => {
+  for(let i = 1; i < eventosGlobais.length; i++){
 
-    if(i === 0) return false; // cabeçalho
+    const ev = eventosGlobais[i];
 
     const modalidade = ev[0];
     const tipo = ev[1];
     const data = ev[3];
-    const hInicio = ev[4];
-    const hFim = ev[5];
-    const desc = ev[6]; // 🔥 SOMENTE DESCRIÇÃO
+    const hInicio = horaParaMinutos(ev[4]);
+    const hFim = horaParaMinutos(ev[5]);
+    const desc = ev[6];
 
     const modAtual = document.getElementById('selectModalidade').value;
 
-    if(modalidade !== modAtual) return false;
-    if(tipo !== "GERAL") return false;
-    if(data !== dia) return false;
+    if(modalidade !== modAtual) continue;
+    if(tipo !== "GERAL") continue;
+    if(data !== dia) continue;
 
     if(hAtual >= hInicio && hAtual <= hFim){
-      return desc; // 🔥 RETORNA SÓ A DESCRIÇÃO
+      return desc || "EVENTO";
     }
+  }
 
-    return false;
-  });
+  return null;
 }
   
 function getCursoInfo(t){
@@ -884,11 +889,9 @@ function renderizarTabela(){
 
                 while(fim + 1 < linhas.length){
 
-                    const prox = linhas[fim + 1];
                     const proxEvento = getEventoGeral(dia, prox[1]);
-                    const isIntervalo = prox[1].toUpperCase().includes("INTERVALO");
 
-                    if(proxEvento === eventoGeral || isIntervalo){
+if(proxEvento === eventoGeral){
                         fim++;
                     } else {
                         break;
