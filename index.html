@@ -905,48 +905,51 @@ function renderizarTabela(){
 
             const eventoGeral = getEventoGeral(dia, horario);
 
-            // 🔥 BLOCO DE EVENTO (CORRIGIDO)
-            if(eventoGeral){
+if(eventoGeral){
 
-                let inicio = i;
-let fim = i;
+    let inicio = i;
+    let fim = i;
 
-while(fim + 1 < linhas.length){
+    const inicioMin = horaParaMinutos(linhas[inicio][1].split(" - ")[0]);
 
-    const prox = linhas[fim + 1];
-    const horarioProx = prox[1];
+    // 🔥 VAI ATÉ O FINAL REAL DO EVENTO (ex: 18:20)
+    while(fim + 1 < linhas.length){
 
-    // ignora intervalo mas mantém no cálculo
-    const proxEvento = getEventoGeral(dia, horarioProx);
+        const prox = linhas[fim + 1];
+        const horarioProx = prox[1];
 
-    if(
-        proxEvento === eventoGeral ||
-        (horarioProx && horarioProx.toUpperCase().includes("INTERVALO"))
-    ){
-        fim++;
-    } else {
-        break;
+        if(!horarioProx) break;
+
+        const proxMin = horaParaMinutos(horarioProx.split(" - ")[0]);
+
+        const proxEvento = getEventoGeral(dia, horarioProx);
+
+        // 🔥 REGRA: continua se ainda estiver dentro do evento
+        if(proxEvento === eventoGeral){
+            fim++;
+        }
+        // 🔥 mantém INTERVALO dentro do bloco
+        else if(horarioProx.toUpperCase().includes("INTERVALO")){
+            fim++;
+        }
+        else{
+            break;
+        }
     }
-}
 
-// 🔥 AQUI ESTÁ A CORREÇÃO REAL
-let totalLinhas = 0;
+    const totalLinhas = (fim - inicio) + 1;
 
-for(let k = inicio; k <= fim; k++){
-    totalLinhas++; // conta TODAS, inclusive intervalo
-}
+    html += `
+      <tr class="evento-geral">
+        <td class="time-col">${linhas[inicio][1]}</td>
+        <td rowspan="${totalLinhas}" colspan="${turmasAtivas.length}" class="evento-bloco">
+          ${eventoGeral}
+        </td>
+      </tr>
+    `;
 
-html += `
-  <tr class="evento-geral">
-    <td class="time-col">${linhas[inicio][1]}</td>
-    <td rowspan="${totalLinhas}" colspan="${turmasAtivas.length}" class="evento-bloco">
-      ${eventoGeral}
-    </td>
-  </tr>
-`;
-
-i = fim + 1;
-continue;
+    i = fim + 1;
+    continue;
             }
 
             // 🔹 LINHA NORMAL (ORIGINAL PRESERVADA)
