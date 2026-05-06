@@ -881,7 +881,7 @@ function renderizarTabela(){
 
             const eventoGeral = getEventoGeral(dia, horario);
 
-            // 🔥 BLOCO DE EVENTO (CORRIGIDO SEM QUEBRAR INTERVALO)
+            // 🔥 BLOCO DE EVENTO (CORRIGIDO)
             if(eventoGeral){
 
                 let inicio = i;
@@ -889,9 +889,18 @@ function renderizarTabela(){
 
                 while(fim + 1 < linhas.length){
 
-                    const proxEvento = getEventoGeral(dia, prox[1]);
+                    const prox = linhas[fim + 1]; // ✅ CORREÇÃO
+                    const horarioProx = prox[1];
 
-if(proxEvento === eventoGeral){
+                    // 🔥 IGNORA INTERVALO NO MEIO DO EVENTO
+                    if(horarioProx && horarioProx.toUpperCase().includes("INTERVALO")){
+                        fim++;
+                        continue;
+                    }
+
+                    const proxEvento = getEventoGeral(dia, horarioProx);
+
+                    if(proxEvento === eventoGeral){
                         fim++;
                     } else {
                         break;
@@ -904,7 +913,7 @@ if(proxEvento === eventoGeral){
                   <tr class="evento-geral">
                     <td class="time-col">${linhas[inicio][1]}</td>
                     <td rowspan="${totalLinhas}" colspan="${turmasAtivas.length}" class="evento-bloco">
-                      📌 ${eventoGeral}
+                      ${eventoGeral}
                     </td>
                   </tr>
                 `;
@@ -914,7 +923,7 @@ if(proxEvento === eventoGeral){
             }
 
             // 🔹 LINHA NORMAL (ORIGINAL PRESERVADA)
-            const isInt = r[1].toUpperCase().includes("INTERVALO");
+            const isInt = r[1] && r[1].toUpperCase().includes("INTERVALO");
             const linhaVazia = r.slice(2).every(v => !v || v.trim() === "");
 
             html += `<tr class="${isInt ? 'intervalo' : ''} ${linhaVazia ? 'linha-vazia' : ''}">
