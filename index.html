@@ -815,20 +815,21 @@ function renderizarTabela(){
 
     let html = "";
 
-    // 🔥 Regras de destaque
     const regrasDestaque = [
-    { match: v => v.includes("RESERVA ENSINO"), classe: "reserva-ensino" },
-    { match: v => v.includes("PPS/ATENDIMENTO"), classe: "pps" },
-    { match: v => v.includes("ESTUDOS INDIVIDUAIS"), classe: "estudos" },
-    { match: v => v.includes("REUNIAO DE SERVIDORES"), classe: "reuniao" },
-    { match: v => v.includes("CAED") || v.includes("PRE-CONSELHO"), classe: "caed" },
-    { match: v => v.includes("_REP -"), classe: "reposicao" }
-];
+        { match: v => v.includes("RESERVA ENSINO"), classe: "reserva-ensino" },
+        { match: v => v.includes("PPS/ATENDIMENTO"), classe: "pps" },
+        { match: v => v.includes("ESTUDOS INDIVIDUAIS"), classe: "estudos" },
+        { match: v => v.includes("REUNIAO DE SERVIDORES"), classe: "reuniao" },
+        { match: v => v.includes("CAED") || v.includes("PRE-CONSELHO"), classe: "caed" },
+        { match: v => v.includes("_REP -"), classe: "reposicao" }
+    ];
 
     Object.keys(dias).forEach(dia => {
+
         const p = dia.split('/');
         const dObj = new Date(p[2], p[1]-1, p[0]);
 
+        // 🔴 FERIADO
         if (isFeriado(dia)){
             html += `<table>
                 <tr class="day-divider">
@@ -846,12 +847,15 @@ function renderizarTabela(){
         }
 
         html += `<table>`;
+
+        // 🔹 CABEÇALHO DO DIA
         html += `<tr class="day-divider">
                     <td colspan="${turmasAtivas.length+1}">
                         ${nomes[dObj.getDay()]} - ${dia}
                     </td>
                  </tr>`;
 
+        // 🔹 CABEÇALHO DAS TURMAS
         html += `<tr>
                     <th class="time-col">Horário</th>`;
 
@@ -861,126 +865,90 @@ function renderizarTabela(){
 
         html += `</tr>`;
 
+        let linhas = dias[dia];
         let i = 0;
-const linhas = dias[dia];
 
-while(i < linhas.length){
+        while(i < linhas.length){
 
-  const r = linhas[i];
-  const horario = r[1];
+            const r = linhas[i];
+            const horario = r[1];
 
-  const eventoGeral = getEventoGeral(dia, horario);
+            const eventoGeral = getEventoGeral(dia, horario);
 
-  if(eventoGeral){
+            // 🟡 BLOCO DE EVENTO
+            if(eventoGeral){
 
-    let inicio = i;
-    let fim = i;
+                let inicio = i;
+                let fim = i;
 
-    // 🔥 encontra até onde o evento vai
-    while(
-      fim + 1 < linhas.length &&
-      getEventoGeral(dia, linhas[fim + 1][1]) === eventoGeral
-    ){
-      fim++;
-    }
+                while(
+                    fim + 1 < linhas.length &&
+                    getEventoGeral(dia, linhas[fim + 1][1]) === eventoGeral
+                ){
+                    fim++;
+                }
 
-    const totalLinhas = (fim - inicio) + 1;
+                const totalLinhas = (fim - inicio) + 1;
 
-    html += `
-      <tr class="evento-geral">
-        <td class="time-col">${linhas[inicio][1]}</td>
-        <td rowspan="${totalLinhas}" colspan="${turmasAtivas.length}" class="evento-bloco">
-          📌 ${eventoGeral}
-        </td>
-      </tr>
-    `;
+                html += `
+                  <tr class="evento-geral">
+                    <td class="time-col">${linhas[inicio][1]}</td>
+                    <td rowspan="${totalLinhas}" colspan="${turmasAtivas.length}" class="evento-bloco">
+                      📌 ${eventoGeral}
+                    </td>
+                  </tr>
+                `;
 
-    i = fim + 1;
-    continue;
-  }
-
-  // 🔥 linha normal
-  const isInt = r[1].toUpperCase().includes("INTERVALO");
-  const linhaVazia = r.slice(2).every(v => !v || v.trim() === "");
-
-  html += `<tr class="${isInt ? 'intervalo' : ''} ${linhaVazia ? 'linha-vazia' : ''}">
-              <td class="time-col">${r[1]}</td>`;
-
-  turmasAtivas.forEach(t => {
-      const idx = dadosGlobais[0].indexOf(t);
-      let val = (r[idx] || "").trim();
-
-      let classesExtras = [];
-
-      const valNorm = normalizarTexto(val);
-
-      regrasDestaque.forEach(regra => {
-          if (regra.match(valNorm)) {
-              classesExtras.push(regra.classe);
-          }
-      });
-
-      if (
-          val.includes("[+]") ||
-          val.includes("*") ||
-          val.includes("[R]") ||
-          valNorm.includes("INTERVALO")
-      ) {
-          classesExtras.push("marcacao-extra");
-      }
-
-      html += `<td class="aula-cell ${getCursoInfo(t).cl} ${classesExtras.join(" ")}">
-                  ${val}
-               </td>`;
-  });
-
-  html += `</tr>`;
-
-  i++;
-}
-
-    const isInt = r[1].toUpperCase().includes("INTERVALO");
-    const linhaVazia = r.slice(2).every(v => !v || v.trim() === "");
-
-    html += `<tr class="${isInt ? 'intervalo' : ''} ${linhaVazia ? 'linha-vazia' : ''}">
-                <td class="time-col">${r[1]}</td>`;
-
-    turmasAtivas.forEach(t => {
-        const idx = dadosGlobais[0].indexOf(t);
-        let val = (r[idx] || "").trim();
-
-        let classesExtras = [];
-
-        const valNorm = normalizarTexto(val);
-
-        regrasDestaque.forEach(regra => {
-            if (regra.match(valNorm)) {
-                classesExtras.push(regra.classe);
+                i = fim + 1;
+                continue;
             }
-        });
 
-        if (
-            val.includes("[+]") ||
-            val.includes("*") ||
-            val.includes("[R]") ||
-            valNorm.includes("INTERVALO")
-        ) {
-            classesExtras.push("marcacao-extra");
+            // 🔹 LINHA NORMAL
+            const isInt = r[1].toUpperCase().includes("INTERVALO");
+            const linhaVazia = r.slice(2).every(v => !v || v.trim() === "");
+
+            html += `<tr class="${isInt ? 'intervalo' : ''} ${linhaVazia ? 'linha-vazia' : ''}">
+                        <td class="time-col">${r[1]}</td>`;
+
+            turmasAtivas.forEach(t => {
+
+                const idx = dadosGlobais[0].indexOf(t);
+                let val = (r[idx] || "").trim();
+
+                let classesExtras = [];
+                const valNorm = normalizarTexto(val);
+
+                regrasDestaque.forEach(regra => {
+                    if (regra.match(valNorm)) {
+                        classesExtras.push(regra.classe);
+                    }
+                });
+
+                if (
+                    val.includes("[+]") ||
+                    val.includes("*") ||
+                    val.includes("[R]") ||
+                    valNorm.includes("INTERVALO")
+                ) {
+                    classesExtras.push("marcacao-extra");
+                }
+
+                html += `<td class="aula-cell ${getCursoInfo(t).cl} ${classesExtras.join(" ")}">
+                            ${val}
+                         </td>`;
+            });
+
+            html += `</tr>`;
+
+            i++;
         }
-
-        html += `<td class="aula-cell ${getCursoInfo(t).cl} ${classesExtras.join(" ")}">
-                    ${val}
-                 </td>`;
-    });
-
-    html += `</tr>`;
-});
 
         html += `</table><br>`;
     });
 
     container.innerHTML = html;
-  criarBotoesDias();
+
+    criarBotoesDias();
 }
 
   const coresPDF = {
