@@ -496,20 +496,44 @@ function compararMapas(mapaAntigo, mapaNovo) {
   return alteracoes;
 }
   
-  
 function salvarSnapshotAtual() {
 
   const sem = document.getElementById('selectSemana').value;
   const mod = document.getElementById('selectModalidade').value;
 
-  const mapa = gerarMapaDados(dadosGlobais);
+  const mapaOriginal = gerarMapaDados(dadosGlobais);
+
+  // 🔥 REDUZ O TAMANHO: salva só o essencial
+  const mapaCompacto = {};
+
+  Object.keys(mapaOriginal).forEach(k => {
+    mapaCompacto[k] = mapaOriginal[k].valorNormalizado;
+  });
 
   const snapshot = {
     tempo: new Date().toISOString(),
-    mapa
+    mapa: mapaCompacto
   };
 
-  localStorage.setItem(`snapshot_${mod}_${sem}`, JSON.stringify(snapshot));
+  try {
+    localStorage.setItem(`snapshot_${mod}_${sem}`, JSON.stringify(snapshot));
+  } catch (e) {
+
+    // 🔥 SE ESTOURAR, LIMPA E TENTA DE NOVO
+    if (e.name === "QuotaExceededError") {
+      console.warn("⚠️ LocalStorage cheio. Limpando snapshots antigos...");
+
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith("snapshot_")) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      localStorage.setItem(`snapshot_${mod}_${sem}`, JSON.stringify(snapshot));
+    } else {
+      throw e;
+    }
+  }
 }
 
 function obterSnapshotAntigo() {
