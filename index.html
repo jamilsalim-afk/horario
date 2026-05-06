@@ -705,7 +705,14 @@ function getEventoGeral(dia, horario){
     const data = ev[3];
     const hInicio = ev[4];
     const hFim = ev[5];
-    const desc = ev[6];
+
+    // 🔥 PEGA SOMENTE A DESCRIÇÃO LIMPA
+    let descricao = (ev[6] || "").toString().trim();
+
+    // 🔥 REMOVE POSSÍVEIS SUJEIRAS (caso venha concatenado)
+    if(descricao.includes("|")){
+      descricao = descricao.split("|")[0].trim();
+    }
 
     const modAtual = document.getElementById('selectModalidade').value;
 
@@ -714,7 +721,7 @@ function getEventoGeral(dia, horario){
     if(data !== dia) return false;
 
     if(hAtual >= hInicio && hAtual <= hFim){
-      return desc;
+      return descricao;
     }
 
     return false;
@@ -875,22 +882,30 @@ function renderizarTabela(){
 
             const eventoGeral = getEventoGeral(dia, horario);
 
-            // 🔥 EVENTO (CORREÇÃO AQUI)
+            // 🔥 EVENTO (CORRIGIDO)
             if(eventoGeral){
 
                 let inicio = i;
                 let fim = i;
 
-                while(
-                    fim + 1 < linhas.length &&
-                    getEventoGeral(dia, linhas[fim + 1][1]) === eventoGeral
-                ){
-                    fim++;
+                // 🔥 IGNORA INTERVALO NO AGRUPAMENTO
+                while(fim + 1 < linhas.length){
+
+                    const proxHorario = linhas[fim + 1][1];
+                    const proxEvento = getEventoGeral(dia, proxHorario);
+
+                    const isIntervalo = proxHorario.toUpperCase().includes("INTERVALO");
+
+                    if(proxEvento === eventoGeral || isIntervalo){
+                        fim++;
+                    } else {
+                        break;
+                    }
                 }
 
                 const totalLinhas = (fim - inicio) + 1;
 
-                // primeira linha com rowspan
+                // 🔹 PRIMEIRA LINHA
                 html += `
                   <tr class="evento-geral">
                     <td class="time-col">${linhas[inicio][1]}</td>
@@ -900,7 +915,7 @@ function renderizarTabela(){
                   </tr>
                 `;
 
-                // 🔥 LINHAS RESTANTES (ESSENCIAL)
+                // 🔹 LINHAS RESTANTES
                 for(let k = inicio + 1; k <= fim; k++){
                     html += `
                       <tr class="evento-geral">
