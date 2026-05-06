@@ -187,6 +187,17 @@ tr.linha-vazia td {
     color: #0b3d91; /* azul escuro */
     font-weight: bold;
 }
+
+.evento-bloco {
+  background: #ffeb3b !important;
+  font-weight: bold;
+  font-size: 12px;
+  text-align: center;
+}
+
+.evento-geral td {
+  border: 2px solid #f57f17;
+}
   
 </style>
 </head>
@@ -312,9 +323,20 @@ BR 364, Km 228, Lote 2-A - Zona Rural<br>
 <script>
 const SHEETS={
 INTEGRADO:{id:'1j33kiPqwtzZNuvkBgYDaIiXZvVMY_J0qWAtRfYGdnD8',gid:'1357770092'},
-SUPERIOR:{id:'14ALXZgFIT68ee9ajuIdG63SpGVm0HyTjwp63-J6vRyg',gid:'669887707'}
+SUPERIOR:{id:'14ALXZgFIT68ee9ajuIdG63SpGVm0HyTjwp63-J6vRyg',gid:'669887707'},
+
+// 🔥 NOVO
+EVENTOS:{
+  id:'1IDjs0oS6lQBGDrL7ja1Ge0vaBdNCNIULDH7J5p89c5s',
+  gid:'0'}
 };
 
+async function carregarEventos(){
+  const url = `https://docs.google.com/spreadsheets/d/${SHEETS.EVENTOS.id}/export?format=csv&gid=${SHEETS.EVENTOS.gid}`;
+  const res = await fetch(url);
+  eventosGlobais = parseCSV(await res.text());
+}
+  
 let dadosGlobais=[],turmasDaPlanilha=[],semanasAgrupadas={};
 
   function isSemanaPassada(dataStr){
@@ -656,6 +678,7 @@ async function init(){
   const res = await fetch(url);
 
   dadosGlobais = parseCSV(await res.text());
+  await carregarEventos(); // 🔥 NOVO
 
   processarDados();
 
@@ -668,6 +691,36 @@ async function init(){
   });
 }, 100);
 }
+
+function getEventoGeral(dia, horario){
+
+  const hAtual = horario.split(" - ")[0];
+
+  return eventosGlobais.find((ev, i) => {
+
+    if(i === 0) return false; // ignora cabeçalho
+
+    const modalidade = ev[0];
+    const tipo = ev[1];
+    const data = ev[3];
+    const hInicio = ev[4];
+    const hFim = ev[5];
+    const desc = ev[6];
+
+    const modAtual = document.getElementById('selectModalidade').value;
+
+    if(modalidade !== modAtual) return false;
+    if(tipo !== "GERAL") return false;
+    if(data !== dia) return false;
+
+    if(hAtual >= hInicio && hAtual <= hFim){
+      return desc;
+    }
+
+    return false;
+  });
+}
+  
 function getCursoInfo(t){
 t=t.toUpperCase();
 if(t.includes("AGROEC")) return {cl:"c-agroec",rgb:[232,245,233]};
@@ -808,44 +861,75 @@ function renderizarTabela(){
 
         html += `</tr>`;
 
-        dias[dia].forEach(r => {
-            const isInt = r[1].toUpperCase().includes("INTERVALO");
-            const linhaVazia = r.slice(2).every(v => !v || v.trim() === "");
+        let eventoAtual = null;
 
-            html += `<tr class="${isInt ? 'intervalo' : ''} ${linhaVazia ? 'linha-vazia' : ''}">
-                        <td class="time-col">${r[1]}</td>`;
+dias[dia].forEach(r => {
 
-            turmasAtivas.forEach(t => {
-                const idx = dadosGlobais[0].indexOf(t);
-                let val = (r[idx] || "").trim();
+    const horario = r[1];
 
-                let classesExtras = [];
+    const eventoGeral = getEventoGeral(dia, horario);
 
-const valNorm = normalizarTexto(val);
+    // 🔥 SE EXISTE EVENTO GERAL
+    if(eventoGeral){
 
-regrasDestaque.forEach(regra => {
-    if (regra.match(valNorm)) {
-        classesExtras.push(regra.classe);
+        // evita repetir várias linhas
+        if(eventoAtual === eventoGeral){
+            return;
+        }
+
+        eventoAtual = eventoGeral;
+
+        html += `
+          <tr class="evento-geral">
+            <td class="time-col">${horario}</td>
+            <td colspan="${turmasAtivas.length}" class="evento-bloco">
+              📌 ${eventoGeral}
+            </td>
+          </tr>
+        `;
+
+        return;
     }
-});
-              
-                // 🔥 manter regras antigas
-               if (
-    val.includes("[+]") ||
-    val.includes("*") ||
-    val.includes("[R]") ||
-    valNorm.includes("INTERVALO")
-) {
-    classesExtras.push("marcacao-extra");
-}
 
-                html += `<td class="aula-cell ${getCursoInfo(t).cl} ${classesExtras.join(" ")}">
-                            ${val}
-                         </td>`;
-            });
+    // 🔥 volta ao normal
+    eventoAtual = null;
 
-            html += `</tr>`;
+    const isInt = r[1].toUpperCase().includes("INTERVALO");
+    const linhaVazia = r.slice(2).every(v => !v || v.trim() === "");
+
+    html += `<tr class="${isInt ? 'intervalo' : ''} ${linhaVazia ? 'linha-vazia' : ''}">
+                <td class="time-col">${r[1]}</td>`;
+
+    turmasAtivas.forEach(t => {
+        const idx = dadosGlobais[0].indexOf(t);
+        let val = (r[idx] || "").trim();
+
+        let classesExtras = [];
+
+        const valNorm = normalizarTexto(val);
+
+        regrasDestaque.forEach(regra => {
+            if (regra.match(valNorm)) {
+                classesExtras.push(regra.classe);
+            }
         });
+
+        if (
+            val.includes("[+]") ||
+            val.includes("*") ||
+            val.includes("[R]") ||
+            valNorm.includes("INTERVALO")
+        ) {
+            classesExtras.push("marcacao-extra");
+        }
+
+        html += `<td class="aula-cell ${getCursoInfo(t).cl} ${classesExtras.join(" ")}">
+                    ${val}
+                 </td>`;
+    });
+
+    html += `</tr>`;
+});
 
         html += `</table><br>`;
     });
