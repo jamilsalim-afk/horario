@@ -875,7 +875,7 @@ function renderizarTabela(){
 
             const eventoGeral = getEventoGeral(dia, horario);
 
-            // 🟡 BLOCO DE EVENTO
+            // 🔥 EVENTO (CORREÇÃO AQUI)
             if(eventoGeral){
 
                 let inicio = i;
@@ -890,6 +890,7 @@ function renderizarTabela(){
 
                 const totalLinhas = (fim - inicio) + 1;
 
+                // primeira linha com rowspan
                 html += `
                   <tr class="evento-geral">
                     <td class="time-col">${linhas[inicio][1]}</td>
@@ -898,6 +899,15 @@ function renderizarTabela(){
                     </td>
                   </tr>
                 `;
+
+                // 🔥 LINHAS RESTANTES (ESSENCIAL)
+                for(let k = inicio + 1; k <= fim; k++){
+                    html += `
+                      <tr class="evento-geral">
+                        <td class="time-col">${linhas[k][1]}</td>
+                      </tr>
+                    `;
+                }
 
                 i = fim + 1;
                 continue;
