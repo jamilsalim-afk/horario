@@ -909,41 +909,44 @@ function renderizarTabela(){
             if(eventoGeral){
 
                 let inicio = i;
-                let fim = i;
+let fim = i;
 
-                while(fim + 1 < linhas.length){
+while(fim + 1 < linhas.length){
 
-                    const prox = linhas[fim + 1]; // ✅ CORREÇÃO
-                    const horarioProx = prox[1];
+    const prox = linhas[fim + 1];
+    const horarioProx = prox[1];
 
-                    // 🔥 IGNORA INTERVALO NO MEIO DO EVENTO
-                    if(horarioProx && horarioProx.toUpperCase().includes("INTERVALO")){
-                        fim++;
-                        continue;
-                    }
+    // ignora intervalo mas mantém no cálculo
+    const proxEvento = getEventoGeral(dia, horarioProx);
 
-                    const proxEvento = getEventoGeral(dia, horarioProx);
+    if(
+        proxEvento === eventoGeral ||
+        (horarioProx && horarioProx.toUpperCase().includes("INTERVALO"))
+    ){
+        fim++;
+    } else {
+        break;
+    }
+}
 
-                    if(proxEvento === eventoGeral){
-                        fim++;
-                    } else {
-                        break;
-                    }
-                }
+// 🔥 AQUI ESTÁ A CORREÇÃO REAL
+let totalLinhas = 0;
 
-                const totalLinhas = (fim - inicio) + 1;
+for(let k = inicio; k <= fim; k++){
+    totalLinhas++; // conta TODAS, inclusive intervalo
+}
 
-                html += `
-                  <tr class="evento-geral">
-                    <td class="time-col">${linhas[inicio][1]}</td>
-                    <td rowspan="${totalLinhas}" colspan="${turmasAtivas.length}" class="evento-bloco">
-                      ${eventoGeral}
-                    </td>
-                  </tr>
-                `;
+html += `
+  <tr class="evento-geral">
+    <td class="time-col">${linhas[inicio][1]}</td>
+    <td rowspan="${totalLinhas}" colspan="${turmasAtivas.length}" class="evento-bloco">
+      ${eventoGeral}
+    </td>
+  </tr>
+`;
 
-                i = fim + 1;
-                continue;
+i = fim + 1;
+continue;
             }
 
             // 🔹 LINHA NORMAL (ORIGINAL PRESERVADA)
