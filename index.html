@@ -129,17 +129,29 @@ body{
 }
 
 /* =========================================
-   CONTROLES
+   CONTROLES FIXOS
 ========================================= */
 
 .header-sticky{
   position:sticky;
 
-  top:170px;
+  top:0;
 
-  z-index:999;
+  z-index:9998;
 
-  padding:20px;
+  padding:14px 20px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(2,6,23,0.96),
+      rgba(2,6,23,0.82)
+    );
+
+  backdrop-filter:blur(18px);
+
+  border-bottom:
+    1px solid rgba(255,255,255,0.05);
 }
 
 .controls-card{
@@ -344,6 +356,8 @@ select:focus,
 
   overflow-y:visible;
 
+  position:relative;
+
   padding:18px;
 
   border-radius:30px;
@@ -357,14 +371,16 @@ select:focus,
   box-shadow:var(--shadow);
 
   -webkit-overflow-scrolling:touch;
+
+  touch-action:pan-x pan-y;
 }
 
 .table-responsive::-webkit-scrollbar{
-  height:12px;
+  height:10px;
 }
 
 .table-responsive::-webkit-scrollbar-thumb{
-  background:#334155;
+  background:#475569;
 
   border-radius:999px;
 }
@@ -434,14 +450,16 @@ th{
   z-index:5;
 }
 
-/* COLUNA HORÁRIO FIXA */
+/* =========================================
+   COLUNA HORÁRIO FIXA
+========================================= */
 
 .time-col{
   position:sticky;
 
   left:0;
 
-  z-index:999;
+  z-index:100;
 
   width:95px !important;
 
@@ -464,7 +482,7 @@ th{
   overflow:hidden;
 
   box-shadow:
-    8px 0 14px rgba(0,0,0,0.45);
+    10px 0 18px rgba(0,0,0,0.55);
 
   border-right:
     2px solid rgba(255,255,255,0.08);
@@ -472,17 +490,29 @@ th{
 
 td.time-col{
   background:#020617 !important;
+
+  position:sticky;
+
+  left:0;
+
+  z-index:90;
 }
 
 th.time-col{
   background:#020617 !important;
 
-  z-index:1000;
+  position:sticky;
+
+  left:0;
+
+  z-index:120;
 
   font-size:10px;
 }
 
-/* CÉLULAS */
+/* =========================================
+   CÉLULAS
+========================================= */
 
 .aula-cell{
   background:rgba(255,255,255,0.02);
@@ -498,7 +528,9 @@ th.time-col{
   background:rgba(34,197,94,0.12);
 }
 
-/* DIVISÃO DIA */
+/* =========================================
+   DIVISÃO DIA
+========================================= */
 
 .day-divider td{
   background:linear-gradient(135deg,#15803d,#22c55e);
@@ -520,7 +552,9 @@ th.time-col{
   z-index:50;
 }
 
-/* INTERVALOS */
+/* =========================================
+   INTERVALOS
+========================================= */
 
 .intervalo td,
 .marcacao-extra{
@@ -531,7 +565,9 @@ th.time-col{
   font-weight:700;
 }
 
-/* HIGHLIGHT */
+/* =========================================
+   HIGHLIGHT
+========================================= */
 
 .highlight{
   background:linear-gradient(135deg,#facc15,#f59e0b) !important;
@@ -547,7 +583,9 @@ th.time-col{
   opacity:0.12;
 }
 
-/* FERIADO */
+/* =========================================
+   FERIADO
+========================================= */
 
 .feriado{
   background:linear-gradient(135deg,#991b1b,#dc2626);
@@ -563,7 +601,9 @@ th.time-col{
   height:220px;
 }
 
-/* EVENTO GERAL */
+/* =========================================
+   EVENTOS
+========================================= */
 
 .evento-bloco{
   background:linear-gradient(135deg,#0f766e,#14b8a6) !important;
@@ -754,9 +794,7 @@ th.time-col{
   }
 
   .header-sticky{
-    top:145px;
-
-    padding:12px;
+    padding:10px;
   }
 
   .controls-card{
