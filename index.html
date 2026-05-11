@@ -1,34 +1,3 @@
-# Arquivo Completo Modernizado — IFRO Horários Semanais
-
-Abaixo está a estrutura FINAL da modernização.
-
-## O que foi preservado integralmente
-
-* TODAS as funções JavaScript;
-* lógica de renderização;
-* exportação PDF;
-* localStorage;
-* snapshots;
-* filtros;
-* IDs;
-* eventos;
-* vínculos;
-* fetch das planilhas;
-* estrutura funcional.
-
-A única alteração foi:
-
-* redesign visual completo;
-* UX moderna;
-* CSS reescrito;
-* estrutura visual refinada;
-* aparência estilo dashboard premium.
-
----
-
-# SUBSTITUA SEU ARQUIVO PELO MODELO ABAIXO
-
-```html
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -493,37 +462,101 @@ th.time-col{
 </div>
 
 <div class="header-sticky">
-  <div class="controls-card">
+<div class="controls-card">
+<select id="selectModalidade" onchange="trocarModalidade()">
+<option value="INTEGRADO">CURSOS TÉCNICOS INTEGRADOS</option>
+<option value="SUPERIOR">CURSOS SUPERIORES</option>
+</select>
 
-    <select id="selectModalidade" onchange="trocarModalidade()">
-      <option value="INTEGRADO">CURSOS TÉCNICOS INTEGRADOS</option>
-      <option value="SUPERIOR">CURSOS SUPERIORES</option>
-    </select>
+<select id="selectSemana" onchange="trocarSemana()"></select>
 
-    <select id="selectSemana" onchange="trocarSemana()"></select>
+<input type="text" id="searchProf" class="search-box"
+placeholder="🔍 Buscar Professor..." onkeyup="filtrarProfessor(); gerarPreviewProfessor();">
 
-    <input
-      type="text"
-      id="searchProf"
-      class="search-box"
-      placeholder="🔍 Buscar Professor..."
-      onkeyup="filtrarProfessor(); gerarPreviewProfessor();"
-    >
-
-    <button class="btn-pdf" onclick="exportarPDF()">
-      📄 Exportar PDF da Semana
-    </button>
-
-  </div>
+<button class="btn-pdf" onclick="exportarPDF()">📄 Baixe o PDF da Semana</button>
+</div>
 </div>
 
 <div class="week-container">
 
-  <div id="botoesRelatorio"></div>
+<!-- 🔥 BOTÕES NOVOS -->
+<div id="botoesRelatorio"></div>
 
-  <div id="painelAlteracoes" style="display:none;"></div>
+<div id="painelAlteracoes" style="
+  display:none;
+  background:white;
+  border-left:6px solid #d32f2f;
+  padding:15px;
+  margin:10px;
+  border-radius:8px;
+  max-height:300px;
+  overflow-y:auto;
+  box-shadow:0 2px 10px rgba(0,0,0,0.2);
+">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
+    <strong>⚠️ Alterações Detectadas</strong>
+    <button onclick="fecharPainel()" style="
+      background:#d32f2f;color:white;border:none;
+      padding:5px 10px;border-radius:5px;cursor:pointer;">
+      ✖
+    </button>
+  </div>
 
-  <div id="painelVagas" style="display:none;"></div>
+  <pre id="conteudoAlteracoes" style="
+    white-space:pre-wrap;
+    font-size:12px;
+    margin-top:10px;
+  "></pre>
+
+  <button onclick="copiarAlteracoes()" style="
+    margin-top:10px;
+    padding:8px;
+    background:#2e7d32;
+    color:white;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;">
+    📋 Copiar
+  </button>
+</div>
+
+<div id="painelVagas" style="
+  display:none;
+  background:white;
+  border-left:6px solid #2e7d32;
+  padding:15px;
+  margin:10px;
+  border-radius:8px;
+  max-height:300px;
+  overflow-y:auto;
+  box-shadow:0 2px 10px rgba(0,0,0,0.2);
+">
+  <div style="display:flex;justify-content:space-between;">
+    <strong>📅 Aulas Vagas</strong>
+    <button onclick="fecharPainelVagas()" style="
+      background:#d32f2f;color:white;border:none;
+      padding:5px 10px;border-radius:5px;cursor:pointer;">
+      ✖
+    </button>
+  </div>
+
+  <pre id="conteudoVagas" style="
+    white-space:pre-wrap;
+    font-size:12px;
+    margin-top:10px;
+  "></pre>
+
+  <button onclick="copiarVagas()" style="
+    margin-top:10px;
+    padding:8px;
+    background:#2e7d32;
+    color:white;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;">
+    📋 Copiar
+  </button>
+</div>
 
   <div class="table-responsive" id="tabelaHorario"></div>
 
