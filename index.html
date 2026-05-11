@@ -1072,9 +1072,21 @@ function trocarModalidade(){
   init();
 }
 
-  function trocarSemana(){
-  limparPainelAlteracoes(); // 🔥 ESSENCIAL
+function trocarSemana(){
+
+  limparPainelAlteracoes();
+
   renderizarTabela();
+
+  setTimeout(() => {
+
+    verificarMudancaAoAbrir({
+      dados: dadosGlobais,
+      getSemana: () => document.getElementById('selectSemana').value,
+      getModalidade: () => document.getElementById('selectModalidade').value
+    });
+
+  }, 50);
 }
 
 function gerarMapaDados(dados) {
@@ -1182,26 +1194,28 @@ function salvarSnapshotAtual() {
   const sem = document.getElementById('selectSemana').value;
   const mod = document.getElementById('selectModalidade').value;
 
-  const mapaOriginal = gerarMapaDados(dadosGlobais);
-
-  // 🔥 REDUZ O TAMANHO: salva só o essencial
-  const mapaCompacto = {};
-
-  Object.keys(mapaOriginal).forEach(k => {
-    mapaCompacto[k] = mapaOriginal[k].valorNormalizado;
-  });
+  const mapa = gerarMapaDados(dadosGlobais);
 
   const snapshot = {
-    tempo: new Date().toISOString(),
-    mapa: mapaCompacto
+    criadoEm: new Date().toISOString(),
+
+    // 🔥 marca que este snapshot é baseline inicial
+    baseline: true,
+
+    mapa
   };
 
   try {
-    localStorage.setItem(`snapshot_${mod}_${sem}`, JSON.stringify(snapshot));
+
+    localStorage.setItem(
+      `snapshot_${mod}_${sem}`,
+      JSON.stringify(snapshot)
+    );
+
   } catch (e) {
 
-    // 🔥 SE ESTOURAR, LIMPA E TENTA DE NOVO
     if (e.name === "QuotaExceededError") {
+
       console.warn("⚠️ LocalStorage cheio. Limpando snapshots antigos...");
 
       Object.keys(localStorage).forEach(key => {
@@ -1210,7 +1224,11 @@ function salvarSnapshotAtual() {
         }
       });
 
-      localStorage.setItem(`snapshot_${mod}_${sem}`, JSON.stringify(snapshot));
+      localStorage.setItem(
+        `snapshot_${mod}_${sem}`,
+        JSON.stringify(snapshot)
+      );
+
     } else {
       throw e;
     }
@@ -1247,36 +1265,80 @@ function verificarMudancaAoAbrir({
   const mod = getModalidade();
 
   const chave = `snapshot_${mod}_${sem}`;
+
   const antigoRaw = localStorage.getItem(chave);
 
   const mapaNovo = gerarMapaDados(dados);
 
-  // primeira execução
+  // 🔥 PRIMEIRO ACESSO DA SEMANA
   if (!antigoRaw) {
 
-  // 🔥 PRIMEIRO ACESSO: NÃO MOSTRA ALTERAÇÕES
-  salvarSnapshotAtual();
+    console.log("📌 Primeira abertura da semana.");
 
-  console.log("📌 Snapshot inicial criado — nenhuma comparação feita.");
+    const snapshotInicial = {
+      criadoEm: new Date().toISOString(),
+      baseline: true,
+      mapa: mapaNovo
+    };
 
-  return;
-}
+    localStorage.setItem(
+      chave,
+      JSON.stringify(snapshotInicial)
+    );
+
+    // 🔥 NÃO COMPARA NADA
+    return;
+  }
 
   const snapshotAntigo = JSON.parse(antigoRaw);
-  const mapaAntigo = snapshotAntigo.mapa || {};
 
-  const alteracoes = compararMapas(mapaAntigo, mapaNovo);
+  // 🔥 segurança contra snapshots inválidos
+  if (
+    !snapshotAntigo ||
+    !snapshotAntigo.mapa ||
+    typeof snapshotAntigo.mapa !== "object"
+  ) {
 
-  // filtro: ignora semanas passadas
-  const filtradas = alteracoes.filter(a => !isSemanaPassada(a.dia));
+    console.warn("⚠️ Snapshot inválido. Recriando baseline.");
+
+    localStorage.removeItem(chave);
+
+    localStorage.setItem(chave, JSON.stringify({
+      criadoEm: new Date().toISOString(),
+      baseline: true,
+      mapa: mapaNovo
+    }));
+
+    return;
+  }
+
+  const mapaAntigo = snapshotAntigo.mapa;
+
+  const alteracoes = compararMapas(
+    mapaAntigo,
+    mapaNovo
+  );
+
+  // 🔥 ignora semanas passadas
+  const filtradas = alteracoes.filter(
+    a => !isSemanaPassada(a.dia)
+  );
 
   if (filtradas.length > 0) {
+
     mostrarAvisoAlteracoesRobusto(filtradas);
+
   } else {
+
     document.getElementById("painelAlteracoes").style.display = "none";
   }
 
-  salvarSnapshotAtual();
+  // 🔥 atualiza snapshot
+  localStorage.setItem(chave, JSON.stringify({
+    criadoEm: new Date().toISOString(),
+    baseline: true,
+    mapa: mapaNovo
+  }));
 }
 
 function mostrarAvisoAlteracoesRobusto(lista) {
