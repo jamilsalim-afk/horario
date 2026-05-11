@@ -17,25 +17,15 @@
 :root{
   --primary:#22c55e;
   --primary-dark:#15803d;
-
   --bg:#020617;
   --card:#0f172a;
   --card-2:#111827;
-
   --text:#f8fafc;
   --muted:#94a3b8;
-
   --border:rgba(255,255,255,0.08);
-
-  --shadow:
-    0 10px 30px rgba(0,0,0,0.28);
-
+  --shadow:0 10px 35px rgba(0,0,0,0.35);
   --radius:24px;
 }
-
-/* =========================
-   RESET
-========================= */
 
 *{
   margin:0;
@@ -51,8 +41,8 @@ body{
   font-family:'Inter',sans-serif;
 
   background:
-    radial-gradient(circle at top left,rgba(34,197,94,0.14),transparent 30%),
-    radial-gradient(circle at bottom right,rgba(59,130,246,0.14),transparent 30%),
+    radial-gradient(circle at top left,rgba(34,197,94,0.15),transparent 30%),
+    radial-gradient(circle at bottom right,rgba(59,130,246,0.15),transparent 30%),
     linear-gradient(135deg,#020617,#0f172a,#111827);
 
   color:var(--text);
@@ -62,16 +52,18 @@ body{
   overflow-x:hidden;
 }
 
-/* =========================
+/* =========================================
    HEADER
-========================= */
+========================================= */
 
 .ifro-header{
   position:sticky;
+
   top:0;
+
   z-index:9999;
 
-  backdrop-filter:blur(10px);
+  backdrop-filter:blur(18px);
 
   background:rgba(2,6,23,0.82);
 
@@ -83,7 +75,7 @@ body{
 
   margin:auto;
 
-  padding:28px 20px;
+  padding:30px 24px;
 
   text-align:center;
 }
@@ -99,13 +91,11 @@ body{
 }
 
 .ifro-linha2{
-  font-size:clamp(24px,4vw,40px);
+  font-size:38px;
 
   font-weight:800;
 
   color:white;
-
-  line-height:1.2;
 }
 
 .ifro-linha3{
@@ -114,56 +104,46 @@ body{
   color:#94a3b8;
 
   font-size:14px;
-
-  line-height:1.6;
 }
 
 .ifro-linha4{
-  margin-top:20px;
+  margin-top:22px;
 
   display:inline-flex;
 
   align-items:center;
 
-  justify-content:center;
-
   gap:10px;
 
-  padding:14px 22px;
+  padding:14px 24px;
 
   border-radius:999px;
 
-  background:
-    linear-gradient(
-      135deg,
-      #16a34a,
-      #22c55e
-    );
+  background:linear-gradient(135deg,#16a34a,#22c55e);
 
   color:white;
 
   font-weight:700;
 
-  box-shadow:
-    0 10px 22px rgba(34,197,94,0.22);
+  box-shadow:0 12px 25px rgba(34,197,94,0.25);
 }
 
-/* =========================
+/* =========================================
    CONTROLES
-========================= */
+========================================= */
 
 .header-sticky{
   position:sticky;
 
-  top:0;
+  top:170px;
 
   z-index:999;
 
-  padding:14px;
+  padding:20px;
 }
 
 .controls-card{
-  max-width:1600px;
+  max-width:1800px;
 
   margin:auto;
 
@@ -175,14 +155,13 @@ body{
 
   gap:14px;
 
-  padding:22px;
+  padding:24px;
 
   border-radius:28px;
 
-  background:
-    rgba(15,23,42,0.75);
+  background:rgba(15,23,42,0.75);
 
-  backdrop-filter:blur(10px);
+  backdrop-filter:blur(20px);
 
   border:1px solid rgba(255,255,255,0.06);
 
@@ -203,21 +182,19 @@ select,
 
 select,
 .search-box{
-  width:100%;
-
-  max-width:320px;
-
-  min-width:0;
+  min-width:260px;
 
   padding:15px 18px;
 
   border-radius:16px;
 
-  background:#111827;
+  background:#171702;
 
   color:white;
 
   border:1px solid rgba(255,255,255,0.08);
+
+  font-size:14px;
 }
 
 select:hover,
@@ -229,8 +206,7 @@ select:focus,
 .search-box:focus{
   border-color:#22c55e;
 
-  box-shadow:
-    0 0 0 4px rgba(34,197,94,0.15);
+  box-shadow:0 0 0 4px rgba(34,197,94,0.15);
 }
 
 .search-box::placeholder{
@@ -242,12 +218,7 @@ select:focus,
 
   border-radius:16px;
 
-  background:
-    linear-gradient(
-      135deg,
-      #dc2626,
-      #ef4444
-    );
+  background:linear-gradient(135deg,#dc2626,#ef4444);
 
   color:white;
 
@@ -255,32 +226,35 @@ select:focus,
 
   cursor:pointer;
 
-  box-shadow:
-    0 10px 22px rgba(239,68,68,0.22);
+  box-shadow:0 12px 22px rgba(239,68,68,0.25);
+
+  font-size:14px;
 }
 
 .btn-pdf:hover{
   transform:translateY(-2px);
 }
 
-/* =========================
+/* =========================================
    CONTAINER
-========================= */
+========================================= */
 
 .week-container{
-  max-width:1800px;
+  width:100%;
+
+  max-width:100vw;
 
   margin:30px auto;
 
-  padding:0 16px 60px;
+  padding:0 18px 60px;
 }
 
-/* =========================
+/* =========================================
    RELATÓRIOS
-========================= */
+========================================= */
 
 #botoesRelatorio{
-  margin-bottom:22px;
+  margin-bottom:24px;
 }
 
 #botoesRelatorio > div{
@@ -296,10 +270,9 @@ select:focus,
 
   border:none !important;
 
-  border-radius:14px !important;
+  border-radius:16px !important;
 
-  background:
-    rgba(15,23,42,0.88) !important;
+  background:rgba(15,23,42,0.85) !important;
 
   color:white !important;
 
@@ -318,26 +291,21 @@ select:focus,
   transform:translateY(-2px);
 }
 
-/* =========================
+/* =========================================
    PAINÉIS
-========================= */
+========================================= */
 
 #painelAlteracoes,
 #painelVagas{
-  width:100%;
-
-  overflow-x:auto;
-
-  background:
-    rgba(15,23,42,0.92) !important;
+  background:rgba(15,23,42,0.92) !important;
 
   color:white;
 
   border:none !important;
 
-  border-radius:24px !important;
+  border-radius:28px !important;
 
-  backdrop-filter:blur(10px);
+  backdrop-filter:blur(18px);
 
   box-shadow:var(--shadow);
 }
@@ -353,38 +321,46 @@ select:focus,
 #painelVagas button{
   border:none !important;
 
-  border-radius:12px !important;
+  border-radius:14px !important;
 
   font-weight:700;
 
   transition:0.25s ease;
 }
 
-/* =========================
+#painelAlteracoes button:hover,
+#painelVagas button:hover{
+  transform:translateY(-2px);
+}
+
+/* =========================================
    TABELAS
-========================= */
+========================================= */
 
 .table-responsive{
-  overflow:auto;
+  width:100%;
 
-  -webkit-overflow-scrolling:touch;
+  overflow-x:auto;
 
-  padding:14px;
+  overflow-y:visible;
 
-  border-radius:24px;
+  padding:18px;
 
-  background:
-    rgba(15,23,42,0.78);
+  border-radius:30px;
 
-  backdrop-filter:blur(10px);
+  background:rgba(15,23,42,0.78);
+
+  backdrop-filter:blur(20px);
 
   border:1px solid rgba(255,255,255,0.08);
 
   box-shadow:var(--shadow);
+
+  -webkit-overflow-scrolling:touch;
 }
 
 .table-responsive::-webkit-scrollbar{
-  height:10px;
+  height:12px;
 }
 
 .table-responsive::-webkit-scrollbar-thumb{
@@ -394,7 +370,9 @@ select:focus,
 }
 
 table{
-  width:100%;
+  width:max-content;
+
+  min-width:100%;
 
   table-layout:fixed;
 
@@ -405,11 +383,9 @@ table{
   border-radius:22px;
 
   overflow:hidden;
-}
 
-/* =========================
-   LARGURA FIXA DAS COLUNAS
-========================= */
+  margin-bottom:18px;
+}
 
 th,
 td{
@@ -431,12 +407,14 @@ td{
 
   hyphens:auto;
 
-  width:110px;
+  width:140px;
 
-  min-width:110px;
+  min-width:140px;
 
-  max-width:110px;
+  max-width:140px;
 }
+
+/* CABEÇALHO */
 
 th{
   background:#111827;
@@ -448,38 +426,28 @@ th{
   font-weight:700;
 
   line-height:1.3;
+
+  position:sticky;
+
+  top:0;
+
+  z-index:5;
 }
 
-.aula-cell{
-  background:rgba(255,255,255,0.02);
-
-  color:#f8fafc;
-
-  font-size:10px;
-
-  line-height:1.3;
-}
-
-.aula-cell:hover{
-  background:rgba(34,197,94,0.12);
-}
-
-/* =========================
-   COLUNA HORÁRIO FIXA
-========================= */
+/* COLUNA HORÁRIO FIXA */
 
 .time-col{
   position:sticky;
 
   left:0;
 
-  z-index:50;
+  z-index:999;
 
-  width:95px;
+  width:95px !important;
 
-  min-width:95px;
+  min-width:95px !important;
 
-  max-width:95px;
+  max-width:95px !important;
 
   background:#020617 !important;
 
@@ -487,7 +455,7 @@ th{
 
   font-weight:600;
 
-  font-size:11px;
+  font-size:10px;
 
   line-height:1.2;
 
@@ -496,140 +464,200 @@ th{
   overflow:hidden;
 
   box-shadow:
-    6px 0 12px rgba(0,0,0,0.35);
+    8px 0 14px rgba(0,0,0,0.45);
 
   border-right:
     2px solid rgba(255,255,255,0.08);
 }
 
-th.time-col{
-  z-index:60;
-
-  font-size:11px;
+td.time-col{
+  background:#020617 !important;
 }
 
-/* =========================
-   DIVISÃO DOS DIAS
-========================= */
+th.time-col{
+  background:#020617 !important;
+
+  z-index:1000;
+
+  font-size:10px;
+}
+
+/* CÉLULAS */
+
+.aula-cell{
+  background:rgba(255,255,255,0.02);
+
+  color:#f8fafc;
+
+  font-size:10px;
+
+  line-height:1.45;
+}
+
+.aula-cell:hover{
+  background:rgba(34,197,94,0.12);
+}
+
+/* DIVISÃO DIA */
 
 .day-divider td{
-  background:
-    linear-gradient(
-      135deg,
-      #15803d,
-      #22c55e
-    );
+  background:linear-gradient(135deg,#15803d,#22c55e);
 
   color:white;
 
   font-weight:800;
 
-  font-size:14px;
+  font-size:15px;
 
   letter-spacing:1px;
 
-  padding:14px;
+  padding:16px;
+
+  position:sticky;
+
+  left:0;
+
+  z-index:50;
 }
+
+/* INTERVALOS */
 
 .intervalo td,
 .marcacao-extra{
-  background:
-    rgba(255,255,255,0.05) !important;
+  background:rgba(255,255,255,0.05) !important;
 
   color:#94a3b8;
 
   font-weight:700;
 }
 
+/* HIGHLIGHT */
+
 .highlight{
-  background:
-    linear-gradient(
-      135deg,
-      #facc15,
-      #f59e0b
-    ) !important;
+  background:linear-gradient(135deg,#facc15,#f59e0b) !important;
 
   color:white !important;
 
   font-weight:800;
 
-  box-shadow:
-    0 0 20px rgba(250,204,21,0.25);
+  box-shadow:0 0 20px rgba(250,204,21,0.25);
 }
 
 .opaco{
   opacity:0.12;
 }
 
+/* FERIADO */
+
 .feriado{
-  background:
-    linear-gradient(
-      135deg,
-      #991b1b,
-      #dc2626
-    );
+  background:linear-gradient(135deg,#991b1b,#dc2626);
 
   color:white;
 
-  font-size:clamp(34px,7vw,72px);
+  font-size:72px;
 
   font-weight:900;
 
-  letter-spacing:4px;
+  letter-spacing:8px;
 
-  height:180px;
+  height:220px;
 }
 
-/* =========================
+/* EVENTO GERAL */
+
+.evento-bloco{
+  background:linear-gradient(135deg,#0f766e,#14b8a6) !important;
+
+  color:white;
+
+  font-weight:800;
+
+  font-size:18px;
+
+  letter-spacing:1px;
+
+  text-align:center;
+
+  vertical-align:middle;
+}
+
+/* =========================================
    CURSOS
-========================= */
+========================================= */
 
-.c-agroec{ background:rgba(34,197,94,0.15) !important; }
-.c-agropec{ background:rgba(59,130,246,0.15) !important; }
-.c-info{ background:rgba(250,204,21,0.15) !important; }
-.c-geo{ background:rgba(168,85,247,0.15) !important; }
-.c-mat{ background:rgba(6,182,212,0.15) !important; }
-.c-agroneg{ background:rgba(120,113,108,0.18) !important; }
-.c-zoo{ background:rgba(244,114,182,0.15) !important; }
-.c-agron{ background:rgba(132,204,22,0.15) !important; }
+.c-agroec{
+  background:rgba(34,197,94,0.15) !important;
+}
 
-/* =========================
+.c-agropec{
+  background:rgba(59,130,246,0.15) !important;
+}
+
+.c-info{
+  background:rgba(250,204,21,0.15) !important;
+}
+
+.c-geo{
+  background:rgba(168,85,247,0.15) !important;
+}
+
+.c-mat{
+  background:rgba(6,182,212,0.15) !important;
+}
+
+.c-agroneg{
+  background:rgba(120,113,108,0.18) !important;
+}
+
+.c-zoo{
+  background:rgba(244,114,182,0.15) !important;
+}
+
+.c-agron{
+  background:rgba(132,204,22,0.15) !important;
+}
+
+/* =========================================
    STATUS
-========================= */
+========================================= */
 
 .reserva-ensino{
   color:#fde047;
+
   font-weight:800;
 }
 
 .pps{
   color:#93c5fd;
+
   font-weight:800;
 }
 
 .estudos{
   color:#86efac;
+
   font-weight:800;
 }
 
 .reuniao{
   color:#fdba74;
+
   font-weight:800;
 }
 
 .caed{
-  background:
-    rgba(250,204,21,0.16) !important;
+  background:rgba(250,204,21,0.16) !important;
 }
 
 .reposicao{
   color:#4ade80;
+
   font-weight:800;
 }
 
-/* =========================
+/* =========================================
    FOOTER
-========================= */
+========================================= */
 
 .ifro-footer{
   margin-top:60px;
@@ -644,54 +672,75 @@ th.time-col{
 
   line-height:1.8;
 
-  border-top:
-    1px solid rgba(255,255,255,0.08);
+  border-top:1px solid rgba(255,255,255,0.08);
+
+  font-size:14px;
 }
 
-/* =========================
+/* =========================================
    TABLET
-========================= */
+========================================= */
 
 @media(max-width:1024px){
 
-  th,
-  td{
-    width:95px;
-    min-width:95px;
-    max-width:95px;
+  .ifro-linha2{
+    font-size:30px;
   }
 
-  .time-col{
-    width:80px;
-    min-width:80px;
-    max-width:80px;
+  .controls-card{
+    gap:10px;
+  }
 
-    font-size:10px;
+  th,
+  td{
+    width:125px;
+
+    min-width:125px;
+
+    max-width:125px;
   }
 
   .aula-cell{
     font-size:9px;
   }
 
+  th{
+    font-size:10px;
+  }
+
+  .time-col{
+    width:85px !important;
+
+    min-width:85px !important;
+
+    max-width:85px !important;
+
+    font-size:9px;
+  }
+
+  .feriado{
+    font-size:44px;
+  }
 }
 
-/* =========================
-   MOBILE
-========================= */
+/* =========================================
+   CELULAR
+========================================= */
 
 @media(max-width:768px){
 
   .ifro-header-content{
-    padding:18px 12px;
+    padding:22px 14px;
   }
 
   .ifro-linha1{
     font-size:10px;
+
     letter-spacing:1px;
   }
 
   .ifro-linha2{
-    font-size:22px;
+    font-size:24px;
   }
 
   .ifro-linha3{
@@ -700,11 +749,19 @@ th.time-col{
 
   .ifro-linha4{
     padding:10px 16px;
+
     font-size:12px;
+  }
+
+  .header-sticky{
+    top:145px;
+
+    padding:12px;
   }
 
   .controls-card{
     flex-direction:column;
+
     padding:16px;
   }
 
@@ -712,69 +769,64 @@ th.time-col{
   .search-box,
   .btn-pdf{
     width:100%;
-    max-width:100%;
+
+    min-width:unset;
+  }
+
+  .table-responsive{
+    padding:10px;
   }
 
   th,
   td{
-    width:85px;
-    min-width:85px;
-    max-width:85px;
+    width:115px;
+
+    min-width:115px;
+
+    max-width:115px;
 
     padding:6px 4px;
   }
 
-  .time-col{
-    width:72px;
-    min-width:72px;
-    max-width:72px;
+  .aula-cell{
+    font-size:8px;
 
+    line-height:1.35;
+  }
+
+  th{
     font-size:9px;
   }
 
-  .aula-cell{
-    font-size:8.5px;
+  .time-col{
+    width:75px !important;
 
-    line-height:1.2;
+    min-width:75px !important;
+
+    max-width:75px !important;
+
+    font-size:8px;
+  }
+
+  .day-divider td{
+    font-size:12px;
+
+    padding:12px;
   }
 
   .feriado{
-    font-size:32px;
+    font-size:28px;
 
-    letter-spacing:2px;
+    letter-spacing:3px;
 
     height:120px;
   }
 
-}
+  .ifro-footer{
+    font-size:12px;
 
-/* =========================
-   TELAS MUITO PEQUENAS
-========================= */
-
-@media(max-width:480px){
-
-  th,
-  td{
-    width:75px;
-    min-width:75px;
-    max-width:75px;
+    line-height:1.6;
   }
-
-  .time-col{
-    width:65px;
-    min-width:65px;
-    max-width:65px;
-  }
-
-  .aula-cell{
-    font-size:8px;
-  }
-
-  th{
-    font-size:8px;
-  }
-
 }
 
 </style>
