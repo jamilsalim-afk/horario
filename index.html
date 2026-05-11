@@ -352,11 +352,11 @@ select:focus,
 .table-responsive{
   width:100%;
 
+  position:relative;
+
   overflow-x:auto;
 
   overflow-y:visible;
-
-  position:relative;
 
   padding:18px;
 
@@ -397,8 +397,6 @@ table{
   border-spacing:0;
 
   border-radius:22px;
-
-  overflow:hidden;
 
   margin-bottom:18px;
 }
@@ -455,59 +453,57 @@ th{
 ========================================= */
 
 .time-col{
-  position:sticky;
 
-  left:0;
+  position: sticky;
 
-  z-index:100;
+  left: 0;
 
-  width:95px !important;
+  z-index: 999;
 
-  min-width:95px !important;
+  background: #020617 !important;
 
-  max-width:95px !important;
+  width: 95px !important;
+  min-width: 95px !important;
+  max-width: 95px !important;
 
-  background:#020617 !important;
+  color: white;
 
-  color:white;
+  font-weight: 700;
 
-  font-weight:600;
+  font-size: 10px;
 
-  font-size:10px;
-
-  line-height:1.2;
-
-  white-space:nowrap;
-
-  overflow:hidden;
+  white-space: nowrap;
 
   box-shadow:
-    10px 0 18px rgba(0,0,0,0.55);
+    6px 0 12px rgba(0,0,0,0.45);
 
   border-right:
-    2px solid rgba(255,255,255,0.08);
+    2px solid rgba(255,255,255,0.12);
 }
 
 td.time-col{
-  background:#020617 !important;
+  position: sticky;
 
-  position:sticky;
+  left: 0;
 
-  left:0;
+  z-index: 998;
 
-  z-index:90;
+  background: #020617 !important;
 }
 
 th.time-col{
-  background:#020617 !important;
 
-  position:sticky;
+  position: sticky;
 
-  left:0;
+  left: 0;
 
-  z-index:120;
+  top: 0;
 
-  font-size:10px;
+  z-index: 1000;
+
+  background: #020617 !important;
+
+  font-size: 10px;
 }
 
 /* =========================================
