@@ -4357,20 +4357,39 @@ function exportarGradePDF() {
             },
             // Estilização especial para as linhas de resumo (Totais, Permanência, Alertas)
             didParseCell: function(data) {
-                const totalRows = data.table.body.length;
-                // As últimas 4 linhas são o rodapé da tabela (Totais e Alertas)
-                if (data.row.index >= totalRows - 4) {
-                    data.cell.styles.fillColor = [240, 248, 240]; // Verde bem claro
-                    data.cell.styles.fontStyle = 'bold';
-                    data.cell.styles.fontSize = 7;
-                    
-                    // Se for a última linha (Observações/Alertas), alinha à esquerda
-                    if (data.row.index === totalRows - 1 && data.column.index === 1) {
-                        data.cell.styles.halign = 'left';
-                        data.cell.styles.textColor = [180, 0, 0]; // Vermelho para alertas
-                    }
-                }
-            },
+
+    const texto = (data.cell.raw?.innerText || '').toUpperCase();
+
+    // RECUPERAÇÃO
+    if (texto.includes('RECUPERAÇÃO')) {
+        data.cell.styles.fillColor = [254, 249, 195]; // amarelo
+        data.cell.styles.textColor = [133, 77, 14];
+    }
+
+    // EXAME
+    else if (texto.includes('EXAME')) {
+        data.cell.styles.fillColor = [254, 226, 226]; // vermelho claro
+        data.cell.styles.textColor = [127, 29, 29];
+    }
+
+    // EXTRA
+    else if (texto.includes('EXTRA')) {
+        data.cell.styles.fillColor = [219, 234, 254]; // azul claro
+        data.cell.styles.textColor = [30, 64, 175];
+    }
+
+    // EVENTO
+    else if (texto.includes('EVENTO')) {
+        data.cell.styles.fillColor = [220, 252, 231]; // verde claro
+        data.cell.styles.textColor = [20, 83, 45];
+    }
+
+    // REPOSIÇÃO
+    else if (texto.includes('REPOSIÇÃO')) {
+        data.cell.styles.fillColor = [233, 213, 255]; // roxo claro
+        data.cell.styles.textColor = [88, 28, 135];
+    }
+},
             margin: { bottom: 25 }
         });
     }
