@@ -196,6 +196,7 @@
                     <div class="flex gap-2">
                         <button onclick="gerarGrade()" class="bg-blue-600 text-white font-bold rounded-lg flex-1 hover:bg-blue-700 transition uppercase text-xs">Ver Grade</button>
                         <button onclick="exportarGradePDF()" class="bg-[#15803d] text-white font-bold rounded-lg flex-1 hover:bg-green-800 transition shadow-md uppercase text-xs">Exportar PDF Grade</button>
+                        <button onclick="exportarTodosProfessoresPDF()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-bold">📚 Exportar Todos </button>
                     </div>
                 </div>
                 <div id="gradeRender" class="overflow-x-auto border rounded-lg"></div>
@@ -4405,6 +4406,47 @@ function exportarGradePDF() {
     const nomeLimpo = profNome.replace(/\s+/g, '_').replace(/[\\/:*?"<>|]/g, '');
     doc.save(`Ficha_Semanal_${nomeLimpo}_Semana_${w}.pdf`);
 }
+
+
+async function exportarTodosProfessoresPDF() {
+
+    const select = document.getElementById('profSelect');
+
+    if (!select.value) {
+        alert("Selecione primeiro uma semana.");
+    }
+
+    const professores = [...select.options]
+        .map(o => o.value)
+        .filter(v => v);
+
+    if (!professores.length) {
+        alert("Nenhum professor encontrado.");
+        return;
+    }
+
+    const confirmar = confirm(
+        `Serão gerados ${professores.length} PDFs.\nDeseja continuar?`
+    );
+
+    if (!confirmar) return;
+
+    for (const prof of professores) {
+
+        select.value = prof;
+
+        gerarGrade();
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        exportarGradePDF();
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    alert("Exportação concluída.");
+}
+        
 
 // EXPORTADOR DE PDF DO RELATORIO MENSAL DO PROFESSOR DA ABA 04
 function exportarRelatorioProfessorPDF() {
