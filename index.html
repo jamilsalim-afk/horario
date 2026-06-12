@@ -4361,19 +4361,19 @@ function exportarGradePDF() {
     const texto = (data.cell.raw?.innerText || '').toUpperCase();
 
     // RECUPERAÇÃO
-    if (texto.includes('RECUPERAÇÃO')) {
+    if (texto.includes('REC')) {
         data.cell.styles.fillColor = [254, 249, 195]; // amarelo
         data.cell.styles.textColor = [133, 77, 14];
     }
 
     // EXAME
-    else if (texto.includes('EXAME')) {
+    else if (texto.includes('EX')) {
         data.cell.styles.fillColor = [254, 226, 226]; // vermelho claro
         data.cell.styles.textColor = [127, 29, 29];
     }
 
     // EXTRA
-    else if (texto.includes('EXTRA')) {
+    else if (texto.includes('+')) {
         data.cell.styles.fillColor = [219, 234, 254]; // azul claro
         data.cell.styles.textColor = [30, 64, 175];
     }
@@ -4385,7 +4385,7 @@ function exportarGradePDF() {
     }
 
     // REPOSIÇÃO
-    else if (texto.includes('REPOSIÇÃO')) {
+    else if (texto.includes('REP')) {
         data.cell.styles.fillColor = [233, 213, 255]; // roxo claro
         data.cell.styles.textColor = [88, 28, 135];
     }
