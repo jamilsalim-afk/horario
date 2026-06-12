@@ -4389,6 +4389,10 @@ function exportarGradePDF() {
             data.cell.styles.textColor = [22, 101, 52];
             break;
     }
+                didParseCell: function(data) {
+    console.log("RAW:", data.cell.raw);
+    console.log("TEXT:", data.cell.text);
+}
 },
             margin: { bottom: 25 }
         });
