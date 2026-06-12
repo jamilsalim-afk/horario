@@ -2303,7 +2303,7 @@ function gerarGrade() {
                 aulasEncontradas.forEach(a => {
                     const status = TRADUCAO[a.tag] || { class: "bg-green-50 border-green-200" };
                     cellContent += `
-                        <div class="p-1 mb-1 rounded border-l-4 ${status.class} shadow-sm">
+                        <div class="p-1 mb-1 rounded border-l-4 ${status.class} shadow-sm" data-status="${a.tag}">
                             <div class="font-bold text-[9px] text-gray-800">${a.turmaNome}</div>
                             <div class="text-[8px] text-blue-800 uppercase border-t border-blue-100 mt-1">${a.discNome}</div>
                         </div>`;
@@ -4358,36 +4358,36 @@ function exportarGradePDF() {
             // Estilização especial para as linhas de resumo (Totais, Permanência, Alertas)
             didParseCell: function(data) {
 
-    const texto = (data.cell.raw?.innerText || '').toUpperCase();
+    if (!data.cell.raw) return;
 
-    // RECUPERAÇÃO
-    if (texto.includes('REC')) {
-        data.cell.styles.fillColor = [254, 249, 195]; // amarelo
-        data.cell.styles.textColor = [133, 77, 14];
-    }
+    const status = data.cell.raw.getAttribute?.('data-status');
 
-    // EXAME
-    else if (texto.includes('EX')) {
-        data.cell.styles.fillColor = [254, 226, 226]; // vermelho claro
-        data.cell.styles.textColor = [127, 29, 29];
-    }
+    switch(status) {
 
-    // EXTRA
-    else if (texto.includes('+')) {
-        data.cell.styles.fillColor = [219, 234, 254]; // azul claro
-        data.cell.styles.textColor = [30, 64, 175];
-    }
+        case "EX":
+            data.cell.styles.fillColor = [254, 226, 226];
+            data.cell.styles.textColor = [127, 29, 29];
+            break;
 
-    // EVENTO
-    else if (texto.includes('EVENTO')) {
-        data.cell.styles.fillColor = [220, 252, 231]; // verde claro
-        data.cell.styles.textColor = [20, 83, 45];
-    }
+        case "REC":
+            data.cell.styles.fillColor = [255, 237, 213];
+            data.cell.styles.textColor = [154, 52, 18];
+            break;
 
-    // REPOSIÇÃO
-    else if (texto.includes('REP')) {
-        data.cell.styles.fillColor = [233, 213, 255]; // roxo claro
-        data.cell.styles.textColor = [88, 28, 135];
+        case "+":
+            data.cell.styles.fillColor = [219, 234, 254];
+            data.cell.styles.textColor = [30, 64, 175];
+            break;
+
+        case "R":
+            data.cell.styles.fillColor = [243, 232, 255];
+            data.cell.styles.textColor = [107, 33, 168];
+            break;
+
+        case "SÁBADO LETIVO":
+            data.cell.styles.fillColor = [220, 252, 231];
+            data.cell.styles.textColor = [22, 101, 52];
+            break;
     }
 },
             margin: { bottom: 25 }
